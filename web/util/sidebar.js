@@ -10,7 +10,7 @@ const menus = {
     ],
     admin: [
         {label: 'Profile', href: 'profile.jsp'},
-        {label: 'Dashboard', href: 'dashboard_admin.jsp'},
+        {label: 'Dashboard', href: 'admin/dashboard_admin.jsp'},
         {label: 'Schedule (Class List)', href: 'schedule_admin.jsp'},
         {label: 'Monitor Instructor', href: 'monitor_instructor.jsp'},
         {label: 'Review Registration', href: 'review_registration.jsp'},
