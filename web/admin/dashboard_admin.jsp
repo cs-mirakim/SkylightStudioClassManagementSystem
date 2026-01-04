@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Dashboard Admin Page</title>
+        <title>Admin Dashboard Page</title>
 
         <!-- Font Inter + Lora -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,7 +78,7 @@
 
                 <div class="mb-8 pb-4 border-b border-espresso/10">
                     <h2 class="text-xl font-semibold mb-1 text-espresso">
-                        Dashboard Admin Page
+                        Admin Dashboard Page
                     </h2>
                     <p class="text-sm text-espresso/60">
                         Welcome back, Admin! Here's an overview of your studio management.
