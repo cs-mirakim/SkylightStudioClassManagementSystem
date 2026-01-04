@@ -23,7 +23,7 @@
 
     <div class="flex items-center justify-end gap-4 w-1/4">
 
-        <a href="inboxMessages_admin.jsp" 
+        <a href="../admin/inboxMessages_admin.jsp" 
            class="relative p-2 rounded-xl hover:bg-petal/50 transition-all text-espresso/60 hover:text-dusty"
            aria-label="Inbox">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
             </span>
         </a>
 
-        <a href="profile.jsp"
+        <a href="../general/profile.jsp"
            class="flex items-center gap-3 pl-3 pr-1 py-1 rounded-xl border border-petal hover:border-dusty/30 hover:bg-cloud transition-all group">
             <div class="flex flex-col items-end leading-tight hidden sm:flex text-right">
                 <span class="text-[9px] font-bold text-espresso/40 uppercase tracking-tighter">Admin / Instructor</span>
