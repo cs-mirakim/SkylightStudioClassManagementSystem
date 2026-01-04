@@ -29,51 +29,51 @@
 
         <!-- Tailwind Custom Palette -->
         <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        fontFamily: {
-                            sans: ['Roboto', 'ui-sans-serif', 'system-ui'],
-                        },
-                        colors: {
-                            /* Primary & Background */
-                            dusty: '#B36D6D',
-                            dustyHover: '#965656',
-                            blush: '#F2D1D1',
-                            blushHover: '#E8BEBE',
-                            cloud: '#FDF8F8',
-                            whitePure: '#FFFFFF',
-                            petal: '#EFE1E1',
+            tailwind.config = {u
+                        theme: {
+                            extend: {
+                                fontFamily: {
+                                    sans: ['Roboto', 'ui-sans-serif', 'system-ui']
+                                },
+                                colors: {
+                                    /* Primary & Background */
+                                    dusty: '#B36D6D',
+                                    dustyHover: '#965656',
+                                    blush: '#F2D1D1',
+                                    blushHover: '#E8BEBE',
+                                    cloud: '#FDF8F8',
+                                    whitePure: '#FFFFFF',
+                                    petal: '#EFE1E1',
 
-                            /* Text */
-                            espresso: '#3D3434',
-                            successText: '#1E3A1E',
+                                    /* Text */
+                                    espresso: '#3D3434',
+                                    successText: '#1E3A1E',
 
-                            /* Blue Accents */
-                            teal: '#6D9B9B',
-                            tealSoft: '#A3C1D6',
-                            tealHover: '#557878',
+                                    /* Blue Accents */
+                                    teal: '#6D9B9B',
+                                    tealSoft: '#A3C1D6',
+                                    tealHover: '#557878',
 
-                            /* Alerts */
-                            successBg: '#A5D6A7',
-                            successTextDark: '#1B5E20',
+                                    /* Alerts */
+                                    successBg: '#A5D6A7',
+                                    successTextDark: '#1B5E20',
 
-                            warningBg: '#FFCC80',
-                            warningText: '#E65100',
+                                    warningBg: '#FFCC80',
+                                    warningText: '#E65100',
 
-                            dangerBg: '#EF9A9A',
-                            dangerText: '#B71C1C',
+                                    dangerBg: '#EF9A9A',
+                                    dangerText: '#B71C1C',
 
-                            infoBg: '#A3C1D6',
-                            infoText: '#2C5555',
+                                    infoBg: '#A3C1D6',
+                                    infoText: '#2C5555',
 
-                            /* Chips */
-                            chipRose: '#FCE4EC',
-                            chipSand: '#D9C5B2',
-                            chipTeal: '#6D9B9B'
+                                    /* Chips */
+                                    chipRose: '#FCE4EC',
+                                    chipSand: '#D9C5B2',
+                                    chipTeal: '#6D9B9B'
+                                }
+                            }
                         }
-                    }
-                }
             }
         </script>
 
