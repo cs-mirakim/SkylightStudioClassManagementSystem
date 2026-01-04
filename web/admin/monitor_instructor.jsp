@@ -108,14 +108,21 @@
                 width: 100%;
             }
 
-            /* Hover effect for clickable items */
-            .clickable-item {
-                transition: all 0.2s ease;
-                cursor: pointer;
+            /* Remove pointer cursor from stats */
+            .stats-container {
+                cursor: default !important;
             }
-            .clickable-item:hover {
-                transform: translateY(-1px);
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            .stats-container:hover {
+                transform: none !important;
+                box-shadow: none !important;
+            }
+            
+            /* Pagination styles */
+            .pagination-btn {
+                transition: all 0.2s ease;
+            }
+            .pagination-btn:hover:not(.disabled) {
+                background-color: #F2D1D1;
             }
         </style>
     </head>
@@ -139,69 +146,82 @@
                     </p>
                 </div>
 
-                <!-- Quick Stats Overview -->
+                <!-- Quick Stats Overview dengan susunan dan warna baru -->
                 <div class="mb-8 grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="bg-petal p-4 rounded-lg border border-blush clickable-item">
+                    <!-- Total Active Instructors -->
+                    <div class="bg-petal p-4 rounded-lg border border-blush stats-container">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-espresso/60">Total Active Instructors</p>
-                                <p class="text-2xl font-bold text-espresso">24</p>
+                                <p id="statActiveInstructors" class="text-2xl font-bold text-espresso">6</p>
                             </div>
-                            <div class="w-10 h-10 rounded-full bg-tealSoft flex items-center justify-center">
-                                <svg class="w-6 h-6 text-teal" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-10 h-10 rounded-full bg-successBg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-petal p-4 rounded-lg border border-blush clickable-item">
+                    <!-- Total Inactive Instructors -->
+                    <div class="bg-petal p-4 rounded-lg border border-blush stats-container">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-espresso/60">Total Inactive</p>
+                                <p id="statInactiveInstructors" class="text-2xl font-bold text-espresso">2</p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-dangerBg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Average Overall Rating -->
+                    <div class="bg-petal p-4 rounded-lg border border-blush stats-container">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-espresso/60">Avg. Overall Rating</p>
-                                <p class="text-2xl font-bold text-espresso">4.2</p>
+                                <p id="statAvgRating" class="text-2xl font-bold text-espresso">4.0</p>
                             </div>
-                            <div class="w-10 h-10 rounded-full bg-chipRose flex items-center justify-center">
-                                <svg class="w-6 h-6 text-dusty" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="w-10 h-10 rounded-full bg-infoBg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-infoText" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
                         </div>
                     </div>
 
-                    <div class="bg-petal p-4 rounded-lg border border-blush clickable-item">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <p class="text-sm text-espresso/60">Need Attention (<3.5)</p>
-                                <p class="text-2xl font-bold text-espresso">3</p>
-                            </div>
-                            <div class="w-10 h-10 rounded-full bg-warningBg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-warningText" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                                </svg>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-petal p-4 rounded-lg border border-blush clickable-item">
+                    <!-- New This Month -->
+                    <div class="bg-petal p-4 rounded-lg border border-blush stats-container">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm text-espresso/60">New This Month</p>
-                                <p class="text-2xl font-bold text-espresso">2</p>
+                                <p id="statNewThisMonth" class="text-2xl font-bold text-espresso">1</p>
                             </div>
-                            <div class="w-10 h-10 rounded-full bg-successBg flex items-center justify-center">
-                                <svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" clip-rule="evenodd"/>
+                            <div class="w-10 h-10 rounded-full bg-chipRose flex items-center justify-center">
+                                <svg class="w-6 h-6 text-dusty" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l2.828 2.829a1 1 0 101.415-1.415L11 10.586V7z" clip-rule="evenodd"/>
                                 </svg>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filter Section -->
+                <!-- Filter Section dengan filter nama -->
                 <div class="mb-6 bg-petal p-4 rounded-lg border border-blush">
                     <h3 class="text-lg font-medium mb-4 text-espresso">Filter Instructors</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <!-- Name Filter -->
+                        <div>
+                            <label class="block text-sm font-medium text-espresso/70 mb-1">Instructor Name</label>
+                            <select id="nameFilter" class="w-full px-3 py-2 border border-blush rounded-lg bg-whitePure focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent">
+                                <option value="">All Instructors</option>
+                                <!-- Options akan diisi oleh JavaScript -->
+                            </select>
+                        </div>
+
                         <!-- Experience Filter -->
                         <div>
                             <label class="block text-sm font-medium text-espresso/70 mb-1">Experience</label>
@@ -210,7 +230,8 @@
                                 <option value="1">1 Year</option>
                                 <option value="2">2 Years</option>
                                 <option value="3">3 Years</option>
-                                <option value="4+">4+ Years</option>
+                                <option value="4">4 Years</option>
+                                <option value="5+">5+ Years</option>
                             </select>
                         </div>
 
@@ -220,23 +241,22 @@
                             <input type="text" id="dateRangeFilter" class="w-full px-3 py-2 border border-blush rounded-lg bg-whitePure focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent" placeholder="Select date range">
                         </div>
 
-                        <!-- Name Filter -->
+                        <!-- Status Filter -->
                         <div>
-                            <label class="block text-sm font-medium text-espresso/70 mb-1">Instructor Name</label>
-                            <select id="nameFilter" class="w-full px-3 py-2 border border-blush rounded-lg bg-whitePure focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent">
-                                <option value="">All Instructors</option>
-                                <option value="1">Sarah Chen</option>
-                                <option value="2">Michael Wong</option>
-                                <option value="3">Aisha Patel</option>
+                            <label class="block text-sm font-medium text-espresso/70 mb-1">Status</label>
+                            <select id="statusFilter" class="w-full px-3 py-2 border border-blush rounded-lg bg-whitePure focus:outline-none focus:ring-2 focus:ring-teal focus:border-transparent">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
                             </select>
                         </div>
 
                         <!-- Filter Buttons -->
                         <div class="flex items-end space-x-2">
-                            <button onclick="applyFilters()" class="px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors focus:outline-none focus:ring-2 focus:ring-dusty focus:ring-offset-2">
+                            <button id="applyFilterBtn" class="px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors focus:outline-none focus:ring-2 focus:ring-dusty focus:ring-offset-2">
                                 Apply Filters
                             </button>
-                            <button onclick="resetFilters()" class="px-4 py-2 border border-dusty text-dusty rounded-lg hover:bg-blush transition-colors focus:outline-none focus:ring-2 focus:ring-dusty focus:ring-offset-2">
+                            <button id="resetFilterBtn" class="px-4 py-2 border border-dusty text-dusty rounded-lg hover:bg-blush transition-colors focus:outline-none focus:ring-2 focus:ring-dusty focus:ring-offset-2">
                                 Reset
                             </button>
                         </div>
@@ -259,147 +279,28 @@
                                         <th class="px-6 py-3 text-left text-xs font-medium text-espresso uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-whitePure divide-y divide-blush">
-                                    <!-- Instructor 1 -->
-                                    <tr class="hover:bg-cloud">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10">
-                                                    <img class="h-10 w-10 rounded-full object-cover" src="../profile_pictures/instructor/dummy.png" alt="Sarah Chen">
-                                                </div>
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-espresso">Sarah Chen</div>
-                                                    <div class="text-sm text-espresso/60">sarah.chen@email.com</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">5 years</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">15 Jan 2021</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-espresso">142</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="text-sm font-medium text-espresso mr-2">4.7</div>
-                                                <div class="w-24 bg-blush rounded-full h-2">
-                                                    <div class="bg-successBg h-2 rounded-full" style="width: 94%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-successBg text-successTextDark">
-                                                Active
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button onclick="showDetails(1)" class="text-teal hover:text-tealHover mr-3 px-3 py-1 rounded border border-teal hover:bg-teal/5 transition-colors">View Details</button>
-                                            <button onclick="deactivateInstructor(1)" class="text-dusty hover:text-dustyHover px-3 py-1 rounded border border-dusty hover:bg-dusty/5 transition-colors">Deactivate</button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Instructor 2 -->
-                                    <tr class="hover:bg-cloud">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10">
-                                                    <img class="h-10 w-10 rounded-full object-cover" src="../profile_pictures/instructor/dummy.png" alt="Michael Wong">
-                                                </div>
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-espresso">Michael Wong</div>
-                                                    <div class="text-sm text-espresso/60">michael.w@email.com</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">2 years</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">22 Mar 2023</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-espresso">67</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="text-sm font-medium text-espresso mr-2">3.8</div>
-                                                <div class="w-24 bg-blush rounded-full h-2">
-                                                    <div class="bg-warningBg h-2 rounded-full" style="width: 76%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-successBg text-successTextDark">
-                                                Active
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button onclick="showDetails(2)" class="text-teal hover:text-tealHover mr-3 px-3 py-1 rounded border border-teal hover:bg-teal/5 transition-colors">View Details</button>
-                                            <button onclick="deactivateInstructor(2)" class="text-dusty hover:text-dustyHover px-3 py-1 rounded border border-dusty hover:bg-dusty/5 transition-colors">Deactivate</button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Instructor 3 -->
-                                    <tr class="hover:bg-cloud">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="flex-shrink-0 h-10 w-10">
-                                                    <img class="h-10 w-10 rounded-full object-cover" src="../profile_pictures/instructor/dummy.png" alt="Aisha Patel">
-                                                </div>
-                                                <div class="ml-4">
-                                                    <div class="text-sm font-medium text-espresso">Aisha Patel</div>
-                                                    <div class="text-sm text-espresso/60">aisha.p@email.com</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">1 year</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-espresso">10 Aug 2024</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-espresso">23</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="text-sm font-medium text-espresso mr-2">3.2</div>
-                                                <div class="w-24 bg-blush rounded-full h-2">
-                                                    <div class="bg-dangerBg h-2 rounded-full" style="width: 64%"></div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-warningBg text-warningText">
-                                                Needs Attention
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button onclick="showDetails(3)" class="text-teal hover:text-tealHover mr-3 px-3 py-1 rounded border border-teal hover:bg-teal/5 transition-colors">View Details</button>
-                                            <button onclick="deactivateInstructor(3)" class="text-dusty hover:text-dustyHover px-3 py-1 rounded border border-dusty hover:bg-dusty/5 transition-colors">Deactivate</button>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Empty State (hidden by default) -->
-                                    <tr id="noResults" class="hidden">
-                                        <td colspan="7" class="px-6 py-12 text-center">
-                                            <div class="text-espresso/40">
-                                                <svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                                </svg>
-                                                <p class="text-lg font-medium">No instructors found</p>
-                                                <p class="text-sm mt-1">Try adjusting your filters</p>
-                                                <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors">
-                                                    Reset Filters
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                <tbody id="instructorTableBody" class="bg-whitePure divide-y divide-blush">
+                                    <!-- Instructor rows will be generated by JavaScript -->
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="bg-petal px-6 py-4 border-t border-blush flex items-center justify-between">
+                            <div class="text-sm text-espresso/60">
+                                Showing <span id="paginationStart">1</span> to <span id="paginationEnd">5</span> of <span id="paginationTotal">8</span> instructors
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="prevPageBtn" class="pagination-btn px-3 py-1 rounded border border-blush text-espresso disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                    Previous
+                                </button>
+                                <div class="flex space-x-1" id="pageNumbers">
+                                    <!-- Page numbers will be generated by JavaScript -->
+                                </div>
+                                <button id="nextPageBtn" class="pagination-btn px-3 py-1 rounded border border-blush text-espresso disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Next
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -752,7 +653,7 @@
                 <div class="bg-whitePure rounded-lg shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col">
 
                     <div class="flex items-center justify-between p-4 border-b border-blush">
-                        <h3 class="text-lg font-semibold text-espresso">Certification Document</h3>
+                        <h3 id="certModalTitle" class="text-lg font-semibold text-espresso">Certification Document</h3>
                         <button onclick="closeCert()" class="text-espresso/40 hover:text-espresso">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -773,26 +674,23 @@
             </div>
         </div>
 
-        <!-- Deactivate Confirmation Modal -->
-        <div id="deactivateModal" class="fixed inset-0 z-50 hidden">
-            <div class="modal-backdrop fixed inset-0" onclick="closeDeactivate()"></div>
+        <!-- Deactivate/Activate Confirmation Modal -->
+        <div id="activateDeactivateModal" class="fixed inset-0 z-50 hidden">
+            <div class="modal-backdrop fixed inset-0" onclick="closeActivateDeactivate()"></div>
             <div class="fixed inset-0 flex items-center justify-center p-4">
                 <div class="bg-whitePure rounded-lg shadow-xl border border-blush w-full max-w-md">
                     <div class="p-6">
-                        <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-dangerBg">
-                            <svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
-                            </svg>
+                        <div id="modalIcon" class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full">
+                            <!-- Icon akan diisi oleh JavaScript -->
                         </div>
-                        <h3 class="text-lg font-semibold text-center text-espresso mb-2">Deactivate Instructor?</h3>
-                        <p class="text-sm text-espresso/70 text-center mb-6">
-                            Are you sure you want to deactivate this instructor? They will no longer be able to access the system or be assigned to new classes.
+                        <h3 id="modalTitle" class="text-lg font-semibold text-center text-espresso mb-2"></h3>
+                        <p id="modalText" class="text-sm text-espresso/70 text-center mb-6">
                         </p>
                         <div class="flex justify-center space-x-3">
-                            <button onclick="confirmDeactivate()" class="px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors">
-                                Yes, Deactivate
+                            <button onclick="confirmActivateDeactivate()" id="confirmButton" class="px-4 py-2 text-whitePure rounded-lg transition-colors">
+                                Confirm
                             </button>
-                            <button onclick="closeDeactivate()" class="px-4 py-2 border border-dusty text-dusty rounded-lg hover:bg-blush transition-colors">
+                            <button onclick="closeActivateDeactivate()" class="px-4 py-2 border border-dusty text-dusty rounded-lg hover:bg-blush transition-colors">
                                 Cancel
                             </button>
                         </div>
@@ -806,607 +704,1121 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-                                // Dummy instructor data
-                                const instructors = {
-                                    1: {
-                                        name: "Sarah Chen",
-                                        email: "sarah.chen@email.com",
-                                        phone: "+60 12-345 6789",
-                                        nric: "901234-56-7890",
-                                        bod: "15 June 1990",
-                                        regDate: "14 Jan 2021 10:30 AM",
-                                        regStatus: "Approved",
-                                        userType: "Instructor",
-                                        experience: "5 years",
-                                        dateJoined: "15 Jan 2021",
-                                        status: "Active",
-                                        address: "123 Fitness Street, Bukit Jalil, 57000 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur",
-                                        totalClasses: 142,
-                                        cancelledClasses: 8,
-                                        completedClasses: 134,
-                                        avgRating: 4.7,
-                                        totalFeedbacks: 89,
-                                        categoryRatings: {
-                                            teaching: 4.8,
-                                            communication: 4.7,
-                                            support: 4.2,
-                                            punctuality: 4.5
-                                        },
-                                        monthlyTrend: [4.5, 4.6, 4.4, 4.7, 4.8, 4.7],
-                                        classDistribution: {
-                                            completed: 134,
-                                            cancelled: 8
-                                        }
-                                    },
-                                    2: {
-                                        name: "Michael Wong",
-                                        email: "michael.w@email.com",
-                                        phone: "+60 13-456 7890",
-                                        nric: "891234-12-3456",
-                                        bod: "22 March 1988",
-                                        regDate: "21 Mar 2023 09:15 AM",
-                                        regStatus: "Approved",
-                                        userType: "Instructor",
-                                        experience: "2 years",
-                                        dateJoined: "22 Mar 2023",
-                                        status: "Active",
-                                        address: "456 Wellness Avenue, Damansara Heights, 50490 Kuala Lumpur",
-                                        totalClasses: 67,
-                                        cancelledClasses: 3,
-                                        completedClasses: 64,
-                                        avgRating: 3.8,
-                                        totalFeedbacks: 45,
-                                        categoryRatings: {
-                                            teaching: 4.0,
-                                            communication: 3.9,
-                                            support: 3.5,
-                                            punctuality: 3.8
-                                        },
-                                        monthlyTrend: [3.6, 3.7, 3.8, 3.9, 4.0, 3.9],
-                                        classDistribution: {
-                                            completed: 64,
-                                            cancelled: 3
-                                        }
-                                    },
-                                    3: {
-                                        name: "Aisha Patel",
-                                        email: "aisha.p@email.com",
-                                        phone: "+60 14-567 8901",
-                                        nric: "950123-78-9012",
-                                        bod: "10 October 1995",
-                                        regDate: "9 Aug 2024 02:45 PM",
-                                        regStatus: "Approved",
-                                        userType: "Instructor",
-                                        experience: "1 year",
-                                        dateJoined: "10 Aug 2024",
-                                        status: "Needs Attention",
-                                        address: "789 Yoga Lane, Bangsar South, 59200 Kuala Lumpur",
-                                        totalClasses: 23,
-                                        cancelledClasses: 2,
-                                        completedClasses: 21,
-                                        avgRating: 3.2,
-                                        totalFeedbacks: 18,
-                                        categoryRatings: {
-                                            teaching: 3.5,
-                                            communication: 3.3,
-                                            support: 2.8,
-                                            punctuality: 3.2
-                                        },
-                                        monthlyTrend: [3.0, 3.1, 3.2, 3.3, 3.2, 3.1],
-                                        classDistribution: {
-                                            completed: 21,
-                                            cancelled: 2
-                                        }
+            // Dummy instructor data - 8 instructors
+            var instructors = {
+                1: {
+                    name: "Sarah Chen",
+                    email: "sarah.chen@email.com",
+                    phone: "+60 12-345 6789",
+                    nric: "901234-56-7890",
+                    bod: "15 June 1990",
+                    regDate: "14 Jan 2021 10:30 AM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "5 years",
+                    dateJoined: "15 Jan 2021",
+                    status: "active",
+                    address: "123 Fitness Street, Bukit Jalil, 57000 Kuala Lumpur, Wilayah Persekutuan Kuala Lumpur",
+                    totalClasses: 142,
+                    cancelledClasses: 8,
+                    completedClasses: 134,
+                    avgRating: 4.7,
+                    totalFeedbacks: 89,
+                    categoryRatings: {
+                        teaching: 4.8,
+                        communication: 4.7,
+                        support: 4.2,
+                        punctuality: 4.5
+                    },
+                    monthlyTrend: [4.5, 4.6, 4.4, 4.7, 4.8, 4.7],
+                    classDistribution: {
+                        completed: 134,
+                        cancelled: 8
+                    }
+                },
+                2: {
+                    name: "Michael Wong",
+                    email: "michael.w@email.com",
+                    phone: "+60 13-456 7890",
+                    nric: "891234-12-3456",
+                    bod: "22 March 1988",
+                    regDate: "21 Mar 2023 09:15 AM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "2 years",
+                    dateJoined: "22 Mar 2023",
+                    status: "active",
+                    address: "456 Wellness Avenue, Damansara Heights, 50490 Kuala Lumpur",
+                    totalClasses: 67,
+                    cancelledClasses: 3,
+                    completedClasses: 64,
+                    avgRating: 3.8,
+                    totalFeedbacks: 45,
+                    categoryRatings: {
+                        teaching: 4.0,
+                        communication: 3.9,
+                        support: 3.5,
+                        punctuality: 3.8
+                    },
+                    monthlyTrend: [3.6, 3.7, 3.8, 3.9, 4.0, 3.9],
+                    classDistribution: {
+                        completed: 64,
+                        cancelled: 3
+                    }
+                },
+                3: {
+                    name: "Aisha Patel",
+                    email: "aisha.p@email.com",
+                    phone: "+60 14-567 8901",
+                    nric: "950123-78-9012",
+                    bod: "10 October 1995",
+                    regDate: "9 Aug 2024 02:45 PM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "1 year",
+                    dateJoined: "10 Aug 2024",
+                    status: "active",
+                    address: "789 Yoga Lane, Bangsar South, 59200 Kuala Lumpur",
+                    totalClasses: 23,
+                    cancelledClasses: 2,
+                    completedClasses: 21,
+                    avgRating: 3.2,
+                    totalFeedbacks: 18,
+                    categoryRatings: {
+                        teaching: 3.5,
+                        communication: 3.3,
+                        support: 2.8,
+                        punctuality: 3.2
+                    },
+                    monthlyTrend: [3.0, 3.1, 3.2, 3.3, 3.2, 3.1],
+                    classDistribution: {
+                        completed: 21,
+                        cancelled: 2
+                    }
+                },
+                4: {
+                    name: "David Lee",
+                    email: "david.lee@email.com",
+                    phone: "+60 16-789 0123",
+                    nric: "881122-33-4455",
+                    bod: "5 May 1985",
+                    regDate: "15 Feb 2020 11:00 AM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "4 years",
+                    dateJoined: "16 Feb 2020",
+                    status: "inactive",
+                    address: "321 Fitness Road, Mont Kiara, 50480 Kuala Lumpur",
+                    totalClasses: 210,
+                    cancelledClasses: 12,
+                    completedClasses: 198,
+                    avgRating: 4.5,
+                    totalFeedbacks: 156,
+                    categoryRatings: {
+                        teaching: 4.6,
+                        communication: 4.4,
+                        support: 4.3,
+                        punctuality: 4.7
+                    },
+                    monthlyTrend: [4.4, 4.5, 4.5, 4.6, 4.5, 4.4],
+                    classDistribution: {
+                        completed: 198,
+                        cancelled: 12
+                    }
+                },
+                5: {
+                    name: "Lisa Tan",
+                    email: "lisa.tan@email.com",
+                    phone: "+60 17-890 1234",
+                    nric: "920304-55-6677",
+                    bod: "30 April 1992",
+                    regDate: "10 Nov 2022 03:30 PM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "3 years",
+                    dateJoined: "11 Nov 2022",
+                    status: "active",
+                    address: "654 Health Boulevard, Subang Jaya, 47600 Selangor",
+                    totalClasses: 98,
+                    cancelledClasses: 5,
+                    completedClasses: 93,
+                    avgRating: 4.3,
+                    totalFeedbacks: 76,
+                    categoryRatings: {
+                        teaching: 4.4,
+                        communication: 4.2,
+                        support: 4.1,
+                        punctuality: 4.5
+                    },
+                    monthlyTrend: [4.1, 4.2, 4.3, 4.4, 4.3, 4.2],
+                    classDistribution: {
+                        completed: 93,
+                        cancelled: 5
+                    }
+                },
+                6: {
+                    name: "Raj Kumar",
+                    email: "raj.kumar@email.com",
+                    phone: "+60 18-901 2345",
+                    nric: "870909-11-2233",
+                    bod: "9 September 1987",
+                    regDate: "5 Jun 2021 09:45 AM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "5+ years",
+                    dateJoined: "6 Jun 2021",
+                    status: "active",
+                    address: "987 Wellness Drive, Petaling Jaya, 46200 Selangor",
+                    totalClasses: 178,
+                    cancelledClasses: 7,
+                    completedClasses: 171,
+                    avgRating: 4.6,
+                    totalFeedbacks: 132,
+                    categoryRatings: {
+                        teaching: 4.7,
+                        communication: 4.5,
+                        support: 4.4,
+                        punctuality: 4.8
+                    },
+                    monthlyTrend: [4.5, 4.6, 4.6, 4.7, 4.8, 4.7],
+                    classDistribution: {
+                        completed: 171,
+                        cancelled: 7
+                    }
+                },
+                7: {
+                    name: "Emily Wong",
+                    email: "emily.wong@email.com",
+                    phone: "+60 19-012 3456",
+                    nric: "930707-44-5566",
+                    bod: "7 July 1993",
+                    regDate: "20 Sep 2023 01:15 PM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "2 years",
+                    dateJoined: "21 Sep 2023",
+                    status: "active",
+                    address: "741 Fitness Lane, Cheras, 56000 Kuala Lumpur",
+                    totalClasses: 45,
+                    cancelledClasses: 2,
+                    completedClasses: 43,
+                    avgRating: 4.1,
+                    totalFeedbacks: 38,
+                    categoryRatings: {
+                        teaching: 4.2,
+                        communication: 4.0,
+                        support: 3.9,
+                        punctuality: 4.3
+                    },
+                    monthlyTrend: [4.0, 4.1, 4.2, 4.1, 4.2, 4.1],
+                    classDistribution: {
+                        completed: 43,
+                        cancelled: 2
+                    }
+                },
+                8: {
+                    name: "James Lim",
+                    email: "james.lim@email.com",
+                    phone: "+60 11-234 5678",
+                    nric: "880808-22-3344",
+                    bod: "8 August 1988",
+                    regDate: "3 Dec 2024 10:00 AM",
+                    regStatus: "Approved",
+                    userType: "Instructor",
+                    experience: "1 year",
+                    dateJoined: "4 Dec 2024",
+                    status: "inactive",
+                    address: "852 Health Street, Puchong, 47100 Selangor",
+                    totalClasses: 15,
+                    cancelledClasses: 1,
+                    completedClasses: 14,
+                    avgRating: 3.9,
+                    totalFeedbacks: 12,
+                    categoryRatings: {
+                        teaching: 4.0,
+                        communication: 3.8,
+                        support: 3.7,
+                        punctuality: 4.1
+                    },
+                    monthlyTrend: [3.8, 3.9, 4.0, 3.9, 4.0, 3.8],
+                    classDistribution: {
+                        completed: 14,
+                        cancelled: 1
+                    }
+                }
+            };
+
+            // Global variables
+            var currentInstructorId = null;
+            var chartInstances = {};
+            var currentPage = 1;
+            var itemsPerPage = 5;
+            var filteredInstructors = [];
+            var isViewingPDF = false;
+
+            // Initialize Date Range Picker dan komponen lainnya
+            $(document).ready(function () {
+                $('#dateRangeFilter').daterangepicker({
+                    opens: 'left',
+                    drops: 'down',
+                    locale: {
+                        format: 'DD/MM/YYYY',
+                        applyLabel: 'Apply',
+                        cancelLabel: 'Cancel'
+                    }
+                });
+
+                // Initialize instructor table
+                initializeInstructorTable();
+                
+                // Initialize stats
+                updateStats();
+                
+                // Populate name filter dropdown
+                populateNameFilter();
+                
+                // Add event listeners for filters
+                document.getElementById('applyFilterBtn').addEventListener('click', applyFilters);
+                document.getElementById('resetFilterBtn').addEventListener('click', resetFilters);
+                document.getElementById('prevPageBtn').addEventListener('click', goToPrevPage);
+                document.getElementById('nextPageBtn').addEventListener('click', goToNextPage);
+
+                // Initialize Charts
+                initializeCharts();
+            });
+
+            // Populate name filter dropdown dengan data dari instructors
+            function populateNameFilter() {
+                var nameFilter = document.getElementById('nameFilter');
+                
+                // Clear existing options kecuali "All Instructors"
+                while (nameFilter.options.length > 1) {
+                    nameFilter.remove(1);
+                }
+                
+                // Add instructor names
+                for (var id in instructors) {
+                    var instructor = instructors[id];
+                    var option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = instructor.name;
+                    nameFilter.appendChild(option);
+                }
+            }
+
+            // Initialize instructor table with pagination
+            function initializeInstructorTable() {
+                // Reset filtered instructors to all
+                filteredInstructors = [];
+                for (var id in instructors) {
+                    filteredInstructors.push({
+                        id: id,
+                        data: instructors[id]
+                    });
+                }
+                
+                // Render table
+                renderInstructorTable();
+            }
+
+            // Render instructor table based on current page
+            function renderInstructorTable() {
+                var tableBody = document.getElementById('instructorTableBody');
+                tableBody.innerHTML = '';
+                
+                // Calculate start and end indices
+                var startIndex = (currentPage - 1) * itemsPerPage;
+                var endIndex = Math.min(startIndex + itemsPerPage, filteredInstructors.length);
+                
+                // Update pagination info
+                document.getElementById('paginationStart').textContent = startIndex + 1;
+                document.getElementById('paginationEnd').textContent = endIndex;
+                document.getElementById('paginationTotal').textContent = filteredInstructors.length;
+                
+                // Update pagination buttons
+                document.getElementById('prevPageBtn').disabled = (currentPage === 1);
+                document.getElementById('nextPageBtn').disabled = (currentPage === Math.ceil(filteredInstructors.length / itemsPerPage));
+                
+                // Render page numbers
+                renderPageNumbers();
+                
+                // Render table rows
+                for (var i = startIndex; i < endIndex; i++) {
+                    var instructor = filteredInstructors[i];
+                    var row = createInstructorRow(instructor.id, instructor.data);
+                    tableBody.appendChild(row);
+                }
+                
+                // Show empty state if no results
+                if (filteredInstructors.length === 0) {
+                    var emptyRow = document.createElement('tr');
+                    emptyRow.id = 'noResults';
+                    emptyRow.innerHTML = '<td colspan="7" class="px-6 py-12 text-center">' +
+                        '<div class="text-espresso/40">' +
+                        '<svg class="mx-auto h-12 w-12 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>' +
+                        '</svg>' +
+                        '<p class="text-lg font-medium">No instructors found</p>' +
+                        '<p class="text-sm mt-1">Try adjusting your filters</p>' +
+                        '<button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors">' +
+                        'Reset Filters' +
+                        '</button>' +
+                        '</div>' +
+                        '</td>';
+                    tableBody.appendChild(emptyRow);
+                }
+            }
+
+            // Render page numbers
+            function renderPageNumbers() {
+                var pageNumbersContainer = document.getElementById('pageNumbers');
+                pageNumbersContainer.innerHTML = '';
+                
+                var totalPages = Math.ceil(filteredInstructors.length / itemsPerPage);
+                
+                // Always show first page
+                addPageButton(1);
+                
+                // Show ellipsis if needed
+                if (currentPage > 3) {
+                    var ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-3 py-1';
+                    ellipsis.textContent = '...';
+                    pageNumbersContainer.appendChild(ellipsis);
+                }
+                
+                // Show pages around current page
+                var startPage = Math.max(2, currentPage - 1);
+                var endPage = Math.min(totalPages - 1, currentPage + 1);
+                
+                for (var i = startPage; i <= endPage; i++) {
+                    addPageButton(i);
+                }
+                
+                // Show ellipsis if needed
+                if (currentPage < totalPages - 2) {
+                    var ellipsis = document.createElement('span');
+                    ellipsis.className = 'px-3 py-1';
+                    ellipsis.textContent = '...';
+                    pageNumbersContainer.appendChild(ellipsis);
+                }
+                
+                // Always show last page if more than 1 page
+                if (totalPages > 1) {
+                    addPageButton(totalPages);
+                }
+            }
+
+            function addPageButton(pageNumber) {
+                var pageNumbersContainer = document.getElementById('pageNumbers');
+                var button = document.createElement('button');
+                button.className = 'pagination-btn px-3 py-1 rounded border ' + 
+                    (pageNumber === currentPage ? 'bg-dusty text-whitePure' : 'border-blush text-espresso');
+                button.textContent = pageNumber;
+                button.onclick = function() {
+                    goToPage(pageNumber);
+                };
+                pageNumbersContainer.appendChild(button);
+            }
+
+            // Pagination functions
+            function goToPage(page) {
+                currentPage = page;
+                renderInstructorTable();
+            }
+
+            function goToPrevPage() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderInstructorTable();
+                }
+            }
+
+            function goToNextPage() {
+                var totalPages = Math.ceil(filteredInstructors.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderInstructorTable();
+                }
+            }
+
+            // Create instructor table row dengan button yang sesuai
+            function createInstructorRow(id, instructor) {
+                var row = document.createElement('tr');
+                row.className = 'hover:bg-cloud';
+                
+                // Determine status badge
+                var statusBadge = '';
+                if (instructor.status === 'active') {
+                    statusBadge = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-successBg text-successTextDark">Active</span>';
+                } else {
+                    statusBadge = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-dangerBg text-dangerText">Inactive</span>';
+                }
+                
+                // Calculate rating percentage for progress bar
+                var ratingPercentage = (instructor.avgRating / 5) * 100;
+                var ratingColor = instructor.avgRating >= 4 ? 'bg-successBg' : (instructor.avgRating >= 3 ? 'bg-warningBg' : 'bg-dangerBg');
+                
+                // Determine button text based on status
+                var actionButtonText = instructor.status === 'active' ? 'Deactivate' : 'Activate';
+                var actionButtonClass = instructor.status === 'active' ? 'text-dusty hover:text-dustyHover' : 'text-teal hover:text-tealHover';
+                var actionButtonBorder = instructor.status === 'active' ? 'border-dusty' : 'border-teal';
+                
+                row.innerHTML = '<td class="px-6 py-4 whitespace-nowrap">' +
+                    '<div class="flex items-center">' +
+                    '<div class="flex-shrink-0 h-10 w-10">' +
+                    '<img class="h-10 w-10 rounded-full object-cover" src="../profile_pictures/instructor/dummy.png" alt="' + instructor.name + '">' +
+                    '</div>' +
+                    '<div class="ml-4">' +
+                    '<div class="text-sm font-medium text-espresso">' + instructor.name + '</div>' +
+                    '<div class="text-sm text-espresso/60">' + instructor.email + '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap">' +
+                    '<div class="text-sm text-espresso">' + instructor.experience + '</div>' +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap">' +
+                    '<div class="text-sm text-espresso">' + instructor.dateJoined + '</div>' +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap">' +
+                    '<div class="text-sm font-medium text-espresso">' + instructor.totalClasses + '</div>' +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap">' +
+                    '<div class="flex items-center">' +
+                    '<div class="text-sm font-medium text-espresso mr-2">' + instructor.avgRating + '</div>' +
+                    '<div class="w-24 bg-blush rounded-full h-2">' +
+                    '<div class="' + ratingColor + ' h-2 rounded-full" style="width:' + ratingPercentage + '%"></div>' +
+                    '</div>' +
+                    '</div>' +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap">' +
+                    statusBadge +
+                    '</td>' +
+                    '<td class="px-6 py-4 whitespace-nowrap text-sm font-medium">' +
+                    '<button onclick="showDetails(' + id + ')" class="text-teal hover:text-tealHover mr-3 px-3 py-1 rounded border border-teal hover:bg-teal/5 transition-colors">View Details</button>' +
+                    '<button onclick="toggleActivateInstructor(' + id + ')" class="' + actionButtonClass + ' px-3 py-1 rounded border ' + actionButtonBorder + ' hover:bg-' + (instructor.status === 'active' ? 'dusty' : 'teal') + '/5 transition-colors">' + 
+                    actionButtonText +
+                    '</button>' +
+                    '</td>';
+                
+                return row;
+            }
+
+            // Update statistics
+            function updateStats() {
+                var activeCount = 0;
+                var inactiveCount = 0;
+                var newThisMonth = 0;
+                var totalRating = 0;
+                var instructorCount = 0;
+                
+                var currentMonth = new Date().getMonth() + 1;
+                var currentYear = new Date().getFullYear();
+                
+                for (var id in instructors) {
+                    var instructor = instructors[id];
+                    
+                    if (instructor.status === 'active') {
+                        activeCount++;
+                    } else {
+                        inactiveCount++;
+                    }
+                    
+                    // Check if joined this month (for demo, checking Dec 2024)
+                    if (instructor.dateJoined.includes('Dec 2024')) {
+                        newThisMonth++;
+                    }
+                    
+                    totalRating += instructor.avgRating;
+                    instructorCount++;
+                }
+                
+                var avgRating = instructorCount > 0 ? (totalRating / instructorCount).toFixed(1) : '0.0';
+                
+                document.getElementById('statActiveInstructors').textContent = activeCount;
+                document.getElementById('statInactiveInstructors').textContent = inactiveCount;
+                document.getElementById('statNewThisMonth').textContent = newThisMonth;
+                document.getElementById('statAvgRating').textContent = avgRating;
+            }
+
+            // Filter Functions dengan filter nama
+            function applyFilters() {
+                var name = document.getElementById('nameFilter').value;
+                var experience = document.getElementById('experienceFilter').value;
+                var dateRange = document.getElementById('dateRangeFilter').value;
+                var status = document.getElementById('statusFilter').value;
+                
+                filteredInstructors = [];
+                
+                for (var id in instructors) {
+                    var instructor = instructors[id];
+                    var matches = true;
+                    
+                    // Filter by name
+                    if (name && name !== "" && id !== name) {
+                        matches = false;
+                    }
+                    
+                    // Filter by experience
+                    if (experience && matches) {
+                        if (experience === '5+') {
+                            if (!instructor.experience.includes('+') && !instructor.experience.includes('5')) {
+                                matches = false;
+                            }
+                        } else if (!instructor.experience.includes(experience)) {
+                            matches = false;
+                        }
+                    }
+                    
+                    // Filter by status
+                    if (status && matches && instructor.status !== status) {
+                        matches = false;
+                    }
+                    
+                    // Filter by date range (simplified for demo)
+                    if (dateRange && matches) {
+                        // In real implementation, you would parse the date range
+                        // and compare with instructor.dateJoined
+                        // This is simplified for demo
+                    }
+                    
+                    if (matches) {
+                        filteredInstructors.push({
+                            id: id,
+                            data: instructor
+                        });
+                    }
+                }
+                
+                // Reset to first page
+                currentPage = 1;
+                renderInstructorTable();
+            }
+
+            function resetFilters() {
+                document.getElementById('nameFilter').value = '';
+                document.getElementById('experienceFilter').value = '';
+                document.getElementById('dateRangeFilter').value = '';
+                document.getElementById('statusFilter').value = '';
+                
+                initializeInstructorTable();
+            }
+
+            // Modal Functions
+            function showDetails(instructorId) {
+                currentInstructorId = instructorId;
+                var instructor = instructors[instructorId];
+
+                if (!instructor)
+                    return;
+
+                // Update modal content basic info
+                document.getElementById('detailName').textContent = instructor.name;
+                document.getElementById('detailEmail').textContent = instructor.email;
+                document.getElementById('detailPhone').textContent = instructor.phone;
+                document.getElementById('detailNRIC').textContent = instructor.nric;
+                document.getElementById('detailBOD').textContent = instructor.bod;
+                document.getElementById('detailRegDate').textContent = instructor.regDate;
+                document.getElementById('detailExperience').textContent = instructor.experience;
+                document.getElementById('detailDateJoined').textContent = instructor.dateJoined;
+                document.getElementById('detailAddress').textContent = instructor.address;
+
+                // Update performance summary menggunakan ID yang baru ditambah
+                document.getElementById('statTotalClasses').textContent = instructor.totalClasses;
+                document.getElementById('statCancelled').textContent = instructor.cancelledClasses;
+                document.getElementById('statAvgRating').textContent = instructor.avgRating;
+                document.getElementById('statFeedbacks').textContent = instructor.totalFeedbacks;
+
+                // Update status badges
+                var regStatusEl = document.getElementById('detailRegStatus');
+                regStatusEl.innerHTML = instructor.regStatus === 'Approved'
+                        ? '<span class="px-2 py-1 text-xs rounded-full bg-successBg text-successTextDark">Approved</span>'
+                        : '<span class="px-2 py-1 text-xs rounded-full bg-warningBg text-warningText">Pending</span>';
+
+                var statusEl = document.getElementById('detailStatus');
+                if (instructor.status === 'active') {
+                    statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-successBg text-successTextDark">Active</span>';
+                } else {
+                    statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-dangerBg text-dangerText">Inactive</span>';
+                }
+
+                // Paparkan modal
+                document.getElementById('detailsModal').classList.remove('hidden');
+            }
+
+            function closeDetails() {
+                document.getElementById('detailsModal').classList.add('hidden');
+                currentInstructorId = null;
+            }
+
+            function showPerformance() {
+                if (!currentInstructorId)
+                    return;
+
+                var instructor = instructors[currentInstructorId];
+                document.getElementById('performanceInstructorName').textContent = instructor.name;
+
+                // Update performance metrics
+                document.getElementById('perfOverallRating').textContent = instructor.avgRating;
+                document.getElementById('perfTotalClasses').textContent = instructor.totalClasses;
+                document.getElementById('perfCancelled').textContent = instructor.cancelledClasses;
+                var completionRate = Math.round((instructor.completedClasses / instructor.totalClasses) * 100);
+                document.getElementById('perfCompletion').textContent = completionRate + '%';
+
+                // Tunjuk modal dulu, baru update chart
+                document.getElementById('performanceModal').classList.remove('hidden');
+
+                // Update charts with instructor specific data
+                setTimeout(function() {
+                    updateCharts();
+                }, 100);
+            }
+
+            function closePerformance() {
+                document.getElementById('performanceModal').classList.add('hidden');
+            }
+
+            function viewCertification() {
+                // Reset to certification view
+                isViewingPDF = false;
+                document.getElementById('certModalTitle').textContent = 'Certification Document';
+                document.getElementById('certFrame').src = '../certifications/instructor/dummy.pdf';
+                document.getElementById('certModal').classList.remove('hidden');
+            }
+
+            function closeCert() {
+                document.getElementById('certModal').classList.add('hidden');
+                // Reset iframe source to dummy PDF
+                document.getElementById('certFrame').src = '../certifications/instructor/dummy.pdf';
+                isViewingPDF = false;
+            }
+
+            // Activate/Deactivate Functions
+            function toggleActivateInstructor(instructorId) {
+                currentInstructorId = instructorId;
+                var instructor = instructors[instructorId];
+                
+                // Update modal elements based on current status
+                var modalIcon = document.getElementById('modalIcon');
+                var modalTitle = document.getElementById('modalTitle');
+                var modalText = document.getElementById('modalText');
+                var confirmButton = document.getElementById('confirmButton');
+                
+                if (instructor.status === 'active') {
+                    // Deactivate mode
+                    modalIcon.innerHTML = '<svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">' +
+                        '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
+                        '</svg>';
+                    modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-dangerBg';
+                    
+                    modalTitle.textContent = 'Deactivate Instructor?';
+                    modalText.textContent = 'Are you sure you want to deactivate ' + instructor.name + '? They will no longer be able to access the system or be assigned to new classes.';
+                    
+                    confirmButton.textContent = 'Yes, Deactivate';
+                    confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
+                } else {
+                    // Activate mode
+                    modalIcon.innerHTML = '<svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">' +
+                        '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>' +
+                        '</svg>';
+                    modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-successBg';
+                    
+                    modalTitle.textContent = 'Activate Instructor?';
+                    modalText.textContent = 'Are you sure you want to activate ' + instructor.name + '? They will be able to access the system and be assigned to new classes.';
+                    
+                    confirmButton.textContent = 'Yes, Activate';
+                    confirmButton.className = 'px-4 py-2 bg-teal text-whitePure rounded-lg hover:bg-tealHover transition-colors';
+                }
+                
+                document.getElementById('activateDeactivateModal').classList.remove('hidden');
+            }
+
+            function closeActivateDeactivate() {
+                document.getElementById('activateDeactivateModal').classList.add('hidden');
+                currentInstructorId = null;
+            }
+
+            function confirmActivateDeactivate() {
+                if (currentInstructorId) {
+                    var instructor = instructors[currentInstructorId];
+                    
+                    // Toggle status
+                    if (instructor.status === 'active') {
+                        instructor.status = 'inactive';
+                        alert('Instructor ' + instructor.name + ' has been deactivated.');
+                    } else {
+                        instructor.status = 'active';
+                        alert('Instructor ' + instructor.name + ' has been activated.');
+                    }
+                    
+                    // Update table and stats
+                    initializeInstructorTable();
+                    updateStats();
+                }
+                closeActivateDeactivate();
+            }
+
+            // Chart Functions
+            function initializeCharts() {
+                // Destroy existing charts
+                for (var key in chartInstances) {
+                    if (chartInstances[key]) {
+                        chartInstances[key].destroy();
+                    }
+                }
+
+                // Category Ratings Chart
+                var categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                chartInstances.categoryChart = new Chart(categoryCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality'],
+                        datasets: [{
+                                label: 'Average Rating',
+                                data: [4.8, 4.7, 4.2, 4.5],
+                                backgroundColor: ['#6D9B9B', '#A3C1D6', '#F2D1D1', '#B36D6D'],
+                                borderColor: ['#557878', '#8AA9C4', '#E8BEBE', '#965656'],
+                                borderWidth: 1,
+                                borderRadius: 4
+                            }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5,
+                                grid: {
+                                    color: '#EFE1E1'
+                                },
+                                ticks: {
+                                    color: '#3D3434'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: '#EFE1E1'
+                                },
+                                ticks: {
+                                    color: '#3D3434'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#3D3434',
+                                titleColor: '#FDF8F8',
+                                bodyColor: '#FDF8F8'
+                            }
+                        }
+                    }
+                });
+
+                // Monthly Trend Chart
+                var trendCtx = document.getElementById('trendChart').getContext('2d');
+                chartInstances.trendChart = new Chart(trendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                                label: 'Overall Rating',
+                                data: [4.5, 4.6, 4.4, 4.7, 4.8, 4.7],
+                                borderColor: '#6D9B9B',
+                                backgroundColor: 'rgba(109, 155, 155, 0.1)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 5,
+                                grid: {
+                                    color: '#EFE1E1'
+                                },
+                                ticks: {
+                                    color: '#3D3434'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: '#EFE1E1'
+                                },
+                                ticks: {
+                                    color: '#3D3434'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#3D3434',
+                                titleColor: '#FDF8F8',
+                                bodyColor: '#FDF8F8'
+                            }
+                        }
+                    }
+                });
+
+                // Class Distribution Chart
+                var distributionCtx = document.getElementById('distributionChart').getContext('2d');
+                chartInstances.distributionChart = new Chart(distributionCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Completed', 'Cancelled'],
+                        datasets: [{
+                                data: [134, 8],
+                                backgroundColor: ['#A5D6A7', '#EF9A9A'],
+                                borderColor: ['#8BC34A', '#F44336'],
+                                borderWidth: 2
+                            }]
+                },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#3D3434',
+                                    padding: 20,
+                                    font: {
+                                        size: 12
                                     }
-                                };
-
-                                let currentInstructorId = null;
-                                let chartInstances = {};
-
-                                // Initialize Date Range Picker
-                                $(document).ready(function () {
-                                    $('#dateRangeFilter').daterangepicker({
-                                        opens: 'left',
-                                        drops: 'down',
-                                        locale: {
-                                            format: 'DD/MM/YYYY',
-                                            applyLabel: 'Apply',
-                                            cancelLabel: 'Cancel'
-                                        }
-                                    });
-
-                                    // Initialize Charts
-                                    initializeCharts();
-                                });
-
-                                // Filter Functions
-                                function applyFilters() {
-                                    const experience = document.getElementById('experienceFilter').value;
-                                    const name = document.getElementById('nameFilter').value;
-
-                                    // Show no results message if no match (for demo)
-                                    if (name === "999") { // Special value for demo
-                                        document.getElementById('noResults').classList.remove('hidden');
-                                        document.querySelectorAll('tbody tr:not(#noResults)').forEach(row => {
-                                            row.classList.add('hidden');
-                                        });
-                                    } else {
-                                        document.getElementById('noResults').classList.add('hidden');
-                                        document.querySelectorAll('tbody tr:not(#noResults)').forEach(row => {
-                                            row.classList.remove('hidden');
-                                        });
-                                    }
                                 }
+                            },
+                            tooltip: {
+                                backgroundColor: '#3D3434',
+                                titleColor: '#FDF8F8',
+                                bodyColor: '#FDF8F8'
+                            }
+                        }
+                    }
+                });
+            }
 
-                                function resetFilters() {
-                                    document.getElementById('experienceFilter').value = '';
-                                    document.getElementById('dateRangeFilter').value = '';
-                                    document.getElementById('nameFilter').value = '';
-                                    document.getElementById('noResults').classList.add('hidden');
-                                    document.querySelectorAll('tbody tr:not(#noResults)').forEach(row => {
-                                        row.classList.remove('hidden');
-                                    });
-                                }
+            function updateCharts() {
+                if (!currentInstructorId)
+                    return;
 
-                                // Modal Functions
-                                function showDetails(instructorId) {
-                                    currentInstructorId = instructorId;
-                                    const instructor = instructors[instructorId];
+                var instructor = instructors[currentInstructorId];
+                var period = document.getElementById('timePeriod').value;
 
-                                    if (!instructor)
-                                        return;
+                var trendData;
+                switch (period) {
+                    case '3months':
+                        trendData = instructor.monthlyTrend.slice(-3);
+                        break;
+                    case '6months':
+                        trendData = instructor.monthlyTrend;
+                        break;
+                    case '1year':
+                        trendData = instructor.monthlyTrend.concat([4.6, 4.7, 4.8, 4.7, 4.8, 4.9]);
+                        break;
+                    default:
+                        trendData = instructor.monthlyTrend;
+                }
 
-                                    // Update modal content basic info
-                                    document.getElementById('detailName').textContent = instructor.name;
-                                    document.getElementById('detailEmail').textContent = instructor.email;
-                                    document.getElementById('detailPhone').textContent = instructor.phone;
-                                    document.getElementById('detailNRIC').textContent = instructor.nric;
-                                    document.getElementById('detailBOD').textContent = instructor.bod;
-                                    document.getElementById('detailRegDate').textContent = instructor.regDate;
-                                    document.getElementById('detailExperience').textContent = instructor.experience;
-                                    document.getElementById('detailDateJoined').textContent = instructor.dateJoined;
-                                    document.getElementById('detailAddress').textContent = instructor.address;
+                // Update charts with instructor data
+                var categoryData = [
+                    instructor.categoryRatings.teaching,
+                    instructor.categoryRatings.communication,
+                    instructor.categoryRatings.support,
+                    instructor.categoryRatings.punctuality
+                ];
 
-                                    // Update performance summary menggunakan ID yang baru ditambah
-                                    document.getElementById('statTotalClasses').textContent = instructor.totalClasses;
-                                    document.getElementById('statCancelled').textContent = instructor.cancelledClasses;
-                                    document.getElementById('statAvgRating').textContent = instructor.avgRating;
-                                    document.getElementById('statFeedbacks').textContent = instructor.totalFeedbacks;
+                chartInstances.trendChart.data.datasets[0].data = trendData;
+                chartInstances.trendChart.data.labels = trendData.map(function(_, i) {
+                    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    return months[i] || 'Month ' + (i + 1);
+                });
 
-                                    // Update status badges
-                                    const regStatusEl = document.getElementById('detailRegStatus');
-                                    regStatusEl.innerHTML = instructor.regStatus === 'Approved'
-                                            ? '<span class="px-2 py-1 text-xs rounded-full bg-successBg text-successTextDark">Approved</span>'
-                                            : '<span class="px-2 py-1 text-xs rounded-full bg-warningBg text-warningText">Pending</span>';
+                chartInstances.categoryChart.data.datasets[0].data = categoryData;
 
-                                    const statusEl = document.getElementById('detailStatus');
-                                    if (instructor.status === 'Active') {
-                                        statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-successBg text-successTextDark">Active</span>';
-                                    } else {
-                                        statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-warningBg text-warningText">' + instructor.status + '</span>';
-                                    }
+                chartInstances.distributionChart.data.datasets[0].data = [
+                    instructor.classDistribution.completed,
+                    instructor.classDistribution.cancelled
+                ];
 
-                                    // Paparkan modal
-                                    document.getElementById('detailsModal').classList.remove('hidden');
-                                }
+                chartInstances.trendChart.update();
+                chartInstances.categoryChart.update();
+                chartInstances.distributionChart.update();
+            }
 
-                                function closeDetails() {
-                                    document.getElementById('detailsModal').classList.add('hidden');
-                                    currentInstructorId = null;
-                                }
+            function exportPerformancePDF() {
+                var jsPDF = window.jspdf.jsPDF;
+                var doc = new jsPDF('p', 'mm', 'a4');
 
-                                function showPerformance() {
-                                    if (!currentInstructorId)
-                                        return;
+                // --- 1. HEADER ---
+                doc.setFillColor(179, 109, 109); // Warna Dusty
+                doc.rect(0, 0, 210, 40, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(22);
+                doc.text('SKYLIGHT STUDIO', 105, 18, {align: 'center'});
+                doc.setFontSize(12);
+                doc.setFont("helvetica", "normal");
+                doc.text('INSTRUCTOR PERFORMANCE REPORT', 105, 28, {align: 'center'});
 
-                                    const instructor = instructors[currentInstructorId];
-                                    document.getElementById('performanceInstructorName').textContent = instructor.name;
+                // --- 2. MAKLUMAT LAPORAN ---
+                doc.setTextColor(61, 52, 52); // Warna Espresso
+                doc.setFontSize(10);
+                var instructor = instructors[currentInstructorId] || instructors[1];
+                var currentDate = new Date();
+                var formattedDate = currentDate.getDate() + ' ' + 
+                    currentDate.toLocaleDateString('en-GB', {month: 'long'}) + ' ' + 
+                    currentDate.getFullYear();
 
-                                    // Update performance metrics
-                                    document.getElementById('perfOverallRating').textContent = instructor.avgRating;
-                                    document.getElementById('perfTotalClasses').textContent = instructor.totalClasses;
-                                    document.getElementById('perfCancelled').textContent = instructor.cancelledClasses;
-                                    const completionRate = Math.round((instructor.completedClasses / instructor.totalClasses) * 100);
-                                    document.getElementById('perfCompletion').textContent = completionRate + '%';
+                var currentY = 50; // Kita guna variable currentY supaya senang kawal jarak
+                doc.setFont("helvetica", "bold");
+                doc.text('Instructor Information', 20, currentY);
+                doc.setFont("helvetica", "normal");
+                currentY += 7;
+                doc.text('Name: ' + instructor.name, 20, currentY);
+                doc.text('Date Generated: ' + formattedDate, 120, currentY);
+                currentY += 6;
+                doc.text('Email: ' + instructor.email, 20, currentY);
+                doc.text('Experience: ' + instructor.experience, 120, currentY);
 
-                                    // Tunjuk modal dulu, baru update chart
-                                    document.getElementById('performanceModal').classList.remove('hidden');
+                currentY += 15;
 
-                                    // Update charts with instructor specific data
-                                    setTimeout(() => {
-                                        updateCharts();
-                                    }, 100);
-                                }
+                // --- 3. EXECUTIVE SUMMARY ---
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text('Executive Summary', 20, currentY);
+                currentY += 2;
+                doc.setDrawColor(242, 209, 209);
+                doc.line(20, currentY, 190, currentY);
 
-                                function closePerformance() {
-                                    document.getElementById('performanceModal').classList.add('hidden');
-                                }
+                currentY += 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                var completionRate = Math.round((instructor.completedClasses / instructor.totalClasses) * 100);
 
-                                function viewCertification() {
-                                    document.getElementById('certModal').classList.remove('hidden');
-                                }
+                // Grid Summary
+                doc.text('Overall Rating: ' + instructor.avgRating + ' / 5.0', 20, currentY);
+                doc.text('Total Classes: ' + instructor.totalClasses, 100, currentY);
+                currentY += 7;
+                doc.text('Completion Rate: ' + completionRate + '%', 20, currentY);
+                doc.text('Total Feedbacks: ' + instructor.totalFeedbacks, 100, currentY);
 
-                                function closeCert() {
-                                    document.getElementById('certModal').classList.add('hidden');
-                                }
+                currentY += 15;
 
-                                // Deactivate Functions
-                                function deactivateInstructor(instructorId) {
-                                    currentInstructorId = instructorId;
-                                    document.getElementById('deactivateModal').classList.remove('hidden');
-                                }
+                // --- 4. PERFORMANCE BREAKDOWN ---
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text('Performance Breakdown by Category', 20, currentY);
+                currentY += 2;
+                doc.line(20, currentY, 190, currentY);
 
-                                function closeDeactivate() {
-                                    document.getElementById('deactivateModal').classList.add('hidden');
-                                    currentInstructorId = null;
-                                }
+                currentY += 12;
+                doc.setFontSize(10);
 
-                                function confirmDeactivate() {
-                                    if (currentInstructorId) {
-                                        // Simulasi update data
-                                        instructors[currentInstructorId].status = 'Inactive';
+                var categories = [
+                    {name: 'Teaching Skill', rating: instructor.categoryRatings.teaching},
+                    {name: 'Communication', rating: instructor.categoryRatings.communication},
+                    {name: 'Support & Interaction', rating: instructor.categoryRatings.support},
+                    {name: 'Punctuality', rating: instructor.categoryRatings.punctuality}
+                ];
 
-                                        alert(`Instructor ${instructors[currentInstructorId].name} has been deactivated.`);
-                                        location.reload();
-                                    }
-                                    closeDeactivate();
-                                }
+                for (var i = 0; i < categories.length; i++) {
+                    var cat = categories[i];
+                    // Teks Kategori
+                    doc.setFont("helvetica", "bold");
+                    doc.setTextColor(61, 52, 52);
+                    doc.text(cat.name, 20, currentY);
 
-                                // Chart Functions
-                                function initializeCharts() {
-                                    // Destroy existing charts
-                                    Object.values(chartInstances).forEach(chart => {
-                                        if (chart)
-                                            chart.destroy();
-                                    });
+                    // Skor Teks (Hujung Kanan)
+                    doc.text(cat.rating + '/5.0', 180, currentY, {align: 'right'});
 
-                                    // Category Ratings Chart
-                                    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-                                    chartInstances.categoryChart = new Chart(categoryCtx, {
-                                        type: 'bar',
-                                        data: {
-                                            labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality'],
-                                            datasets: [{
-                                                    label: 'Average Rating',
-                                                    data: [4.8, 4.7, 4.2, 4.5],
-                                                    backgroundColor: ['#6D9B9B', '#A3C1D6', '#F2D1D1', '#B36D6D'],
-                                                    borderColor: ['#557878', '#8AA9C4', '#E8BEBE', '#965656'],
-                                                    borderWidth: 1,
-                                                    borderRadius: 4
-                                                }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            scales: {
-                                                y: {
-                                                    beginAtZero: true,
-                                                    max: 5,
-                                                    grid: {
-                                                        color: '#EFE1E1'
-                                                    },
-                                                    ticks: {
-                                                        color: '#3D3434'
-                                                    }
-                                                },
-                                                x: {
-                                                    grid: {
-                                                        color: '#EFE1E1'
-                                                    },
-                                                    ticks: {
-                                                        color: '#3D3434'
-                                                    }
-                                                }
-                                            },
-                                            plugins: {
-                                                legend: {
-                                                    display: false
-                                                },
-                                                tooltip: {
-                                                    backgroundColor: '#3D3434',
-                                                    titleColor: '#FDF8F8',
-                                                    bodyColor: '#FDF8F8'
-                                                }
-                                            }
-                                        }
-                                    });
+                    // Lukis Bar Latar Belakang (Soft Pink)
+                    doc.setFillColor(245, 230, 230);
+                    doc.rect(70, currentY - 4, 80, 5, 'F');
 
-                                    // Monthly Trend Chart
-                                    const trendCtx = document.getElementById('trendChart').getContext('2d');
-                                    chartInstances.trendChart = new Chart(trendCtx, {
-                                        type: 'line',
-                                        data: {
-                                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                                            datasets: [{
-                                                    label: 'Overall Rating',
-                                                    data: [4.5, 4.6, 4.4, 4.7, 4.8, 4.7],
-                                                    borderColor: '#6D9B9B',
-                                                    backgroundColor: 'rgba(109, 155, 155, 0.1)',
-                                                    borderWidth: 2,
-                                                    fill: true,
-                                                    tension: 0.4
-                                                }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            scales: {
-                                                y: {
-                                                    beginAtZero: true,
-                                                    max: 5,
-                                                    grid: {
-                                                        color: '#EFE1E1'
-                                                    },
-                                                    ticks: {
-                                                        color: '#3D3434'
-                                                    }
-                                                },
-                                                x: {
-                                                    grid: {
-                                                        color: '#EFE1E1'
-                                                    },
-                                                    ticks: {
-                                                        color: '#3D3434'
-                                                    }
-                                                }
-                                            },
-                                            plugins: {
-                                                legend: {
-                                                    display: false
-                                                },
-                                                tooltip: {
-                                                    backgroundColor: '#3D3434',
-                                                    titleColor: '#FDF8F8',
-                                                    bodyColor: '#FDF8F8'
-                                                }
-                                            }
-                                        }
-                                    });
+                    // Lukis Bar Prestasi (Teal)
+                    var barWidth = (cat.rating / 5) * 80;
+                    doc.setFillColor(109, 155, 155);
+                    doc.rect(70, currentY - 4, barWidth, 5, 'F');
 
-                                    // Class Distribution Chart
-                                    const distributionCtx = document.getElementById('distributionChart').getContext('2d');
-                                    chartInstances.distributionChart = new Chart(distributionCtx, {
-                                        type: 'pie',
-                                        data: {
-                                            labels: ['Completed', 'Cancelled'],
-                                            datasets: [{
-                                                    data: [134, 8],
-                                                    backgroundColor: ['#A5D6A7', '#EF9A9A'],
-                                                    borderColor: ['#8BC34A', '#F44336'],
-                                                    borderWidth: 2
-                                                }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            plugins: {
-                                                legend: {
-                                                    position: 'bottom',
-                                                    labels: {
-                                                        color: '#3D3434',
-                                                        padding: 20,
-                                                        font: {
-                                                            size: 12
-                                                        }
-                                                    }
-                                                },
-                                                tooltip: {
-                                                    backgroundColor: '#3D3434',
-                                                    titleColor: '#FDF8F8',
-                                                    bodyColor: '#FDF8F8'
-                                                }
-                                            }
-                                        }
-                                    });
-                                }
+                    currentY += 12; // Tambah jarak antara baris supaya tak nampak sesak
+                }
 
-                                function updateCharts() {
-                                    if (!currentInstructorId)
-                                        return;
+                currentY += 5;
 
-                                    const instructor = instructors[currentInstructorId];
-                                    const period = document.getElementById('timePeriod').value;
+                // --- 5. INSIGHTS & RECOMMENDATIONS ---
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.text('Strategic Insights', 20, currentY);
+                currentY += 2;
+                doc.line(20, currentY, 190, currentY);
 
-                                    let trendData;
-                                    switch (period) {
-                                        case '3months':
-                                            trendData = instructor.monthlyTrend.slice(-3);
-                                            break;
-                                        case '6months':
-                                            trendData = instructor.monthlyTrend;
-                                            break;
-                                        case '1year':
-                                            trendData = instructor.monthlyTrend.concat([4.6, 4.7, 4.8, 4.7, 4.8, 4.9]);
-                                            break;
-                                        default:
-                                            trendData = instructor.monthlyTrend;
-                                    }
+                currentY += 10;
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
 
-                                    // Update charts with instructor data
-                                    const categoryData = [
-                                        instructor.categoryRatings.teaching,
-                                        instructor.categoryRatings.communication,
-                                        instructor.categoryRatings.support,
-                                        instructor.categoryRatings.punctuality
-                                    ];
+                var insights = [];
+                if (instructor.avgRating >= 4.0) {
+                    insights = [
+                        "Maintain current high standards in teaching methodology.",
+                        "Consider role as mentor for junior instructors.",
+                        "Consistent excellence in student communication and punctuality."
+                    ];
+                } else {
+                    insights = [
+                        "Priority: Improve Support & Interaction scores.",
+                        "Schedule training for better student engagement.",
+                        "Monitor punctuality and attendance for the next 30 days."
+                    ];
+                }
 
-                                    chartInstances.trendChart.data.datasets[0].data = trendData;
-                                    chartInstances.trendChart.data.labels = trendData.map((_, i) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i] || `Month ${i + 1}`);
+                for (var j = 0; j < insights.length; j++) {
+                    doc.text('• ' + insights[j], 25, currentY);
+                    currentY += 7;
+                }
 
-                                    chartInstances.categoryChart.data.datasets[0].data = categoryData;
+                // --- FOOTER ---
+                var pageHeight = doc.internal.pageSize.height;
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text('Confidential - Skylight Studio Management System', 105, pageHeight - 15, {align: 'center'});
+                doc.text('Page 1 of 1', 105, pageHeight - 10, {align: 'center'});
 
-                                    chartInstances.distributionChart.data.datasets[0].data = [
-                                        instructor.classDistribution.completed,
-                                        instructor.classDistribution.cancelled
-                                    ];
+                // --- PREVIEW LOGIC ---
+                var blobURL = doc.output('bloburl');
+                var certFrame = document.getElementById('certFrame');
+                certFrame.src = blobURL;
 
-                                    chartInstances.trendChart.update();
-                                    chartInstances.categoryChart.update();
-                                    chartInstances.distributionChart.update();
-                                }
+                // Set flag and update modal title
+                isViewingPDF = true;
+                document.getElementById('certModalTitle').textContent = 'Preview Instructor Report';
+                document.getElementById('certModal').classList.remove('hidden');
+            }
 
-                                function exportPerformancePDF() {
-                                    const {jsPDF} = window.jspdf;
-                                    const doc = new jsPDF('p', 'mm', 'a4');
+            // Function for exporting detailed report
+            function exportDetailedPDF() {
+                exportPerformancePDF();
+            }
 
-                                    // --- 1. HEADER ---
-                                    doc.setFillColor(179, 109, 109); // Warna Dusty
-                                    doc.rect(0, 0, 210, 40, 'F');
-                                    doc.setTextColor(255, 255, 255);
-                                    doc.setFont("helvetica", "bold");
-                                    doc.setFontSize(22);
-                                    doc.text('SKYLIGHT STUDIO', 105, 18, {align: 'center'});
-                                    doc.setFontSize(12);
-                                    doc.setFont("helvetica", "normal");
-                                    doc.text('INSTRUCTOR PERFORMANCE REPORT', 105, 28, {align: 'center'});
-
-                                    // --- 2. MAKLUMAT LAPORAN ---
-                                    doc.setTextColor(61, 52, 52); // Warna Espresso
-                                    doc.setFontSize(10);
-                                    const instructor = instructors[currentInstructorId] || instructors[1];
-                                    const currentDate = new Date().toLocaleDateString('en-GB', {
-                                        day: '2-digit', month: 'long', year: 'numeric'
-                                    });
-
-                                    let currentY = 50; // Kita guna variable currentY supaya senang kawal jarak
-                                    doc.setFont("helvetica", "bold");
-                                    doc.text(`Instructor Information`, 20, currentY);
-                                    doc.setFont("helvetica", "normal");
-                                    currentY += 7;
-                                    doc.text(`Name: ${instructor.name}`, 20, currentY);
-                                    doc.text(`Date Generated: ${currentDate}`, 120, currentY);
-                                    currentY += 6;
-                                    doc.text(`Email: ${instructor.email}`, 20, currentY);
-                                    doc.text(`Experience: ${instructor.experience}`, 120, currentY);
-
-                                    currentY += 15;
-
-                                    // --- 3. EXECUTIVE SUMMARY ---
-                                    doc.setFont("helvetica", "bold");
-                                    doc.setFontSize(14);
-                                    doc.text('Executive Summary', 20, currentY);
-                                    currentY += 2;
-                                    doc.setDrawColor(242, 209, 209);
-                                    doc.line(20, currentY, 190, currentY);
-
-                                    currentY += 10;
-                                    doc.setFontSize(10);
-                                    doc.setFont("helvetica", "normal");
-                                    const completionRate = Math.round((instructor.completedClasses / instructor.totalClasses) * 100);
-
-                                    // Grid Summary
-                                    doc.text(`Overall Rating: ${instructor.avgRating} / 5.0`, 20, currentY);
-                                    doc.text(`Total Classes: ${instructor.totalClasses}`, 100, currentY);
-                                    currentY += 7;
-                                    doc.text(`Completion Rate: ${completionRate}%`, 20, currentY);
-                                    doc.text(`Total Feedbacks: ${instructor.totalFeedbacks}`, 100, currentY);
-
-                                    currentY += 15;
-
-                                    // --- 4. PERFORMANCE BREAKDOWN (Bahagian yang anda bermasalah) ---
-                                    doc.setFont("helvetica", "bold");
-                                    doc.setFontSize(14);
-                                    doc.text('Performance Breakdown by Category', 20, currentY);
-                                    currentY += 2;
-                                    doc.line(20, currentY, 190, currentY);
-
-                                    currentY += 12;
-                                    doc.setFontSize(10);
-
-                                    const categories = [
-                                        {name: 'Teaching Skill', rating: instructor.categoryRatings.teaching},
-                                        {name: 'Communication', rating: instructor.categoryRatings.communication},
-                                        {name: 'Support & Interaction', rating: instructor.categoryRatings.support},
-                                        {name: 'Punctuality', rating: instructor.categoryRatings.punctuality}
-                                    ];
-
-                                    categories.forEach((cat) => {
-                                        // Teks Kategori
-                                        doc.setFont("helvetica", "bold");
-                                        doc.setTextColor(61, 52, 52);
-                                        doc.text(cat.name, 20, currentY);
-
-                                        // Skor Teks (Hujung Kanan)
-                                        doc.text(`${cat.rating}/5.0`, 180, currentY, {align: 'right'});
-
-                                        // Lukis Bar Latar Belakang (Soft Pink)
-                                        doc.setFillColor(245, 230, 230);
-                                        doc.rect(70, currentY - 4, 80, 5, 'F');
-
-                                        // Lukis Bar Prestasi (Teal)
-                                        const barWidth = (cat.rating / 5) * 80;
-                                        doc.setFillColor(109, 155, 155);
-                                        doc.rect(70, currentY - 4, barWidth, 5, 'F');
-
-                                        currentY += 12; // Tambah jarak antara baris supaya tak nampak sesak
-                                    });
-
-                                    currentY += 5;
-
-                                    // --- 5. INSIGHTS & RECOMMENDATIONS ---
-                                    doc.setFont("helvetica", "bold");
-                                    doc.setFontSize(14);
-                                    doc.text('Strategic Insights', 20, currentY);
-                                    currentY += 2;
-                                    doc.line(20, currentY, 190, currentY);
-
-                                    currentY += 10;
-                                    doc.setFontSize(10);
-                                    doc.setFont("helvetica", "normal");
-
-                                    let insights = [];
-                                    if (instructor.avgRating >= 4.0) {
-                                        insights = [
-                                            "Maintain current high standards in teaching methodology.",
-                                            "Consider role as mentor for junior instructors.",
-                                            "Consistent excellence in student communication and punctuality."
-                                        ];
-                                    } else {
-                                        insights = [
-                                            "Priority: Improve Support & Interaction scores.",
-                                            "Schedule training for better student engagement.",
-                                            "Monitor punctuality and attendance for the next 30 days."
-                                        ];
-                                    }
-
-                                    insights.forEach(text => {
-                                        doc.text(`• ${text}`, 25, currentY);
-                                        currentY += 7;
-                                    });
-
-                                    // --- FOOTER ---
-                                    const pageHeight = doc.internal.pageSize.height;
-                                    doc.setFontSize(8);
-                                    doc.setTextColor(150, 150, 150);
-                                    doc.text('Confidential - Skylight Studio Management System', 105, pageHeight - 15, {align: 'center'});
-                                    doc.text(`Page 1 of 1`, 105, pageHeight - 10, {align: 'center'});
-
-                                    // --- PREVIEW LOGIC ---
-                                    const blobURL = doc.output('bloburl');
-                                    const certFrame = document.getElementById('certFrame');
-                                    certFrame.src = blobURL;
-
-                                    const modalTitle = document.querySelector('#certModal h3');
-                                    if (modalTitle)
-                                        modalTitle.textContent = "Preview Instructor Report";
-
-                                    document.getElementById('certModal').classList.remove('hidden');
-                                }
-
-                                // Function for exporting detailed report
-                                function exportDetailedPDF() {
-                                    exportPerformancePDF();
-                                }
-
-                                // Close modals on ESC key
-                                document.addEventListener('keydown', function (e) {
-                                    if (e.key === 'Escape') {
-                                        closeDetails();
-                                        closePerformance();
-                                        closeCert();
-                                        closeDeactivate();
-                                    }
-                                });
+            // Close modals on ESC key
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    closeDetails();
+                    closePerformance();
+                    closeCert();
+                    closeActivateDeactivate();
+                }
+            });
         </script>
     </body>
 </html>
