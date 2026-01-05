@@ -35,7 +35,7 @@
 
     <div class="p-4 border-t border-petal flex-shrink-0 bg-cloud/50">
         <a id="sidebar-logout"
-           href="logout.jsp"
+           href="../general/logout.jsp"
            class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-dusty text-whitePure font-bold hover:bg-dustyHover transition-all shadow-lg shadow-dusty/20 active:scale-[0.98]"
            title="Logout">
             Logout
