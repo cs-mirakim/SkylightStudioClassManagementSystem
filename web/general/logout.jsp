@@ -78,16 +78,7 @@
 
             <div class="w-full bg-whitePure py-6 px-6 md:px-8
                  rounded-xl shadow-sm border border-blush flex-1 flex flex-col"
-                 style="max-width:1500px">
-
-                <div class="mb-8 pb-4 border-b border-espresso/10">
-                    <h2 class="text-xl font-semibold mb-1 text-espresso">
-                        Logout Successful
-                    </h2>
-                    <p class="text-sm text-espresso/60">
-                        You have been securely logged out from Skylight Studio Management System
-                    </p>
-                </div>
+                 style="max-width:1000px">
 
                 <!-- Logout Content -->
                 <div class="flex-1 flex flex-col items-center justify-center py-8">
@@ -123,10 +114,10 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
-                            Login Again
+                            Logout
                         </a>
                         
-                        <a href="dashboard_admin.jsp" 
+                        <a href="admin/dashboard_admin.jsp" 
                            class="px-6 py-3 bg-cloud hover:bg-blush text-espresso rounded-lg font-medium transition-colors border border-blush flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
@@ -135,22 +126,11 @@
                         </a>
                     </div>
 
-                    <!-- Security Notice -->
-                    <div class="text-center">
-                        <p class="text-xs text-espresso/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            For security, all active sessions have been terminated.
-                        </p>
-                    </div>
+                    
 
                 </div>
 
-                <div class="mt-auto pt-10 text-center text-xs text-espresso/30 italic">
-                    -- End of Logout Page --
-                </div>
-
+           
             </div>
 
         </main>
