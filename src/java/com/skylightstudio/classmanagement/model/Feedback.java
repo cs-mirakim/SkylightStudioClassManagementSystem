@@ -8,8 +8,8 @@ public class Feedback implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Integer feedbackID;
-    private Instructor instructor;
-    private Clazz clazz;        // UPDATE: dari classObj ke clazz
+    private Integer instructorID;
+    private Integer classID;
     private Integer teachingSkill;
     private Integer communication;
     private Integer supportInteraction;
@@ -21,24 +21,16 @@ public class Feedback implements Serializable {
     public Feedback() {
     }
 
-    public Integer getInstructorID() {
-        return (instructor != null) ? instructor.getInstructorID() : null;
-    }
-
-    public Integer getClassID() {
-        return (clazz != null) ? clazz.getClassID() : null;
-    }
-
     public void setFeedbackID(Integer feedbackID) {
         this.feedbackID = feedbackID;
     }
 
-    public void setInstructor(Instructor instructor) {
-        this.instructor = instructor;
+    public void setInstructorID(Integer instructorID) {
+        this.instructorID = instructorID;
     }
 
-    public void setClazz(Clazz clazz) {
-        this.clazz = clazz;
+    public void setClassID(Integer classID) {
+        this.classID = classID;
     }
 
     public void setTeachingSkill(Integer teachingSkill) {
@@ -73,12 +65,12 @@ public class Feedback implements Serializable {
         return feedbackID;
     }
 
-    public Instructor getInstructor() {
-        return instructor;
+    public Integer getInstructorID() {
+        return instructorID;
     }
 
-    public Clazz getClazz() {
-        return clazz;
+    public Integer getClassID() {
+        return classID;
     }
 
     public Integer getTeachingSkill() {

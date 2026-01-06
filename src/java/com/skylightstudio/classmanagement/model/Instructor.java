@@ -9,8 +9,7 @@ public class Instructor implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Integer instructorID;
-    private Registration registration;
-    private Admin reviewedByAdmin;
+    private Integer registerID;
     private String username;
     private String password;
     private String name;
@@ -18,35 +17,24 @@ public class Instructor implements Serializable {
     private String phone;
     private String nric;
     private String profileImageFilePath;
-    private Date BOD;
+    private Date bod;
     private String certificationFilePath;
     private Integer yearOfExperience;
     private String address;
     private String status;
     private Timestamp dateJoined;
+    private Integer reviewedBy;
     private Timestamp reviewedAt;
 
     public Instructor() {
-    }
-
-    public Integer getRegisterID() {
-        return (registration != null) ? registration.getRegisterID() : null;
-    }
-
-    public Integer getReviewedBy() {
-        return (reviewedByAdmin != null) ? reviewedByAdmin.getAdminID() : null;
     }
 
     public void setInstructorID(Integer instructorID) {
         this.instructorID = instructorID;
     }
 
-    public void setRegistration(Registration registration) {
-        this.registration = registration;
-    }
-
-    public void setReviewedByAdmin(Admin reviewedByAdmin) {
-        this.reviewedByAdmin = reviewedByAdmin;
+    public void setRegisterID(Integer registerID) {
+        this.registerID = registerID;
     }
 
     public void setUsername(String username) {
@@ -77,8 +65,8 @@ public class Instructor implements Serializable {
         this.profileImageFilePath = profileImageFilePath;
     }
 
-    public void setBOD(Date BOD) {
-        this.BOD = BOD;
+    public void setBod(Date bod) {
+        this.bod = bod;
     }
 
     public void setCertificationFilePath(String certificationFilePath) {
@@ -101,6 +89,10 @@ public class Instructor implements Serializable {
         this.dateJoined = dateJoined;
     }
 
+    public void setReviewedBy(Integer reviewedBy) {
+        this.reviewedBy = reviewedBy;
+    }
+
     public void setReviewedAt(Timestamp reviewedAt) {
         this.reviewedAt = reviewedAt;
     }
@@ -109,12 +101,8 @@ public class Instructor implements Serializable {
         return instructorID;
     }
 
-    public Registration getRegistration() {
-        return registration;
-    }
-
-    public Admin getReviewedByAdmin() {
-        return reviewedByAdmin;
+    public Integer getRegisterID() {
+        return registerID;
     }
 
     public String getUsername() {
@@ -145,8 +133,8 @@ public class Instructor implements Serializable {
         return profileImageFilePath;
     }
 
-    public Date getBOD() {
-        return BOD;
+    public Date getBod() {
+        return bod;
     }
 
     public String getCertificationFilePath() {
@@ -167,6 +155,10 @@ public class Instructor implements Serializable {
 
     public Timestamp getDateJoined() {
         return dateJoined;
+    }
+
+    public Integer getReviewedBy() {
+        return reviewedBy;
     }
 
     public Timestamp getReviewedAt() {

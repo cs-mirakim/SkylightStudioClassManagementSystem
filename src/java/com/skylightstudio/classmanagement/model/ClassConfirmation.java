@@ -8,8 +8,8 @@ public class ClassConfirmation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Integer confirmID;
-    private Clazz clazz;        // UPDATE: dari classObj ke clazz
-    private Instructor instructor;
+    private Integer classID;
+    private Integer instructorID;
     private String action;
     private Timestamp actionAt;
     private String cancellationReason;
@@ -18,24 +18,16 @@ public class ClassConfirmation implements Serializable {
     public ClassConfirmation() {
     }
 
-    public Integer getClassID() {
-        return (clazz != null) ? clazz.getClassID() : null;
-    }
-
-    public Integer getInstructorID() {
-        return (instructor != null) ? instructor.getInstructorID() : null;
-    }
-
     public void setConfirmID(Integer confirmID) {
         this.confirmID = confirmID;
     }
 
-    public void setClazz(Clazz clazz) {
-        this.clazz = clazz;
+    public void setClassID(Integer classID) {
+        this.classID = classID;
     }
 
-    public void setInstructor(Instructor instructor) {
-        this.instructor = instructor;
+    public void setInstructorID(Integer instructorID) {
+        this.instructorID = instructorID;
     }
 
     public void setAction(String action) {
@@ -58,12 +50,12 @@ public class ClassConfirmation implements Serializable {
         return confirmID;
     }
 
-    public Clazz getClazz() {
-        return clazz;
+    public Integer getClassID() {
+        return classID;
     }
 
-    public Instructor getInstructor() {
-        return instructor;
+    public Integer getInstructorID() {
+        return instructorID;
     }
 
     public String getAction() {

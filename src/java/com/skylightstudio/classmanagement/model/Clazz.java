@@ -20,13 +20,9 @@ public class Clazz implements Serializable {
     private String description;
     private String classStatus;
     private String qrcodeFilePath;
-    private Admin createdByAdmin;
+    private Integer adminID;
 
     public Clazz() {
-    }
-
-    public Integer getAdminID() {
-        return (createdByAdmin != null) ? createdByAdmin.getAdminID() : null;
     }
 
     public void setClassID(Integer classID) {
@@ -77,8 +73,8 @@ public class Clazz implements Serializable {
         this.qrcodeFilePath = qrcodeFilePath;
     }
 
-    public void setCreatedByAdmin(Admin createdByAdmin) {
-        this.createdByAdmin = createdByAdmin;
+    public void setAdminID(Integer adminID) {
+        this.adminID = adminID;
     }
 
     public Integer getClassID() {
@@ -129,7 +125,7 @@ public class Clazz implements Serializable {
         return qrcodeFilePath;
     }
 
-    public Admin getCreatedByAdmin() {
-        return createdByAdmin;
+    public Integer getAdminID() {
+        return adminID;
     }
 }

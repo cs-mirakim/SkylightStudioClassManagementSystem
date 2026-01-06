@@ -9,7 +9,7 @@ public class Admin implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Integer adminID;
-    private Registration registration;
+    private Integer registerID;
     private String username;
     private String password;
     private String name;
@@ -17,7 +17,7 @@ public class Admin implements Serializable {
     private String phone;
     private String nric;
     private String profileImageFilePath;
-    private Date BOD;
+    private Date bod;
     private String certificationFilePath;
     private String address;
     private String status;
@@ -26,16 +26,12 @@ public class Admin implements Serializable {
     public Admin() {
     }
 
-    public Integer getRegisterID() {
-        return (registration != null) ? registration.getRegisterID() : null;
-    }
-
     public void setAdminID(Integer adminID) {
         this.adminID = adminID;
     }
 
-    public void setRegistration(Registration registration) {
-        this.registration = registration;
+    public void setRegisterID(Integer registerID) {
+        this.registerID = registerID;
     }
 
     public void setUsername(String username) {
@@ -66,8 +62,8 @@ public class Admin implements Serializable {
         this.profileImageFilePath = profileImageFilePath;
     }
 
-    public void setBOD(Date BOD) {
-        this.BOD = BOD;
+    public void setBod(Date bod) {
+        this.bod = bod;
     }
 
     public void setCertificationFilePath(String certificationFilePath) {
@@ -90,8 +86,8 @@ public class Admin implements Serializable {
         return adminID;
     }
 
-    public Registration getRegistration() {
-        return registration;
+    public Integer getRegisterID() {
+        return registerID;
     }
 
     public String getUsername() {
@@ -122,8 +118,8 @@ public class Admin implements Serializable {
         return profileImageFilePath;
     }
 
-    public Date getBOD() {
-        return BOD;
+    public Date getBod() {
+        return bod;
     }
 
     public String getCertificationFilePath() {
