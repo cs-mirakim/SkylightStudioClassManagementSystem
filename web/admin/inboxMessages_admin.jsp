@@ -80,6 +80,7 @@
             .notification-item {
                 transition: all 0.2s ease;
                 border-bottom: 1px solid #E9ECEF;
+                cursor: pointer;
             }
             .notification-item:last-child {
                 border-bottom: none;
@@ -100,12 +101,6 @@
                 width: 3px;
                 background-color: #6D9B9B;
             }
-            .notification-item.urgent {
-                background-color: #FFF5F5;
-            }
-            .notification-item.urgent::before {
-                background-color: #DC2626;
-            }
             .notification-type-icon {
                 width: 36px;
                 height: 36px;
@@ -122,26 +117,6 @@
             .notification-type-cancel {
                 background-color: #FEE2E2;
                 color: #DC2626;
-            }
-            .urgency-badge {
-                display: inline-flex;
-                align-items: center;
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 11px;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            .urgency-high {
-                background-color: #FEF3C7;
-                color: #92400E;
-                border: 1px solid #FDE68A;
-            }
-            .urgency-normal {
-                background-color: #E0F2F1;
-                color: #0D9488;
-                border: 1px solid #99F6E4;
             }
             .status-chip {
                 display: inline-flex;
@@ -163,13 +138,25 @@
                 background-color: #FEE2E2;
                 color: #991B1B;
             }
-            .status-action-required {
-                background-color: #FEF3C7;
-                color: #92400E;
+            .notification-tag {
+                display: inline-flex;
+                align-items: center;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
             }
-            .status-resolved {
-                background-color: #D1FAE5;
-                color: #065F46;
+            .tag-register {
+                background-color: #E0F2F1;
+                color: #0D9488;
+                border: 1px solid #99F6E4;
+            }
+            .tag-cancel {
+                background-color: #FEE2E2;
+                color: #DC2626;
+                border: 1px solid #FECACA;
             }
             .action-btn {
                 padding: 6px 14px;
@@ -195,6 +182,32 @@
             .action-btn-read:hover {
                 background-color: #E9ECEF;
             }
+            .modal-backdrop {
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+            }
+            .modal-content {
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+            .filter-active {
+                background-color: #B36D6D !important;
+                color: white !important;
+                border-color: #965656 !important;
+            }
+            .toggle-archive-btn {
+                background-color: #F8F9FA;
+                border: 1px solid #E9ECEF;
+                color: #6C757D;
+            }
+            .toggle-archive-btn:hover {
+                background-color: #E9ECEF;
+            }
+            .toggle-archive-btn.active {
+                background-color: #6D9B9B;
+                color: white;
+                border-color: #557878;
+            }
         </style>
     </head>
 
@@ -209,7 +222,7 @@
                  style="max-width:1500px">
 
                 <!-- Page Header -->
-                <div class="mb-8 pb-4 border-b border-espresso/10">
+                <div class="mb-6 pb-4 border-b border-espresso/10">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div class="mb-4 md:mb-0">
                             <h1 class="text-2xl font-semibold text-espresso mb-2">
@@ -234,6 +247,54 @@
                                 <span id="unreadCount" class="text-dangerText font-medium">0</span>
                                 <span class="text-dangerText ml-1">unread</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Section -->
+                <div class="mb-6">
+                    <!-- Filter by Type -->
+                    <div class="flex flex-wrap items-center gap-4 mb-4">
+                        <span class="text-sm font-medium text-espresso">Filter by Type:</span>
+                        <div class="flex gap-1">
+                            <button id="filterAll" class="filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors filter-active">
+                                All Messages
+                            </button>
+                            <button id="filterRegister" class="filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors">
+                                Instructor Registrations
+                            </button>
+                            <button id="filterCancel" class="filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors">
+                                Class Cancellations
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter by Status -->
+                    <div class="flex flex-wrap items-center gap-4 mb-4">
+                        <span class="text-sm font-medium text-espresso">Filter by Status:</span>
+                        <div class="flex gap-1">
+                            <button id="filterAllStatus" class="status-filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors filter-active">
+                                All
+                            </button>
+                            <button id="filterUnread" class="status-filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors">
+                                Unread
+                            </button>
+                            <button id="filterRead" class="status-filter-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-dusty hover:text-whitePure transition-colors">
+                                Read
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Show by -->
+                    <div class="flex flex-wrap items-center gap-4">
+                        <span class="text-sm font-medium text-espresso">Show by:</span>
+                        <div class="flex gap-1">
+                            <button id="showActive" class="toggle-archive-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-teal hover:text-whitePure transition-colors active">
+                                Active
+                            </button>
+                            <button id="showArchived" class="toggle-archive-btn px-3 py-1.5 bg-whitePure border border-borderGray rounded-lg text-sm text-espresso hover:bg-teal hover:text-whitePure transition-colors">
+                                Archived
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -285,6 +346,52 @@
 
         </main>
 
+        <!-- Modal for Viewing Notification Details -->
+        <div id="notificationModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+            <div class="modal-backdrop fixed inset-0"></div>
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="modal-content relative bg-whitePure rounded-lg shadow-xl max-w-2xl w-full mx-auto">
+                    <!-- Modal header -->
+                    <div class="flex items-center justify-between p-6 border-b border-borderGray">
+                        <div class="flex items-center">
+                            <div id="modalIcon" class="notification-type-icon mr-3"></div>
+                            <div>
+                                <h3 id="modalTitle" class="text-lg font-semibold text-espresso"></h3>
+                                <p id="modalSubtitle" class="text-sm text-espressoLighter"></p>
+                            </div>
+                        </div>
+                        <button id="closeModal" class="text-espressoLighter hover:text-espresso transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="p-6">
+                        <div id="modalContent">
+                            <!-- Content will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="flex items-center justify-between p-6 border-t border-borderGray">
+                        <div class="text-sm text-espressoLighter">
+                            <span id="modalDate"></span>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button id="markAsReadBtn" class="action-btn action-btn-mark">
+                                Mark as Read
+                            </button>
+                            <button id="archiveBtn" class="action-btn action-btn-read">
+                                Archive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <jsp:include page="../util/footer.jsp" />
 
         <jsp:include page="../util/sidebar.jsp" />
@@ -295,74 +402,96 @@
             // Dummy data for notifications
             function generateNotifications() {
                 var notifications = [];
-                var instructors = ['Sarah Johnson', 'Mike Chen', 'David Lee', 'Lisa Wong', 'Emma Wilson', 'James Brown', 'Alex Taylor', 'Maria Garcia'];
-                var classes = ['Morning Pilates', 'Advanced Reformer', 'Evening Relaxation', 'Power Pilates', 'Beginner Reformer', 'Yoga Flow', 'HIIT Class', 'Zumba Dance'];
-                var reasons = ['Sick leave', 'Personal emergency', 'Schedule conflict', 'Family matter', 'Transportation issue', 'Weather conditions'];
+                var instructors = [
+                    {name: 'Sarah Johnson', email: 'sarah.johnson@example.com', phone: '012-3456789', nric: '900101-01-1234'},
+                    {name: 'Mike Chen', email: 'mike.chen@example.com', phone: '013-4567890', nric: '910202-02-2345'},
+                    {name: 'David Lee', email: 'david.lee@example.com', phone: '014-5678901', nric: '920303-03-3456'},
+                    {name: 'Lisa Wong', email: 'lisa.wong@example.com', phone: '015-6789012', nric: '930404-04-4567'},
+                    {name: 'Emma Wilson', email: 'emma.wilson@example.com', phone: '016-7890123', nric: '940505-05-5678'},
+                    {name: 'James Brown', email: 'james.brown@example.com', phone: '017-8901234', nric: '950606-06-6789'},
+                    {name: 'Alex Taylor', email: 'alex.taylor@example.com', phone: '018-9012345', nric: '960707-07-7890'},
+                    {name: 'Maria Garcia', email: 'maria.garcia@example.com', phone: '019-0123456', nric: '970808-08-8901'}
+                ];
+
+                var classes = [
+                    {name: 'Morning Pilates', type: 'Pilates', level: 'Beginner', time: '08:00 AM - 09:00 AM'},
+                    {name: 'Advanced Reformer', type: 'Pilates', level: 'Advanced', time: '10:00 AM - 11:30 AM'},
+                    {name: 'Evening Relaxation', type: 'Yoga', level: 'All Levels', time: '06:00 PM - 07:00 PM'},
+                    {name: 'Power Pilates', type: 'Pilates', level: 'Intermediate', time: '05:00 PM - 06:00 PM'},
+                    {name: 'Beginner Reformer', type: 'Pilates', level: 'Beginner', time: '09:00 AM - 10:00 AM'},
+                    {name: 'Yoga Flow', type: 'Yoga', level: 'Intermediate', time: '07:00 AM - 08:00 AM'},
+                    {name: 'HIIT Class', type: 'Cardio', level: 'Advanced', time: '06:00 PM - 07:00 PM'},
+                    {name: 'Zumba Dance', type: 'Dance', level: 'All Levels', time: '04:00 PM - 05:00 PM'}
+                ];
+
+                var reasons = [
+                    'Sick leave - feeling unwell and cannot conduct the class properly',
+                    'Personal emergency - family matter requiring immediate attention',
+                    'Schedule conflict - double booked with another appointment',
+                    'Family matter - need to attend to family emergency',
+                    'Transportation issue - car breakdown, cannot reach the studio',
+                    'Weather conditions - heavy rain and flood warnings in area'
+                ];
 
                 var today = new Date();
 
-                // Generate registration notifications (no urgency - always normal)
-                for (var i = 0; i < 20; i++) {
+                // Generate registration notifications
+                for (var i = 0; i < 25; i++) {
                     var date = new Date(today);
                     date.setDate(date.getDate() - Math.floor(Math.random() * 30));
                     var isRead = Math.random() > 0.4;
                     var instructor = instructors[Math.floor(Math.random() * instructors.length)];
-                    var email = instructor.toLowerCase().replace(' ', '.') + '@example.com';
                     var status = Math.random() > 0.7 ? 'approved' : (Math.random() > 0.5 ? 'rejected' : 'pending');
 
                     notifications.push({
                         id: i + 1,
                         type: 'register',
-                        title: 'New Instructor Registration',
-                        instructorName: instructor,
-                        instructorEmail: email,
+                        title: 'New Instructor Registration Request',
+                        instructorName: instructor.name,
+                        instructorEmail: instructor.email,
+                        instructorPhone: instructor.phone,
+                        instructorNric: instructor.nric,
                         registerDate: date.toISOString().split('T')[0],
                         status: status,
                         isRead: isRead,
-                        urgency: 'normal', // Registration always normal urgency
+                        archived: Math.random() > 0.8,
                         date: date.toISOString(),
                         displayDate: formatDate(date)
                     });
                 }
 
-                // Generate cancellation notifications (with urgency levels)
-                for (var i = 20; i < 45; i++) {
+                // Generate cancellation notifications
+                for (var i = 25; i < 50; i++) {
                     var date = new Date(today);
                     date.setDate(date.getDate() - Math.floor(Math.random() * 30));
                     var isRead = Math.random() > 0.4;
                     var instructor = instructors[Math.floor(Math.random() * instructors.length)];
-                    var className = classes[Math.floor(Math.random() * classes.length)];
+                    var classItem = classes[Math.floor(Math.random() * classes.length)];
                     var classDate = new Date(date);
-                    classDate.setDate(classDate.getDate() + Math.floor(Math.random() * 7));
+                    classDate.setDate(classDate.getDate() + Math.floor(Math.random() * 14));
                     var reason = reasons[Math.floor(Math.random() * reasons.length)];
-
-                    // Determine urgency based on how close the class date is
-                    var daysUntilClass = Math.floor((classDate - today) / (1000 * 60 * 60 * 24));
-                    var urgency = daysUntilClass <= 2 ? 'high' : 'normal';
-                    var status = urgency === 'high' ? 'action required' : 'resolved';
 
                     notifications.push({
                         id: i + 1,
                         type: 'cancel',
-                        title: 'Class Cancellation',
-                        instructorName: instructor,
-                        className: className,
+                        title: 'Class Cancellation Alert',
+                        instructorName: instructor.name,
+                        className: classItem.name,
+                        classType: classItem.type,
+                        classLevel: classItem.level,
+                        classTime: classItem.time,
                         classDate: classDate.toISOString().split('T')[0],
-                        reason: reason,
-                        status: status,
+                        cancellationReason: reason,
+                        status: 'pending',
                         isRead: isRead,
-                        urgency: urgency,
+                        archived: Math.random() > 0.8,
                         date: date.toISOString(),
                         displayDate: formatDate(date)
                     });
                 }
 
-                // Sort by urgency (high first), then by date (newest first)
+                // Sort by date (newest first)
                 notifications.sort(function (a, b) {
-                    var urgencyOrder = {'high': 0, 'normal': 1};
-                    if (urgencyOrder[a.urgency] !== urgencyOrder[b.urgency]) {
-                        return urgencyOrder[a.urgency] - urgencyOrder[b.urgency];
-                    }
                     return new Date(b.date) - new Date(a.date);
                 });
 
@@ -387,16 +516,19 @@
                 } else if (diffDays < 7) {
                     return diffDays + ' days ago';
                 } else {
-                    return date.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric'
-                    });
+                    var options = {month: 'short', day: 'numeric'};
+                    return date.toLocaleDateString('en-US', options);
                 }
             }
 
             var notificationsData = generateNotifications();
+            var filteredData = notificationsData.slice();
             var currentPage = 1;
             var itemsPerPage = 10;
+            var currentFilter = 'all';
+            var currentStatusFilter = 'all';
+            var showArchived = false;
+            var currentNotificationId = null;
 
             // DOM elements
             var notificationsList = document.getElementById('notificationsList');
@@ -412,15 +544,39 @@
             var unreadBadge = document.getElementById('unreadBadge');
             var unreadCountSpan = document.getElementById('unreadCount');
 
+            // Modal elements
+            var notificationModal = document.getElementById('notificationModal');
+            var modalIcon = document.getElementById('modalIcon');
+            var modalTitle = document.getElementById('modalTitle');
+            var modalSubtitle = document.getElementById('modalSubtitle');
+            var modalContent = document.getElementById('modalContent');
+            var modalDate = document.getElementById('modalDate');
+            var closeModal = document.getElementById('closeModal');
+            var markAsReadBtn = document.getElementById('markAsReadBtn');
+            var archiveBtn = document.getElementById('archiveBtn');
+
+            // Filter elements
+            var filterAll = document.getElementById('filterAll');
+            var filterRegister = document.getElementById('filterRegister');
+            var filterCancel = document.getElementById('filterCancel');
+            var filterAllStatus = document.getElementById('filterAllStatus');
+            var filterUnread = document.getElementById('filterUnread');
+            var filterRead = document.getElementById('filterRead');
+            var showActive = document.getElementById('showActive');
+            var showArchivedBtn = document.getElementById('showArchived');
+
             function init() {
                 renderNotifications();
                 updateUnreadCount();
                 setupEventListeners();
+                setupModalListeners();
+                setupFilterListeners();
             }
 
             function setupEventListeners() {
                 refreshBtn.addEventListener('click', function () {
                     notificationsData = generateNotifications();
+                    applyFilters();
                     renderNotifications();
                     updateUnreadCount();
 
@@ -442,7 +598,7 @@
                 });
 
                 nextPageBtn.addEventListener('click', function () {
-                    var totalPages = Math.ceil(notificationsData.length / itemsPerPage);
+                    var totalPages = Math.ceil(filteredData.length / itemsPerPage);
                     if (currentPage < totalPages) {
                         currentPage++;
                         renderNotifications();
@@ -450,9 +606,156 @@
                 });
             }
 
+            function setupModalListeners() {
+                closeModal.addEventListener('click', function () {
+                    notificationModal.classList.add('hidden');
+                });
+
+                markAsReadBtn.addEventListener('click', function () {
+                    if (currentNotificationId) {
+                        markAsRead(currentNotificationId);
+                        notificationModal.classList.add('hidden');
+                    }
+                });
+
+                archiveBtn.addEventListener('click', function () {
+                    if (currentNotificationId) {
+                        toggleArchive(currentNotificationId);
+                        notificationModal.classList.add('hidden');
+                    }
+                });
+
+                // Close modal when clicking on backdrop
+                notificationModal.addEventListener('click', function (e) {
+                    if (e.target.classList.contains('modal-backdrop')) {
+                        notificationModal.classList.add('hidden');
+                    }
+                });
+            }
+
+            function setupFilterListeners() {
+                // Type filters
+                filterAll.addEventListener('click', function () {
+                    currentFilter = 'all';
+                    updateActiveFilterButtons();
+                    applyFilters();
+                });
+
+                filterRegister.addEventListener('click', function () {
+                    currentFilter = 'register';
+                    updateActiveFilterButtons();
+                    applyFilters();
+                });
+
+                filterCancel.addEventListener('click', function () {
+                    currentFilter = 'cancel';
+                    updateActiveFilterButtons();
+                    applyFilters();
+                });
+
+                // Status filters
+                filterAllStatus.addEventListener('click', function () {
+                    currentStatusFilter = 'all';
+                    updateActiveStatusFilterButtons();
+                    applyFilters();
+                });
+
+                filterUnread.addEventListener('click', function () {
+                    currentStatusFilter = 'unread';
+                    updateActiveStatusFilterButtons();
+                    applyFilters();
+                });
+
+                filterRead.addEventListener('click', function () {
+                    currentStatusFilter = 'read';
+                    updateActiveStatusFilterButtons();
+                    applyFilters();
+                });
+
+                // Archive toggle
+                showActive.addEventListener('click', function () {
+                    showArchived = false;
+                    updateArchiveButtons();
+                    applyFilters();
+                });
+
+                showArchivedBtn.addEventListener('click', function () {
+                    showArchived = true;
+                    updateArchiveButtons();
+                    applyFilters();
+                });
+            }
+
+            function updateActiveFilterButtons() {
+                var buttons = document.querySelectorAll('.filter-btn');
+                for (var i = 0; i < buttons.length; i++) {
+                    buttons[i].classList.remove('filter-active');
+                }
+
+                if (currentFilter === 'all') {
+                    filterAll.classList.add('filter-active');
+                } else if (currentFilter === 'register') {
+                    filterRegister.classList.add('filter-active');
+                } else if (currentFilter === 'cancel') {
+                    filterCancel.classList.add('filter-active');
+                }
+            }
+
+            function updateActiveStatusFilterButtons() {
+                var buttons = document.querySelectorAll('.status-filter-btn');
+                for (var i = 0; i < buttons.length; i++) {
+                    buttons[i].classList.remove('filter-active');
+                }
+
+                if (currentStatusFilter === 'all') {
+                    filterAllStatus.classList.add('filter-active');
+                } else if (currentStatusFilter === 'unread') {
+                    filterUnread.classList.add('filter-active');
+                } else if (currentStatusFilter === 'read') {
+                    filterRead.classList.add('filter-active');
+                }
+            }
+
+            function updateArchiveButtons() {
+                if (showArchived) {
+                    showActive.classList.remove('active');
+                    showArchivedBtn.classList.add('active');
+                } else {
+                    showActive.classList.add('active');
+                    showArchivedBtn.classList.remove('active');
+                }
+            }
+
+            function applyFilters() {
+                filteredData = notificationsData.filter(function (notification) {
+                    // Filter by type
+                    if (currentFilter === 'register' && notification.type !== 'register')
+                        return false;
+                    if (currentFilter === 'cancel' && notification.type !== 'cancel')
+                        return false;
+
+                    // Filter by read status
+                    if (currentStatusFilter === 'unread' && notification.isRead)
+                        return false;
+                    if (currentStatusFilter === 'read' && !notification.isRead)
+                        return false;
+
+                    // Filter by archive status
+                    if (showArchived && !notification.archived)
+                        return false;
+                    if (!showArchived && notification.archived)
+                        return false;
+
+                    return true;
+                });
+
+                currentPage = 1;
+                renderNotifications();
+            }
+
             function updateUnreadCount() {
                 var unreadCount = notificationsData.filter(function (notification) {
-                    return !notification.isRead;
+                    return !notification.isRead && !notification.archived;
                 }).length;
 
                 if (unreadCount > 0) {
@@ -470,23 +773,126 @@
 
                 if (notification && !notification.isRead) {
                     notification.isRead = true;
+                    applyFilters();
                     renderNotifications();
                     updateUnreadCount();
-
-                    var item = document.querySelector('.notification-item[data-id="' + notificationId + '"]');
-                    if (item) {
-                        item.classList.add('bg-successBg', 'bg-opacity-20');
-                        setTimeout(function () {
-                            item.classList.remove('bg-successBg', 'bg-opacity-20');
-                        }, 800);
-                    }
                 }
+            }
+
+            function toggleArchive(notificationId) {
+                var notification = notificationsData.find(function (item) {
+                    return item.id === notificationId;
+                });
+
+                if (notification) {
+                    notification.archived = !notification.archived;
+                    applyFilters();
+                    renderNotifications();
+                    updateUnreadCount();
+                }
+            }
+
+            function openNotificationModal(notificationId) {
+                var notification = notificationsData.find(function (item) {
+                    return item.id === notificationId;
+                });
+
+                if (!notification)
+                    return;
+
+                currentNotificationId = notificationId;
+
+                // Set modal icon
+                modalIcon.className = 'notification-type-icon mr-3';
+                if (notification.type === 'register') {
+                    modalIcon.classList.add('notification-type-register');
+                    modalIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path></svg>';
+                } else {
+                    modalIcon.classList.add('notification-type-cancel');
+                    modalIcon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+                }
+
+                // Set modal title and subtitle
+                modalTitle.textContent = notification.title;
+                modalSubtitle.textContent = notification.displayDate;
+
+                // Set modal content based on type
+                var contentHtml = '';
+                if (notification.type === 'register') {
+                    contentHtml = '<div>' +
+                            '<div class="flex items-start mb-4">' +
+                            '<img src="../profile_pictures/instructor/dummy.png" alt="Instructor" class="w-16 h-16 rounded-full object-cover border-2 border-blush mr-4">' +
+                            '<div>' +
+                            '<h4 class="font-medium text-espresso">' + notification.instructorName + '</h4>' +
+                            '<p class="text-sm text-espressoLighter">' + notification.instructorEmail + '</p>' +
+                            '<div class="mt-2 status-chip ' + (notification.status === 'pending' ? 'status-pending' : (notification.status === 'approved' ? 'status-approved' : 'status-rejected')) + '">' +
+                            notification.status +
+                            '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="space-y-3 text-sm">' +
+                            '<div><span class="font-medium text-espressoLight">Phone:</span> ' + notification.instructorPhone + '</div>' +
+                            '<div><span class="font-medium text-espressoLight">NRIC:</span> ' + notification.instructorNric + '</div>' +
+                            '<div><span class="font-medium text-espressoLight">Registration Date:</span> ' + notification.registerDate + '</div>' +
+                            '</div>' +
+                            '<div class="mt-6 pt-4 border-t border-borderGray">' +
+                            '<p class="text-sm text-espresso">This is a notification about a new instructor registration. Please review the instructor\'s details and take appropriate action in the instructor management section.</p>' +
+                            '</div>' +
+                            '</div>';
+                } else {
+                    contentHtml = '<div>' +
+                            '<div class="mb-4">' +
+                            '<h4 class="font-medium text-espresso mb-2">' + notification.className + '</h4>' +
+                            '<div class="flex items-center space-x-4 text-sm">' +
+                            '<div><span class="font-medium text-espressoLight">Instructor:</span> ' + notification.instructorName + '</div>' +
+                            '<div class="status-chip status-pending">' + notification.status + '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="space-y-3 text-sm mb-4">' +
+                            '<div><span class="font-medium text-espressoLight">Class Type:</span> ' + notification.classType + '</div>' +
+                            '<div><span class="font-medium text-espressoLight">Level:</span> ' + notification.classLevel + '</div>' +
+                            '<div><span class="font-medium text-espressoLight">Date:</span> ' + notification.classDate + '</div>' +
+                            '<div><span class="font-medium text-espressoLight">Time:</span> ' + notification.classTime + '</div>' +
+                            '</div>' +
+                            '<div class="mt-4 pt-4 border-t border-borderGray">' +
+                            '<h5 class="font-medium text-espresso mb-2">Cancellation Reason:</h5>' +
+                            '<div class="bg-softGray p-4 rounded-lg">' +
+                            '<p class="text-sm text-espressoLighter">' + notification.cancellationReason + '</p>' +
+                            '</div>' +
+                            '<p class="text-sm text-espresso mt-4">This is a notification about a class cancellation. Please check the class schedule and make necessary arrangements in the class management section.</p>' +
+                            '</div>' +
+                            '</div>';
+                }
+
+                modalContent.innerHTML = contentHtml;
+                modalDate.textContent = 'Received ' + notification.displayDate;
+
+                // Update button text based on read status
+                if (notification.isRead) {
+                    markAsReadBtn.textContent = 'Mark as Unread';
+                    markAsReadBtn.classList.remove('action-btn-mark');
+                    markAsReadBtn.classList.add('action-btn-read');
+                } else {
+                    markAsReadBtn.textContent = 'Mark as Read';
+                    markAsReadBtn.classList.remove('action-btn-read');
+                    markAsReadBtn.classList.add('action-btn-mark');
+                }
+
+                // Update archive button text
+                if (notification.archived) {
+                    archiveBtn.textContent = 'Unarchive';
+                } else {
+                    archiveBtn.textContent = 'Archive';
+                }
+
+                // Show modal
+                notificationModal.classList.remove('hidden');
             }
 
             function renderNotifications() {
                 var startIndex = (currentPage - 1) * itemsPerPage;
-                var endIndex = Math.min(startIndex + itemsPerPage, notificationsData.length);
-                var pageData = notificationsData.slice(startIndex, endIndex);
+                var endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+                var pageData = filteredData.slice(startIndex, endIndex);
 
                 notificationsList.innerHTML = '';
 
@@ -505,11 +911,14 @@
                     var notification = pageData[i];
                     var item = document.createElement('div');
 
-                    var itemClass = 'notification-item p-4 ' +
-                            (!notification.isRead ? 'unread ' : '') +
-                            (notification.urgency === 'high' ? 'urgent' : '');
+                    var itemClass = 'notification-item p-4 ' + (!notification.isRead ? 'unread' : '');
                     item.className = itemClass;
                     item.setAttribute('data-id', notification.id);
+
+                    item.addEventListener('click', function (e) {
+                        var id = parseInt(this.getAttribute('data-id'));
+                        openNotificationModal(id);
+                    });
 
                     // Icon based on type
                     var icon = '';
@@ -525,14 +934,12 @@
                                 '</svg></div>';
                     }
 
-                    // Urgency badge (only for cancellations with high urgency)
-                    var urgencyBadge = '';
-                    if (notification.type === 'cancel' && notification.urgency === 'high') {
-                        urgencyBadge = '<span class="urgency-badge urgency-high ml-2">High Priority</span>';
-                    } else if (notification.type === 'register') {
-                        urgencyBadge = '<span class="urgency-badge urgency-normal ml-2">Registration</span>';
+                    // Type tag
+                    var typeTag = '';
+                    if (notification.type === 'register') {
+                        typeTag = '<span class="notification-tag tag-register ml-2">Instructor Registration</span>';
                     } else {
-                        urgencyBadge = '<span class="urgency-badge urgency-normal ml-2">Normal</span>';
+                        typeTag = '<span class="notification-tag tag-cancel ml-2">Instructor Class Cancellation Alert</span>';
                     }
 
                     // Status chip
@@ -548,11 +955,7 @@
                             statusClass = 'status-chip status-rejected';
                         }
                     } else {
-                        if (notification.status === 'action required') {
-                            statusClass = 'status-chip status-action-required';
-                        } else {
-                            statusClass = 'status-chip status-resolved';
-                        }
+                        statusClass = 'status-chip status-pending';
                     }
 
                     statusChip = '<span class="' + statusClass + '">' + notification.status + '</span>';
@@ -564,12 +967,12 @@
                                 '<div class="flex-1 min-w-0">' +
                                 '<div class="flex items-center mb-1">' +
                                 '<h3 class="font-semibold text-espresso truncate">' + notification.instructorName + '</h3>' +
-                                urgencyBadge +
+                                typeTag +
                                 '</div>' +
-                                '<p class="text-sm text-espressoLighter mb-2">' + notification.instructorEmail + ' • Registered on ' + notification.registerDate + '</p>' +
+                                '<p class="text-sm text-espressoLighter mb-2">' + notification.instructorEmail + '</p>' +
                                 '<div class="flex items-center space-x-3">' +
                                 statusChip +
-                                '<span class="text-xs text-espressoLighter">' + notification.displayDate + '</span>' +
+                                '<span class="text-xs text-espressoLighter">Registered on ' + notification.registerDate + '</span>' +
                                 '</div>' +
                                 '</div>';
                     } else {
@@ -577,40 +980,44 @@
                                 '<div class="flex-1 min-w-0">' +
                                 '<div class="flex items-center mb-1">' +
                                 '<h3 class="font-semibold text-espresso truncate">' + notification.className + ' cancelled</h3>' +
-                                urgencyBadge +
+                                typeTag +
                                 '</div>' +
-                                '<p class="text-sm text-espressoLighter mb-2">Instructor: ' + notification.instructorName + ' • Reason: ' + notification.reason + '</p>' +
+                                '<p class="text-sm text-espressoLighter mb-2">Instructor: ' + notification.instructorName + ' • Date: ' + notification.classDate + '</p>' +
                                 '<div class="flex items-center space-x-3">' +
                                 statusChip +
-                                '<span class="text-xs text-espressoLighter">Class date: ' + notification.classDate + '</span>' +
                                 '<span class="text-xs text-espressoLighter">' + notification.displayDate + '</span>' +
                                 '</div>' +
                                 '</div>';
                     }
 
-                    // Action button
-                    var actionButton = '';
-                    if (!notification.isRead) {
-                        actionButton =
-                                '<button onclick="markAsRead(' + notification.id + '); event.stopPropagation();" ' +
-                                'class="action-btn action-btn-mark">' +
-                                'Mark as Read' +
-                                '</button>';
+                    // Read status indicator
+                    var readIndicator = '';
+                    if (notification.isRead) {
+                        readIndicator = '<div class="w-2 h-2 rounded-full bg-espressoLighter"></div>';
                     } else {
-                        actionButton =
-                                '<span class="action-btn action-btn-read">Read</span>';
+                        readIndicator = '<div class="w-2 h-2 rounded-full bg-teal"></div>';
+                    }
+
+                    // Archive indicator
+                    var archiveIndicator = '';
+                    if (notification.archived) {
+                        archiveIndicator = '<svg class="w-4 h-4 text-espressoLighter ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>';
                     }
 
                     item.innerHTML =
                             '<div class="flex items-start justify-between">' +
                             '<div class="flex items-start flex-1 min-w-0">' +
                             icon +
-                            '<div onclick="markAsRead(' + notification.id + ')" class="flex-1 min-w-0 cursor-pointer">' +
+                            '<div class="flex-1 min-w-0">' +
                             content +
                             '</div>' +
                             '</div>' +
-                            '<div class="ml-4 flex-shrink-0">' +
-                            actionButton +
+                            '<div class="ml-4 flex flex-col items-end">' +
+                            '<div class="mb-2 flex items-center">' +
+                            readIndicator +
+                            archiveIndicator +
+                            '</div>' +
+                            '<span class="text-xs text-espressoLighter text-right">' + notification.displayDate + '</span>' +
                             '</div>' +
                             '</div>';
 
@@ -621,7 +1028,7 @@
             }
 
             function updatePaginationInfo() {
-                var totalItems = notificationsData.length;
+                var totalItems = filteredData.length;
                 var totalPages = Math.ceil(totalItems / itemsPerPage);
                 var startIndex = (currentPage - 1) * itemsPerPage + 1;
                 var endIndex = Math.min(currentPage * itemsPerPage, totalItems);
@@ -656,8 +1063,6 @@
                     pageNumbers.appendChild(pageBtn);
                 }
             }
-
-            window.markAsRead = markAsRead;
 
             document.addEventListener('DOMContentLoaded', init);
         </script>
