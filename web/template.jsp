@@ -76,7 +76,9 @@
             <div class="w-full bg-whitePure py-6 px-6 md:px-8
                  rounded-xl shadow-sm border border-blush flex-1 flex flex-col"
                  style="max-width:1500px">
-
+                
+                
+                -- change here  --
                 <div class="mb-8 pb-4 border-b border-espresso/10">
                     <h2 class="text-xl font-semibold mb-1 text-espresso">
                         Template Page (Flexible View)

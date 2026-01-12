@@ -5,7 +5,7 @@ const menus = {
         {label: 'Profile', href: 'profile.jsp'},
         {label: 'Dashboard (My Schedule)', href: 'dashboard_instructor.jsp'},
         {label: 'Schedule (Class List)', href: 'schedule_instructor.jsp'},
-        {label: 'Inbox Messages', href: 'inboxMessages_instructor', badge: 3}, // Dummy: 3 mesej
+        {label: 'Inbox Messages', href: 'inboxMessages_instructor.jsp', badge: 3}, // Dummy: 3 mesej
         {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
     ],
     admin: [
@@ -14,7 +14,7 @@ const menus = {
         {label: 'Schedule (Class List)', href: 'schedule_admin.jsp'},
         {label: 'Monitor Instructor', href: 'monitor_instructor.jsp'},
         {label: 'Review Registration', href: 'review_registration.jsp'},
-        {label: 'Inbox Messages', href: 'inboxMessages_admin', badge: 12}, // Dummy: 12 mesej
+        {label: 'Inbox Messages', href: 'inboxMessages_admin.jsp', badge: 12}, // Dummy: 12 mesej
         {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
     ]
 };
