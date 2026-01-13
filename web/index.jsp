@@ -1,3 +1,3 @@
 <%
-    response.sendRedirect("admin/dashboard_admin.jsp");
+    response.sendRedirect("general/login.jsp");
 %>

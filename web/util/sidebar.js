@@ -1,11 +1,11 @@
-// sidebar.js - Versi dengan Notifikasi Dummy
+// sidebar.js - Versi tanpa logout functions (logout sudah ada dalam sidebar.jsp)
 
 const menus = {
     instructor: [
         {label: 'Profile', href: 'profile.jsp'},
         {label: 'Dashboard (My Schedule)', href: 'dashboard_instructor.jsp'},
         {label: 'Schedule (Class List)', href: 'schedule_instructor.jsp'},
-        {label: 'Inbox Messages', href: 'inboxMessages_instructor.jsp', badge: 3}, // Dummy: 3 mesej
+        {label: 'Inbox Messages', href: 'inboxMessages_instructor.jsp', badge: 3},
         {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
     ],
     admin: [
@@ -14,7 +14,7 @@ const menus = {
         {label: 'Schedule (Class List)', href: '../admin/schedule_admin.jsp'},
         {label: 'Monitor Instructor', href: '../admin/monitor_instructor.jsp'},
         {label: 'Review Registration', href: '../admin/review_registration.jsp'},
-        {label: 'Inbox Messages', href: '../admin/inboxMessages_admin.jsp', badge: 12}, // Dummy: 12 mesej
+        {label: 'Inbox Messages', href: '../admin/inboxMessages_admin.jsp', badge: 12},
         {label: 'Privacy Policy', href: '../general/privacy_policy.jsp'}
     ]
 };
@@ -47,7 +47,6 @@ function initSidebar() {
 
             el.className = 'w-full flex items-center justify-between px-4 py-4 hover:bg-cloud transition-colors group';
 
-            // Logik Badge: Jika ada item.badge dan lebih besar dari 0
             const badgeHtml = (item.badge && item.badge > 0)
                     ? `<span class="ml-2 px-2 py-0.5 text-[10px] font-bold bg-dusty text-whitePure rounded-full shadow-sm group-hover:bg-espresso transition-colors">
                     ${item.badge}
@@ -74,11 +73,11 @@ function initSidebar() {
         });
     }
 
-    // ... (fungsi openSidebar, closeSidebar dan event listeners kekal sama)
     function openSidebar() {
         sidebar.classList.remove('-translate-x-full');
         overlay.classList.remove('hidden');
     }
+    
     function closeSidebar() {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
