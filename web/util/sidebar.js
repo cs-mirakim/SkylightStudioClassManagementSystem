@@ -9,13 +9,13 @@ const menus = {
         {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
     ],
     admin: [
-        {label: 'Profile', href: 'profile.jsp'},
-        {label: 'Dashboard', href: 'admin/dashboard_admin.jsp'},
-        {label: 'Schedule (Class List)', href: 'schedule_admin.jsp'},
-        {label: 'Monitor Instructor', href: 'monitor_instructor.jsp'},
-        {label: 'Review Registration', href: 'review_registration.jsp'},
-        {label: 'Inbox Messages', href: 'inboxMessages_admin.jsp', badge: 12}, // Dummy: 12 mesej
-        {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
+        {label: 'Profile', href: '../general/profile.jsp'},
+        {label: 'Dashboard', href: '../admin/dashboard_admin.jsp'},
+        {label: 'Schedule (Class List)', href: '../admin/schedule_admin.jsp'},
+        {label: 'Monitor Instructor', href: '../admin/monitor_instructor.jsp'},
+        {label: 'Review Registration', href: '../admin/review_registration.jsp'},
+        {label: 'Inbox Messages', href: '../admin/inboxMessages_admin.jsp', badge: 12}, // Dummy: 12 mesej
+        {label: 'Privacy Policy', href: '../general/privacy_policy.jsp'}
     ]
 };
 

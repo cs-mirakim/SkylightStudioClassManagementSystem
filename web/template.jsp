@@ -69,7 +69,7 @@
 
     <body class="bg-cloud font-sans text-espresso flex flex-col min-h-screen">
 
-        <jsp:include page="util/header.jsp" />
+        <jsp:include page="../util/header.jsp" />
 
         <main class="p-4 md:p-6 flex-1 flex flex-col items-center">
 
@@ -89,33 +89,19 @@
                     </p>
                 </div>
 
-                <div class="space-y-6">
-                    <% for (int i = 1; i <= 15; i++) {%>
-                    <div class="p-4 rounded-lg border border-petal bg-cloud/30">
-                        <h3 class="font-bold text-dusty">Seksyen Kandungan <%= i%></h3>
-                        <p class="text-sm text-espresso/80 leading-relaxed">
-                            Ini adalah contoh baris maklumat dalam template anda. Apabila anda menambah lebih banyak 
-                            data di sini, container putih ini akan memanjang secara automatik. Layout 
-                            <code class="bg-petal px-1 rounded text-xs">flex-col</code> pada body akan memastikan 
-                            footer sentiasa berada di kedudukan paling bawah selepas semua content ini tamat.
-                        </p>
-                    </div>
-                    <% }%>
-                </div>
-
                 <div class="mt-auto pt-10 text-center text-xs text-espresso/30 italic">
-                    -- Tamat Kandungan Halaman --
+                    -- Contents --
                 </div>
 
             </div>
 
         </main>
 
-        <jsp:include page="util/footer.jsp" />
+        <jsp:include page="../util/footer.jsp" />
 
-        <jsp:include page="util/sidebar.jsp" />
+        <jsp:include page="../util/sidebar.jsp" />
 
-        <script src="util/sidebar.js"></script>
+        <script src="../util/sidebar.js"></script>
 
     </body>
 </html>
