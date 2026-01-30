@@ -1,6 +1,20 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%
+    // Check if user is admin
+    if (!SessionUtil.checkAdminAccess(session)) {
+        // Always redirect to login with appropriate message
+        if (!SessionUtil.isLoggedIn(session)) {
+            response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_admin_pages");
+        } else {
+            // If logged in but not admin
+            response.sendRedirect("../general/login.jsp?error=admin_access_required&message=Admin_privileges_required_to_access_this_page");
+        }
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>

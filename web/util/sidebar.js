@@ -2,11 +2,11 @@
 
 const menus = {
     instructor: [
-        {label: 'Profile', href: 'profile.jsp'},
-        {label: 'Dashboard (My Schedule)', href: 'dashboard_instructor.jsp'},
-        {label: 'Schedule (Class List)', href: 'schedule_instructor.jsp'},
-        {label: 'Inbox Messages', href: 'inboxMessages_instructor.jsp', badge: 3},
-        {label: 'Privacy Policy', href: 'privacy_policy.jsp'}
+        {label: 'Profile', href: '../general/profile.jsp'},
+        {label: 'Dashboard (My Schedule)', href: '../instructor/dashboard_instructor.jsp'},
+        {label: 'Schedule (Class List)', href: '../instructor/schedule_instructor.jsp'},
+        {label: 'Inbox Messages', href: '../instructor/inboxMessages_instructor.jsp', badge: 3},
+        {label: 'Privacy Policy', href: '../general/privacy_policy.jsp'}
     ],
     admin: [
         {label: 'Profile', href: '../general/profile.jsp'},
@@ -77,7 +77,7 @@ function initSidebar() {
         sidebar.classList.remove('-translate-x-full');
         overlay.classList.remove('hidden');
     }
-    
+
     function closeSidebar() {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
