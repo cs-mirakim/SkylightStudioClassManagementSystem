@@ -1,37 +1,119 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%@ page import="com.skylightstudio.classmanagement.model.Admin" %>
+<%@ page import="com.skylightstudio.classmanagement.model.Instructor" %>
+<%@ page import="java.text.SimpleDateFormat" %>
+<%@ page import="java.util.Date" %>
+
 <%
-    // Simulate user data (in real app, this would come from session/database)
-    String userRole = "admin"; // or "instructor"
-    String userId = "1";
-    String username = "johndoe";
-    String name = "John Doe";
-    String email = "john@skylightstudio.com";
-    String phone = "+60 12-345 6789";
-    String nric = "901010-10-1010";
-    String bod = "1990-10-10";
-    String certification = "admin_certificate.pdf";
-    String address = "123 Studio Street, Creative City, 50000";
-    String status = "active";
-    String dateJoined = "2023-01-15 09:30:00";
-    String profileImage = "default_profile.jpg";
-    String yearOfExperience = "5"; // For instructor only
+    // Check if user is logged in
+    if (!SessionUtil.isLoggedIn(session)) {
+        response.sendRedirect("login.jsp?error=access_denied&message=Please_login_to_access_this_page");
+        return;
+    }
+
+    // Get user info from session
+    String userRole = SessionUtil.getUserRole(session);
+    Integer userId = SessionUtil.getUserId(session);
+    String userName = SessionUtil.getUserName(session);
+    String userEmail = SessionUtil.getUserEmail(session);
+
+    // Get user object based on role
+    Admin admin = null;
+    Instructor instructor = null;
+
+    if ("admin".equals(userRole)) {
+        admin = SessionUtil.getAdminObject(session);
+    } else if ("instructor".equals(userRole)) {
+        instructor = SessionUtil.getInstructorObject(session);
+    }
+
+    // Initialize variables
+    String username = "";
+    String name = "";
+    String email = "";
+    String phone = "";
+    String nric = "";
+    String bod = "";
+    String profileImagePath = "";
+    String certificationPath = "";
+    String certificationFileName = "";
+    String address = "";
+    String status = "";
+    String dateJoined = "";
+    String yearOfExperience = "";
+
+    // Format date
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    SimpleDateFormat datetimeFormat = new SimpleDateFormat("dd MMM yyyy HH:mm");
+
+    // Populate data based on role
+    if (admin != null) {
+        username = admin.getUsername();
+        name = admin.getName();
+        email = admin.getEmail();
+        phone = admin.getPhone() != null ? admin.getPhone() : "";
+        nric = admin.getNric() != null ? admin.getNric() : "";
+        if (admin.getBod() != null) {
+            bod = dateFormat.format(admin.getBod());
+        }
+        profileImagePath = admin.getProfileImageFilePath();
+        certificationPath = admin.getCertificationFilePath();
+        if (certificationPath != null && !certificationPath.isEmpty()) {
+            certificationFileName = certificationPath.substring(certificationPath.lastIndexOf("/") + 1);
+        }
+        address = admin.getAddress() != null ? admin.getAddress() : "";
+        status = admin.getStatus() != null ? admin.getStatus() : "active";
+        if (admin.getDateJoined() != null) {
+            dateJoined = datetimeFormat.format(admin.getDateJoined());
+        }
+    } else if (instructor != null) {
+        username = instructor.getUsername();
+        name = instructor.getName();
+        email = instructor.getEmail();
+        phone = instructor.getPhone() != null ? instructor.getPhone() : "";
+        nric = instructor.getNric() != null ? instructor.getNric() : "";
+        if (instructor.getBod() != null) {
+            bod = dateFormat.format(instructor.getBod());
+        }
+        profileImagePath = instructor.getProfileImageFilePath();
+        certificationPath = instructor.getCertificationFilePath();
+        if (certificationPath != null && !certificationPath.isEmpty()) {
+            certificationFileName = certificationPath.substring(certificationPath.lastIndexOf("/") + 1);
+        }
+        address = instructor.getAddress() != null ? instructor.getAddress() : "";
+        status = instructor.getStatus() != null ? instructor.getStatus() : "inactive";
+        if (instructor.getDateJoined() != null) {
+            dateJoined = datetimeFormat.format(instructor.getDateJoined());
+        }
+        if (instructor.getYearOfExperience() != null) {
+            yearOfExperience = instructor.getYearOfExperience().toString();
+        }
+    }
+
+    // Default profile image if none
+    String profileImageDisplay = "";
+    if (profileImagePath != null && !profileImagePath.isEmpty()) {
+        profileImageDisplay = "../" + profileImagePath;
+    } else {
+        // Generate initial letter for avatar
+        String avatarLetter = "U";
+        if (name != null && !name.isEmpty()) {
+            avatarLetter = name.substring(0, 1).toUpperCase();
+        }
+        profileImageDisplay = "https://via.placeholder.com/200x200?text=" + avatarLetter;
+    }
 
     // Check if in edit mode
     boolean editMode = false;
     if (request.getParameter("edit") != null) {
         editMode = request.getParameter("edit").equals("true");
     }
+
+    // Get success/error messages
+    String message = request.getParameter("message");
+    String error = request.getParameter("error");
 %>
 
-<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
-<%
-    // Check if user is logged in
-    if (!SessionUtil.isLoggedIn(session)) {
-        // Redirect to login page if not logged in
-        response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_this_page");
-        return;
-    }
-%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -157,12 +239,42 @@
                     </div>
                 </div>
 
+                <!-- Success/Error Messages -->
+                <% if (message != null && !message.isEmpty()) {
+                        String displayMsg = message.replace("_", " ");
+                %>
+                <div class="mb-6 p-4 rounded-lg border-l-4 border-successTextDark bg-successBg">
+                    <p class="text-successTextDark font-medium">
+                        <%= displayMsg%>
+                    </p>
+                </div>
+                <% } %>
+
+                <% if (error != null && !error.isEmpty()) {
+                        String errorMsg = "";
+                        if ("update_failed".equals(error)) {
+                            errorMsg = "Failed to update profile";
+                            String errorDetail = request.getParameter("message");
+                            if (errorDetail != null) {
+                                errorMsg += ": " + errorDetail.replace("_", " ");
+                            }
+                        } else if ("invalid_role".equals(error)) {
+                            errorMsg = "Invalid user role";
+                        } else {
+                            errorMsg = error.replace("_", " ");
+                        }
+                %>
+                <div class="mb-6 p-4 rounded-lg border-l-4 border-dangerText bg-dangerBg">
+                    <p class="text-dangerText font-medium">
+                        <%= errorMsg%>
+                    </p>
+                </div>
+                <% }%>
+
                 <!-- Profile Content -->
-                <form id="profileForm" action="profile_save.jsp" method="POST" 
+                <form id="profileForm" action="../profile" method="POST" 
                       class="grid grid-cols-1 md:grid-cols-2 gap-8"
                       enctype="multipart/form-data">
-                    <input type="hidden" name="editMode" value="<%= editMode%>">
-
                     <!-- LEFT COLUMN -->
                     <div class="flex flex-col gap-6">
                         <!-- Profile Image Section -->
@@ -174,7 +286,7 @@
                             <div class="flex flex-col items-center gap-4">
                                 <div class="w-48 h-48 rounded-full border-4 border-blush overflow-hidden bg-cloud">
                                     <img id="profilePreview" 
-                                         src="../util/profiles/<%= profileImage%>" 
+                                         src="<%= profileImageDisplay%>" 
                                          alt="Profile Image" 
                                          class="w-full h-full object-cover" 
                                          onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
@@ -246,7 +358,7 @@
                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
                                     <% } else {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
-                                        <%= phone != null ? phone : "Not provided"%>
+                                        <%= phone != null && !phone.isEmpty() ? phone : "Not provided"%>
                                     </div>
                                     <% } %>
                                 </div>
@@ -257,7 +369,6 @@
                                     </label>
                                     <% if (editMode) {%>
                                     <input id="nric" name="nric" type="text" required
-                                           pattern="\d{6}-\d{2}-\d{4}"
                                            value="<%= nric%>"
                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
                                     <% } else {%>
@@ -271,13 +382,30 @@
                                     <label for="bod" class="block text-sm font-medium mb-1 text-espresso">
                                         Date of Birth
                                     </label>
-                                    <% if (editMode) {%>
-                                    <input id="bod" name="bod" type="date" required
-                                           value="<%= bod%>"
+                                    <% if (editMode) {
+                                            // Convert date format from database to HTML input format (yyyy-MM-dd)
+                                            String htmlDateFormat = "";
+                                            if (bod != null && !bod.isEmpty()) {
+                                                try {
+                                                    // Parse from dd-MM-yyyy to Date object
+                                                    SimpleDateFormat displayFormat = new SimpleDateFormat("dd-MM-yyyy");
+                                                    Date dateObj = displayFormat.parse(bod);
+
+                                                    // Convert to yyyy-MM-dd format for HTML input
+                                                    SimpleDateFormat htmlFormat = new SimpleDateFormat("yyyy-MM-dd");
+                                                    htmlDateFormat = htmlFormat.format(dateObj);
+                                                } catch (Exception e) {
+                                                    // If can't parse, try direct format (maybe already in yyyy-MM-dd)
+                                                    htmlDateFormat = bod;
+                                                }
+                                            }
+                                    %>
+                                    <input id="bod" name="bod" type="date"
+                                           value="<%= htmlDateFormat%>"
                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
                                     <% } else {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
-                                        <%= bod%>
+                                        <%= bod != null && !bod.isEmpty() ? bod : "Not provided"%>
                                     </div>
                                     <% }%>
                                 </div>
@@ -354,12 +482,12 @@
                                         Years of Experience
                                     </label>
                                     <% if (editMode) {%>
-                                    <input id="yearOfExperience" name="yearOfExperience" type="number" required min="0"
+                                    <input id="yearOfExperience" name="yearOfExperience" type="number" min="0"
                                            value="<%= yearOfExperience%>"
                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
                                     <% } else {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
-                                        <%= yearOfExperience%> years
+                                        <%= yearOfExperience != null && !yearOfExperience.isEmpty() ? yearOfExperience + " years" : "Not specified"%>
                                     </div>
                                     <% } %>
                                 </div>
@@ -379,17 +507,17 @@
                                     <label class="block text-sm font-medium mb-1 text-espresso">
                                         Current Document
                                     </label>
-                                    <% if (certification != null && !certification.isEmpty()) {%>
+                                    <% if (certificationPath != null && !certificationPath.isEmpty()) {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg">
                                         <div class="flex justify-between items-center">
                                             <span class="text-espresso truncate">
-                                                <%= certification%>
+                                                <%= certificationFileName%>
                                             </span>
-                                            <a href="../util/certifications/<%= certification%>" 
-                                               target="_blank"
-                                               class="text-dusty hover:text-dustyHover font-medium text-sm">
+                                            <button type="button" 
+                                                    onclick="openCertificationModal('<%= "../" + certificationPath%>', '<%= certificationFileName%>')"
+                                                    class="text-dusty hover:text-dustyHover font-medium text-sm">
                                                 View
-                                            </a>
+                                            </button>
                                         </div>
                                     </div>
                                     <% } else { %>
@@ -412,7 +540,7 @@
                                         Accepted formats: PDF, JPG, PNG, DOC (Max: 5MB)
                                     </p>
                                 </div>
-                                <% } else if (certification == null || certification.isEmpty()) { %>
+                                <% } else if (certificationPath == null || certificationPath.isEmpty()) { %>
                                 <p class="text-sm text-espresso/70">
                                     Click "Edit Profile" to upload a document
                                 </p>
@@ -435,7 +563,7 @@
                                           class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition resize-none"><%= address%></textarea>
                                 <% } else {%>
                                 <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso whitespace-pre-line">
-                                    <%= address%>
+                                    <%= address != null && !address.isEmpty() ? address : "Not provided"%>
                                 </div>
                                 <% } %>
                             </div>
@@ -492,122 +620,285 @@
 
         </main>
 
+        <!-- Certification Modal -->
+        <div id="certificationModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
+            <div class="bg-whitePure rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between p-6 border-b border-petal">
+                    <h3 class="text-xl font-semibold text-espresso" id="modalTitle">Document Preview</h3>
+                    <button onclick="closeCertificationModal()" 
+                            class="p-2 rounded-full hover:bg-blush text-espresso/60 hover:text-espresso transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal Content -->
+                <div class="flex-1 overflow-auto p-6" id="modalContent">
+                    <!-- Content will be loaded here -->
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="p-4 border-t border-petal flex justify-end gap-3">
+                    <a id="downloadLink" href="#" target="_blank"
+                       class="px-4 py-2 bg-teal hover:bg-tealHover text-whitePure rounded-lg font-medium transition-colors text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Download
+                    </a>
+                    <button onclick="closeCertificationModal()"
+                            class="px-4 py-2 bg-cloud hover:bg-blush text-espresso rounded-lg font-medium transition-colors text-sm border border-blush">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <jsp:include page="../util/footer.jsp" />
-
         <jsp:include page="../util/sidebar.jsp" />
-
         <script src="../util/sidebar.js"></script>
 
         <script>
-                                               // Preview profile image when new file is selected (only in edit mode)
-                                               function previewProfileImage(event) {
-                                                   const file = event.target.files[0];
-                                                   if (file) {
-                                                       const reader = new FileReader();
-                                                       reader.onload = function (e) {
-                                                           document.getElementById('profilePreview').src = e.target.result;
-                                                       };
-                                                       reader.readAsDataURL(file);
-                                                   }
-                                               }
+                        // Preview profile image when new file is selected (only in edit mode)
+                        function previewProfileImage(event) {
+                            const file = event.target.files[0];
+                            if (file) {
+                                // Validate file size (2MB max)
+                                if (file.size > 2 * 1024 * 1024) {
+                                    alert('Profile image must be less than 2MB');
+                                    event.target.value = '';
+                                    return;
+                                }
 
-                                               // Password validation (only in edit mode)
-                                               function validatePassword() {
-                                                   const newPassword = document.getElementById('newPassword');
-                                                   const confirmPassword = document.getElementById('confirmPassword');
-                                                   const feedback = document.getElementById('passwordFeedback');
+                                // Validate file type
+                                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                                if (!validTypes.includes(file.type)) {
+                                    alert('Only JPG and PNG images are allowed');
+                                    event.target.value = '';
+                                    return;
+                                }
 
-                                                   if (!newPassword || !confirmPassword)
-                                                       return true;
+                                const reader = new FileReader();
+                                reader.onload = function (e) {
+                                    document.getElementById('profilePreview').src = e.target.result;
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        }
 
-                                                   if (newPassword.value && confirmPassword.value) {
-                                                       if (newPassword.value.length < 6) {
-                                                           feedback.textContent = 'New password must be at least 6 characters';
-                                                           feedback.className = 'text-xs mt-2 text-warningText';
-                                                           return false;
-                                                       }
+                        // Password validation (only in edit mode)
+                        function validatePassword() {
+                            const currentPassword = document.getElementById('currentPassword');
+                            const newPassword = document.getElementById('newPassword');
+                            const confirmPassword = document.getElementById('confirmPassword');
+                            const feedback = document.getElementById('passwordFeedback');
 
-                                                       if (newPassword.value !== confirmPassword.value) {
-                                                           feedback.textContent = 'New passwords do not match';
-                                                           feedback.className = 'text-xs mt-2 text-dangerText';
-                                                           return false;
-                                                       }
+                            if (!currentPassword || !newPassword || !confirmPassword)
+                                return true;
 
-                                                       feedback.textContent = 'Passwords match ✓';
-                                                       feedback.className = 'text-xs mt-2 text-successTextDark';
-                                                       return true;
-                                                   }
+                            // Check if any password field is filled
+                            const anyFilled = currentPassword.value || newPassword.value || confirmPassword.value;
 
-                                                   return true;
-                                               }
+                            if (!anyFilled) {
+                                feedback.textContent = 'Leave password fields empty if you don\'t want to change password';
+                                feedback.className = 'text-xs mt-2 text-espresso/70';
+                                return true;
+                            }
 
-                                               // File size validation (only in edit mode)
-                                               function validateFileSize(fileInput, maxSizeMB) {
-                                                   if (fileInput && fileInput.files.length > 0) {
-                                                       const fileSize = fileInput.files[0].size / 1024 / 1024; // in MB
-                                                       if (fileSize > maxSizeMB) {
-                                                           alert(`File size must be less than ${maxSizeMB}MB`);
-                                                           fileInput.value = '';
-                                                           return false;
-                                                       }
-                                                   }
-                                                   return true;
-                                               }
+                            // All password fields must be filled
+                            if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
+                                feedback.textContent = 'Please fill all password fields to change password';
+                                feedback.className = 'text-xs mt-2 text-warningText';
+                                return false;
+                            }
 
-                                               // Form submission (only in edit mode)
+                            if (newPassword.value.length < 6) {
+                                feedback.textContent = 'New password must be at least 6 characters';
+                                feedback.className = 'text-xs mt-2 text-warningText';
+                                return false;
+                            }
+
+                            if (newPassword.value !== confirmPassword.value) {
+                                feedback.textContent = 'New passwords do not match';
+                                feedback.className = 'text-xs mt-2 text-dangerText';
+                                return false;
+                            }
+
+                            feedback.textContent = 'Passwords valid ?';
+                            feedback.className = 'text-xs mt-2 text-successTextDark';
+                            return true;
+                        }
+
+                        // File size validation
+                        function validateFileSize(fileInput, maxSizeMB, fieldName) {
+                            if (fileInput && fileInput.files.length > 0) {
+                                const fileSize = fileInput.files[0].size / 1024 / 1024; // in MB
+                                if (fileSize > maxSizeMB) {
+                                    alert(fieldName + ' must be less than ' + maxSizeMB + 'MB');
+                                    fileInput.value = '';
+                                    return false;
+                                }
+
+                                // Validate file types
+                                const file = fileInput.files[0];
+                                const fileName = file.name.toLowerCase();
+
+                                if (fileInput.id === 'profileImageInput') {
+                                    if (!fileName.match(/\.(jpg|jpeg|png)$/)) {
+                                        alert('Profile image must be JPG or PNG format');
+                                        fileInput.value = '';
+                                        return false;
+                                    }
+                                } else if (fileInput.id === 'certificationInput') {
+                                    if (!fileName.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/)) {
+                                        alert('Document must be PDF, JPG, PNG, DOC, or DOCX format');
+                                        fileInput.value = '';
+                                        return false;
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+
+                        // Certification Modal functions
+                        function openCertificationModal(fileUrl, fileName) {
+                            document.getElementById('modalTitle').textContent = fileName;
+                            document.getElementById('downloadLink').href = fileUrl;
+
+                            const modalContent = document.getElementById('modalContent');
+                            const fileExt = fileName.split('.').pop().toLowerCase();
+
+                            if (fileExt === 'pdf') {
+                                // Show PDF embed
+                                modalContent.innerHTML = `
+                        <div class="w-full h-[70vh]">
+                            <embed src="${fileUrl}" type="application/pdf" width="100%" height="100%" />
+                            <p class="text-xs text-espresso/70 mt-2 text-center">
+                                If PDF doesn't load, <a href="${fileUrl}" target="_blank" class="text-dusty hover:underline">click here to open</a>
+                            </p>
+                        </div>
+                    `;
+                            } else if (['jpg', 'jpeg', 'png'].includes(fileExt)) {
+                                // Show image
+                                modalContent.innerHTML = `
+                        <div class="flex justify-center">
+                            <img src="${fileUrl}" alt="${fileName}" class="max-w-full max-h-[70vh] object-contain rounded-lg" />
+                        </div>
+                    `;
+                            } else {
+                                // Show download link for other formats
+                                modalContent.innerHTML = `
+                        <div class="text-center p-8">
+                            <svg class="w-16 h-16 mx-auto text-dusty mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h4 class="text-lg font-medium text-espresso mb-2">Document Preview Not Available</h4>
+                            <p class="text-espresso/70 mb-4">This document format cannot be previewed in browser.</p>
+                            <p class="text-sm text-espresso/70">Please download the file to view it.</p>
+                        </div>
+                    `;
+                            }
+
+                            document.getElementById('certificationModal').classList.remove('hidden');
+                        }
+
+                        function closeCertificationModal() {
+                            document.getElementById('certificationModal').classList.add('hidden');
+                            document.getElementById('modalContent').innerHTML = '';
+                        }
+
+                        // Form submission validation
             <% if (editMode) { %>
-                                               document.getElementById('profileForm').addEventListener('submit', function (e) {
-                                                   e.preventDefault();
+                        document.getElementById('profileForm').addEventListener('submit', function (e) {
+                            e.preventDefault();
 
-                                                   // Validate file sizes
-                                                   const profileImage = document.getElementById('profileImageInput');
-                                                   const certification = document.getElementById('certificationInput');
+                            // Validate file sizes
+                            const profileImage = document.getElementById('profileImageInput');
+                            const certification = document.getElementById('certificationInput');
 
-                                                   if (!validateFileSize(profileImage, 2) || !validateFileSize(certification, 5)) {
-                                                       return;
-                                                   }
+                            if (!validateFileSize(profileImage, 2, 'Profile image') ||
+                                    !validateFileSize(certification, 5, 'Document')) {
+                                return;
+                            }
 
-                                                   // Validate passwords if entered
-                                                   const currentPassword = document.getElementById('currentPassword');
-                                                   const newPassword = document.getElementById('newPassword');
-                                                   const confirmPassword = document.getElementById('confirmPassword');
+                            // Validate passwords if entered
+                            if (!validatePassword()) {
+                                return;
+                            }
 
-                                                   if (currentPassword && newPassword && confirmPassword) {
-                                                       if ((newPassword.value || confirmPassword.value) && !currentPassword.value) {
-                                                           alert('Please enter your current password to change password');
-                                                           return;
-                                                       }
+                            // Validate NRIC format
+                            const nric = document.getElementById('nric');
+                            if (nric && nric.value && !nric.value.match(/^\d{12}$/)) {
+                                alert('NRIC must be exactly 12 digits without dashes');
+                                nric.focus();
+                                return;
+                            }
 
-                                                       if (newPassword.value && confirmPassword.value && newPassword.value !== confirmPassword.value) {
-                                                           alert('New passwords do not match');
-                                                           return;
-                                                       }
-                                                   }
+                            // Validate date of birth (optional)
+                            const bod = document.getElementById('bod');
+                            if (bod && bod.value) {
+                                const birthDate = new Date(bod.value);
+                                const today = new Date();
+                                let age = today.getFullYear() - birthDate.getFullYear();
+                                const monthDiff = today.getMonth() - birthDate.getMonth();
+                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                                    age--;
+                                }
 
-                                                   // Show success message and submit form
-                                                   if (confirm('Are you sure you want to save all changes?')) {
-                                                       // In real application, this would submit the form
-                                                       // For demo purposes, we'll simulate a successful save
-                                                       alert('Profile updated successfully!');
+                                if (age < 18) {
+                                    alert('You must be at least 18 years old');
+                                    bod.focus();
+                                    return;
+                                }
+                            }
 
-                                                       // Remove edit parameter and reload
-                                                       setTimeout(() => {
-                                                           window.location.href = window.location.pathname;
-                                                       }, 1000);
-                                                   }
-                                               });
+                            // Validate email format
+                            const email = document.getElementById('email');
+                            if (email && email.value) {
+                                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                if (!emailPattern.test(email.value)) {
+                                    alert('Please enter a valid email address');
+                                    email.focus();
+                                    return;
+                                }
+                            }
+
+                            // Show confirmation dialog
+                            if (confirm('Are you sure you want to save all changes?')) {
+                                // Submit the form
+                                this.submit();
+                            }
+                        });
             <% } %>
 
-                                               // Initialize password validation (only in edit mode)
+                        // Initialize password validation listeners
             <% if (editMode) { %>
-                                               const newPasswordInput = document.getElementById('newPassword');
-                                               const confirmPasswordInput = document.getElementById('confirmPassword');
+                        const currentPasswordInput = document.getElementById('currentPassword');
+                        const newPasswordInput = document.getElementById('newPassword');
+                        const confirmPasswordInput = document.getElementById('confirmPassword');
 
-                                               if (newPasswordInput && confirmPasswordInput) {
-                                                   newPasswordInput.addEventListener('input', validatePassword);
-                                                   confirmPasswordInput.addEventListener('input', validatePassword);
-                                               }
+                        if (currentPasswordInput && newPasswordInput && confirmPasswordInput) {
+                            currentPasswordInput.addEventListener('input', validatePassword);
+                            newPasswordInput.addEventListener('input', validatePassword);
+                            confirmPasswordInput.addEventListener('input', validatePassword);
+                        }
             <% }%>
+
+                        // Close modal with Escape key
+                        document.addEventListener('keydown', function (e) {
+                            if (e.key === 'Escape') {
+                                closeCertificationModal();
+                            }
+                        });
+
+                        // Close modal when clicking outside
+                        document.getElementById('certificationModal').addEventListener('click', function (e) {
+                            if (e.target.id === 'certificationModal') {
+                                closeCertificationModal();
+                            }
+                        });
         </script>
 
     </body>

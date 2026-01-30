@@ -265,4 +265,21 @@ public class InstructorDAO {
         instructor.setReviewedAt(rs.getTimestamp("reviewedAt"));
         return instructor;
     }
+
+    // Update password by email (for forgot password)
+    public boolean updatePasswordByEmail(String email, String newPassword) throws SQLException {
+        String hashedPassword = hashPassword(newPassword);
+        String sql = "UPDATE instructor SET password = ? WHERE email = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, hashedPassword);
+            stmt.setString(2, email);
+
+            int rows = stmt.executeUpdate();
+            System.out.println("[InstructorDAO] Password updated for email " + email + ": " + (rows > 0));
+            return rows > 0;
+        }
+    }
 }

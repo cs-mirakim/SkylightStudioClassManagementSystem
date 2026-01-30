@@ -101,6 +101,14 @@
                                 errorMsg = "Access denied";
                             } else if ("session_expired".equals(error)) {
                                 errorMsg = "Session expired, please login again";
+                            } else if ("email_not_found".equals(error)) {
+                                errorMsg = "Email not found in our system";
+                            } else if ("too_many_requests".equals(error)) {
+                                errorMsg = "Too many reset requests. Please wait 3 hours.";
+                            } else if ("reset_failed".equals(error)) {
+                                errorMsg = "Failed to process reset request";
+                            } else if ("invalid_token".equals(error)) {
+                                errorMsg = "Invalid or expired reset link";
                             }
 
                             if (!errorMsg.isEmpty()) {
@@ -125,14 +133,23 @@
                     <% }%>
                 </div>
 
-                <!-- SUCCESS MESSAGE FOR PASSWORD RESET -->
+                <!-- SUCCESS MESSAGES -->
                 <%
                     String message = request.getParameter("message");
                     if (message != null && !message.isEmpty()) {
+                        String displayMsg = "";
+
+                        if ("reset_email_sent".equals(message)) {
+                            displayMsg = "Password reset email sent. Please check your inbox.";
+                        } else if ("password_reset_success".equals(message)) {
+                            displayMsg = "Password reset successful! You can now login with your new password.";
+                        } else {
+                            displayMsg = message.replace("_", " ");
+                        }
                 %>
                 <div class="mb-4 p-3 rounded-lg border-l-4 border-successTextDark bg-successBg">
                     <p class="text-successTextDark font-medium">
-                        <%= message.replace("_", " ")%>
+                        <%= displayMsg%>
                     </p>
                 </div>
                 <%
@@ -226,7 +243,7 @@
                 </h2>
 
                 <p class="text-sm text-espresso/70 mb-4 text-center">
-                    *For testing only: you may enter any random email.*
+                    Enter your email to receive a password reset link.
                 </p>
 
                 <!-- Divider line -->
@@ -296,10 +313,10 @@
                     return;
                 }
 
-                // Create hidden form to submit
+                // Create hidden form to submit to ResetPasswordServlet
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = 'reset_password.jsp';
+                form.action = '../resetPassword';
 
                 // Email parameter
                 const emailInput = document.createElement('input');

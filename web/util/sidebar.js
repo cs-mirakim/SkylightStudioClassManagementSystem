@@ -1,5 +1,4 @@
-// sidebar.js - Versi tanpa logout functions (logout sudah ada dalam sidebar.jsp)
-
+// sidebar.js - Versi yang detect user role dari page
 const menus = {
     instructor: [
         {label: 'Profile', href: '../general/profile.jsp'},
@@ -27,6 +26,18 @@ function initSidebar() {
 
     if (!sidebar || !overlay || !menuContainer)
         return;
+
+    // Get user role from checked radio button (auto-set dari server)
+    function getCurrentUserRole() {
+        const adminRadio = document.querySelector('input[name="sidebar_role"][value="admin"]');
+        const instructorRadio = document.querySelector('input[name="sidebar_role"][value="instructor"]');
+
+        if (adminRadio && adminRadio.checked)
+            return 'admin';
+        if (instructorRadio && instructorRadio.checked)
+            return 'instructor';
+        return 'admin'; // default fallback
+    }
 
     function renderMenu(role) {
         menuContainer.innerHTML = '';
@@ -76,11 +87,13 @@ function initSidebar() {
     function openSidebar() {
         sidebar.classList.remove('-translate-x-full');
         overlay.classList.remove('hidden');
+        sidebar.setAttribute('aria-hidden', 'false');
     }
 
     function closeSidebar() {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
+        sidebar.setAttribute('aria-hidden', 'true');
     }
 
     const sidebarBtn = document.getElementById('sidebarBtn');
@@ -90,12 +103,18 @@ function initSidebar() {
         closeBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
-    document.querySelectorAll('input[name="sidebar_role"]').forEach(radio => {
-        radio.addEventListener('change', (e) => renderMenu(e.target.value));
-    });
+    // Initial render based on user role
+    const initialRole = getCurrentUserRole();
+    renderMenu(initialRole);
 
-    const initial = document.querySelector('input[name="sidebar_role"]:checked');
-    renderMenu(initial ? initial.value : 'admin');
+    // Listen for role changes (though radios are disabled, just in case)
+    document.querySelectorAll('input[name="sidebar_role"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            if (!radio.disabled) {
+                renderMenu(e.target.value);
+            }
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', initSidebar);

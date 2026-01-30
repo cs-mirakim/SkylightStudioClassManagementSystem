@@ -341,13 +341,12 @@ public class RegistrationServlet extends HttpServlet {
             // SUCCESS
             logger.info("✓ Registration COMPLETED successfully!");
 
-            HttpSession session = request.getSession();
-            session.setAttribute("successMessage",
-                    "admin".equals(userType)
-                    ? "Admin account created successfully! You can now login."
-                    : "Instructor registration submitted successfully! Please wait for admin approval.");
+            // SELEPAS:
+            String message = "admin".equals(userType)
+                    ? "Admin_account_created_successfully!_You_can_now_login."
+                    : "Instructor_registration_submitted_successfully!_Please_wait_for_admin_approval.";
 
-            response.sendRedirect(request.getContextPath() + "/general/login.jsp");
+            response.sendRedirect(request.getContextPath() + "/general/login.jsp?message=" + message);
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "✗ Registration ERROR: " + e.getMessage());
