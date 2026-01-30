@@ -1,4 +1,18 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%
+    // Check if user is instructor
+    if (!SessionUtil.checkInstructorAccess(session)) {
+        // Always redirect to login with appropriate message
+        if (!SessionUtil.isLoggedIn(session)) {
+            response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
+        } else {
+            // If logged in but not instructor
+            response.sendRedirect("../general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
+        }
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -65,7 +79,7 @@
                 }
             }
         </script>
-        
+
         <style>
             @media (max-width: 640px) {
                 .mobile-stack { flex-direction: column !important; }
@@ -74,7 +88,7 @@
                 .mobile-p-4 { padding: 1rem !important; }
                 .mobile-mb-4 { margin-bottom: 1rem !important; }
             }
-            
+
             .card-hover {
                 transition: all 0.3s ease;
             }
@@ -82,21 +96,21 @@
                 transform: translateY(-4px);
                 box-shadow: 0 10px 25px rgba(179, 109, 109, 0.15);
             }
-            
+
             .pulse {
                 animation: pulse 2s infinite;
             }
-            
+
             @keyframes pulse {
                 0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
                 70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
                 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
             }
-            
+
             .gradient-bg {
                 background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
             }
-            
+
             .calendar-day {
                 width: 2rem;
                 height: 2rem;
@@ -107,16 +121,16 @@
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            
+
             .calendar-day:hover {
                 background-color: #F2D1D1;
             }
-            
+
             .calendar-day.has-class {
                 background-color: #B36D6D;
                 color: white;
             }
-            
+
             .notification-badge {
                 position: absolute;
                 top: -5px;
@@ -131,12 +145,12 @@
                 align-items: center;
                 justify-content: center;
             }
-            
+
             .qr-container {
                 position: relative;
                 display: inline-block;
             }
-            
+
             .qr-placeholder {
                 width: 60px;
                 height: 60px;
@@ -149,12 +163,12 @@
                 cursor: pointer;
                 transition: all 0.3s ease;
             }
-            
+
             .qr-placeholder:hover {
                 background-color: #F2D1D1;
                 transform: scale(1.05);
             }
-            
+
             .qr-expanded {
                 position: absolute;
                 top: 70px;
@@ -168,17 +182,17 @@
                 width: 200px;
                 text-align: center;
             }
-            
+
             .qr-expanded img {
                 width: 160px;
                 height: 160px;
                 margin-bottom: 10px;
             }
-            
+
             .qr-expanded.show {
                 display: block;
             }
-            
+
             .main-container {
                 background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
                 border-radius: 20px;
@@ -186,20 +200,20 @@
                 box-shadow: 0 8px 30px rgba(179, 109, 109, 0.08);
                 overflow: hidden;
             }
-            
+
             .welcome-header {
                 background: linear-gradient(135deg, #F2D1D1 0%, #EFE1E1 100%);
                 padding: 2rem;
                 border-bottom: 2px solid #EFE1E1;
             }
-            
+
             .dashboard-grid {
                 padding: 2rem;
                 display: grid;
                 grid-template-columns: 1fr;
                 gap: 2rem;
             }
-            
+
             .section-card {
                 background: white;
                 border-radius: 16px;
@@ -207,12 +221,12 @@
                 padding: 1.5rem;
                 transition: all 0.3s ease;
             }
-            
+
             .section-card:hover {
                 box-shadow: 0 10px 25px rgba(179, 109, 109, 0.1);
                 border-color: #F2D1D1;
             }
-            
+
             .section-title {
                 color: #3D3434;
                 font-weight: 600;
@@ -232,10 +246,10 @@
         <jsp:include page="../util/header.jsp" />
 
         <main class="p-4 md:p-6 flex-1 flex flex-col items-center">
-            
+
             <!-- MAIN CONTAINER: Welcome Sarah Lim! -->
             <div class="w-full main-container" style="max-width:1500px">
-                
+
                 <!-- Welcome Header -->
                 <div class="welcome-header">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mobile-stack">
@@ -265,7 +279,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Quick Stats -->
                         <div class="flex space-x-6 mobile-full mobile-justify-center">
                             <div class="text-center bg-whitePure/90 p-4 rounded-xl shadow-sm min-w-[100px]">
@@ -281,10 +295,10 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Dashboard Content Grid - CHANGED TO SINGLE COLUMN -->
                 <div class="dashboard-grid">
-                    
+
                     <!-- TODAY'S SCHEDULE -->
                     <div class="section-card">
                         <h2 class="section-title">
@@ -294,7 +308,7 @@
                         <p class="text-sm text-espresso/60 mb-6">
                             <span id="current-date"></span> • You have 3 classes today
                         </p>
-                        
+
                         <!-- Today's Classes Timeline -->
                         <div class="space-y-4">
                             <!-- Morning Class -->
@@ -320,7 +334,7 @@
                                                 </div>
                                                 <div class="qr-expanded" id="qr1">
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Mat Pilates Beginner">
-                                                    <button onclick="location.href='feedback.jsp'" 
+                                                    <button onclick="location.href = 'feedback.jsp'" 
                                                             class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
@@ -338,7 +352,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Afternoon Class -->
                             <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
                                 <div class="w-20 text-center">
@@ -362,7 +376,7 @@
                                                 </div>
                                                 <div class="qr-expanded" id="qr2">
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Reformer Intermediate">
-                                                    <button onclick="location.href='feedback.jsp'" 
+                                                    <button onclick="location.href = 'feedback.jsp'" 
                                                             class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
@@ -372,7 +386,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Evening Class -->
                             <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
                                 <div class="w-20 text-center">
@@ -396,7 +410,7 @@
                                                 </div>
                                                 <div class="qr-expanded" id="qr3">
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Advanced Pilates">
-                                                    <button onclick="location.href='feedback.jsp'" 
+                                                    <button onclick="location.href = 'feedback.jsp'" 
                                                             class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
@@ -408,7 +422,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- WEEK AT A GLANCE - NOW BELOW TODAY'S SCHEDULE -->
                     <div class="section-card">
                         <div class="flex items-center justify-between mb-6">
@@ -418,7 +432,7 @@
                             </h2>
                             <span class="text-sm text-espresso/60">Nov 2024</span>
                         </div>
-                        
+
                         <!-- Calendar Header -->
                         <div class="grid grid-cols-7 gap-1 mb-3">
                             <div class="text-center text-xs font-medium text-espresso/60">Sun</div>
@@ -429,12 +443,12 @@
                             <div class="text-center text-xs font-medium text-espresso/60">Fri</div>
                             <div class="text-center text-xs font-medium text-espresso/60">Sat</div>
                         </div>
-                        
+
                         <!-- Calendar Days -->
                         <div class="grid grid-cols-7 gap-1 mb-6" id="mini-calendar">
                             <!-- Calendar days will be populated by JavaScript -->
                         </div>
-                        
+
                         <!-- Class Status Legend -->
                         <div class="mt-6 pt-6 border-t border-petal">
                             <h4 class="font-medium text-espresso mb-3">Class Status</h4>
@@ -462,7 +476,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Quick Stats -->
                         <div class="mt-6 pt-6 border-t border-petal">
                             <h4 class="font-medium text-espresso mb-3">This Week</h4>
@@ -478,10 +492,10 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- 2-Column Grid for Relief Updates & Available Classes -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
+
                         <!-- RELIEF CLASS UPDATES -->
                         <div class="section-card">
                             <div class="flex items-center justify-between mb-6">
@@ -493,7 +507,7 @@
                                     History →
                                 </a>
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <!-- Successfully Relieved Class -->
                                 <div class="p-4 rounded-lg border border-successBg/50 bg-successBg/10">
@@ -527,7 +541,7 @@
                                                 </span>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="p-3 rounded-lg bg-whitePure/50 border border-successBg/30">
                                             <div class="flex items-center justify-between mb-1">
                                                 <span class="font-medium text-espresso">Weekend Reformer</span>
@@ -556,7 +570,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Upcoming Relief Opportunities -->
                                 <div class="p-4 rounded-lg border border-infoBg/50 bg-infoBg/10">
                                     <div class="flex items-center mb-3">
@@ -586,7 +600,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- AVAILABLE CLASSES -->
                         <div class="section-card">
                             <div class="flex items-center justify-between mb-6">
@@ -598,7 +612,7 @@
                                     Browse All →
                                 </a>
                             </div>
-                            
+
                             <div class="space-y-4">
                                 <!-- New Class -->
                                 <div class="p-4 rounded-lg border border-infoBg/30 bg-infoBg/5">
@@ -618,7 +632,7 @@
                                         <span class="text-xs text-espresso/60">Available</span>
                                     </div>
                                 </div>
-                                
+
                                 <!-- Available Class -->
                                 <div class="p-4 rounded-lg border border-blush/30">
                                     <div class="flex justify-between items-start mb-2">
@@ -638,7 +652,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="mt-6 pt-4 border-t border-petal">
                                 <a href="schedule_instructor.jsp" class="text-dusty font-medium text-sm hover:text-dustyHover flex items-center justify-center">
                                     <i class="fas fa-plus-circle mr-2"></i>
@@ -657,94 +671,94 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-            // Initialize when page loads
-            document.addEventListener('DOMContentLoaded', function() {
-                // Set current date
-                const now = new Date();
-                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-                document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
-                
-                // Initialize mini calendar
-                initializeMiniCalendar();
-                
-                // Close QR when clicking outside
-                document.addEventListener('click', function(event) {
-                    const qrExpanded = document.querySelectorAll('.qr-expanded.show');
-                    qrExpanded.forEach(qr => {
-                        if (!qr.contains(event.target) && !event.target.closest('.qr-placeholder')) {
-                            qr.classList.remove('show');
-                        }
-                    });
-                });
-            });
-            
-            function initializeMiniCalendar() {
-                const calendarEl = document.getElementById('mini-calendar');
-                const now = new Date();
-                const currentMonth = now.getMonth();
-                const currentYear = now.getFullYear();
-                const currentDay = now.getDate();
-                
-                // Get first day of month
-                const firstDay = new Date(currentYear, currentMonth, 1);
-                const startingDay = firstDay.getDay(); // 0 = Sunday
-                
-                // Get days in month
-                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-                
-                // Days with classes (simulated data)
-                const classDays = [12, 15, 18, 20, 22]; // Regular classes
-                const reliefAvailableDays = [16, 19]; // Available for relief
-                const completedReliefDays = [9, 14]; // Completed relief classes
-                
-                let calendarHTML = '';
-                
-                // Empty cells for days before month starts
-                for (let i = 0; i < startingDay; i++) {
-                    calendarHTML += '<div class="calendar-day"></div>';
-                }
-                
-                // Days of the month
-                for (let day = 1; day <= daysInMonth; day++) {
-                    let dayClass = 'calendar-day';
-                    let dayContent = day;
-                    
-                    // Highlight today
-                    if (day === currentDay) {
-                        dayClass += ' bg-dusty text-whitePure';
-                    }
-                    // Mark days with regular classes
-                    else if (classDays.includes(day)) {
-                        dayClass += ' has-class';
-                    }
-                    // Mark days available for relief
-                    else if (reliefAvailableDays.includes(day)) {
-                        dayClass += ' border-2 border-teal';
-                    }
-                    // Mark completed relief days
-                    else if (completedReliefDays.includes(day)) {
-                        dayClass += ' border-2 border-successTextDark';
-                    }
-                    
-                    calendarHTML += `<div class="${dayClass}" title="${day} Nov ${currentYear}">${dayContent}</div>`;
-                }
-                
-                calendarEl.innerHTML = calendarHTML;
-            }
-            
-            function toggleQR(qrId) {
-                const qrElement = document.getElementById(qrId);
-                
-                // Close all other QR codes
-                document.querySelectorAll('.qr-expanded.show').forEach(qr => {
-                    if (qr.id !== qrId) {
-                        qr.classList.remove('show');
-                    }
-                });
-                
-                // Toggle current QR code
-                qrElement.classList.toggle('show');
-            }
+                                                        // Initialize when page loads
+                                                        document.addEventListener('DOMContentLoaded', function () {
+                                                            // Set current date
+                                                            const now = new Date();
+                                                            const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
+                                                            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+
+                                                            // Initialize mini calendar
+                                                            initializeMiniCalendar();
+
+                                                            // Close QR when clicking outside
+                                                            document.addEventListener('click', function (event) {
+                                                                const qrExpanded = document.querySelectorAll('.qr-expanded.show');
+                                                                qrExpanded.forEach(qr => {
+                                                                    if (!qr.contains(event.target) && !event.target.closest('.qr-placeholder')) {
+                                                                        qr.classList.remove('show');
+                                                                    }
+                                                                });
+                                                            });
+                                                        });
+
+                                                        function initializeMiniCalendar() {
+                                                            const calendarEl = document.getElementById('mini-calendar');
+                                                            const now = new Date();
+                                                            const currentMonth = now.getMonth();
+                                                            const currentYear = now.getFullYear();
+                                                            const currentDay = now.getDate();
+
+                                                            // Get first day of month
+                                                            const firstDay = new Date(currentYear, currentMonth, 1);
+                                                            const startingDay = firstDay.getDay(); // 0 = Sunday
+
+                                                            // Get days in month
+                                                            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+                                                            // Days with classes (simulated data)
+                                                            const classDays = [12, 15, 18, 20, 22]; // Regular classes
+                                                            const reliefAvailableDays = [16, 19]; // Available for relief
+                                                            const completedReliefDays = [9, 14]; // Completed relief classes
+
+                                                            let calendarHTML = '';
+
+                                                            // Empty cells for days before month starts
+                                                            for (let i = 0; i < startingDay; i++) {
+                                                                calendarHTML += '<div class="calendar-day"></div>';
+                                                            }
+
+                                                            // Days of the month
+                                                            for (let day = 1; day <= daysInMonth; day++) {
+                                                                let dayClass = 'calendar-day';
+                                                                let dayContent = day;
+
+                                                                // Highlight today
+                                                                if (day === currentDay) {
+                                                                    dayClass += ' bg-dusty text-whitePure';
+                                                                }
+                                                                // Mark days with regular classes
+                                                                else if (classDays.includes(day)) {
+                                                                    dayClass += ' has-class';
+                                                                }
+                                                                // Mark days available for relief
+                                                                else if (reliefAvailableDays.includes(day)) {
+                                                                    dayClass += ' border-2 border-teal';
+                                                                }
+                                                                // Mark completed relief days
+                                                                else if (completedReliefDays.includes(day)) {
+                                                                    dayClass += ' border-2 border-successTextDark';
+                                                                }
+
+                                                                calendarHTML += `<div class="${dayClass}" title="${day} Nov ${currentYear}">${dayContent}</div>`;
+                                                            }
+
+                                                            calendarEl.innerHTML = calendarHTML;
+                                                        }
+
+                                                        function toggleQR(qrId) {
+                                                            const qrElement = document.getElementById(qrId);
+
+                                                            // Close all other QR codes
+                                                            document.querySelectorAll('.qr-expanded.show').forEach(qr => {
+                                                                if (qr.id !== qrId) {
+                                                                    qr.classList.remove('show');
+                                                                }
+                                                            });
+
+                                                            // Toggle current QR code
+                                                            qrElement.classList.toggle('show');
+                                                        }
         </script>
 
     </body>

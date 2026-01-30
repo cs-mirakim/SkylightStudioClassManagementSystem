@@ -4,15 +4,15 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        
+
         <!-- Font Roboto -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        
+
         <!-- Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
-        
+
         <!-- Tailwind Custom Palette -->
         <script>
             tailwind.config = {
@@ -33,6 +33,9 @@
                             petal: '#EFE1E1',
                             espresso: '#3D3434',
                             successText: '#1E3A1E',
+                            warningText: '#8A6D3B',
+                            dangerText: '#A94442',
+                            successTextDark: '#2E7D32',
                             teal: '#6D9B9B',
                             tealSoft: '#A3C1D6',
                             tealHover: '#557878',
@@ -48,10 +51,10 @@
                 }
             }
         </script>
-        
+
         <title>Register Account - Skylight Studio</title>
     </head>
-    
+
     <body class="bg-cloud font-sans text-espresso min-h-screen flex items-center justify-center p-6">
         <main class="w-full max-w-5xl bg-whitePure rounded-xl shadow-lg shadow-blush/30 p-8 border border-blush">
             <!-- Header -->
@@ -62,16 +65,38 @@
                 </p>
             </div>
 
-            <form id="registerForm" onsubmit="submitReg(event)" 
+            <!-- Display Error Messages -->
+            <%
+                String errorMessage = (String) request.getAttribute("errorMessage");
+                if (errorMessage != null) {
+            %>
+            <div class="mb-6 p-4 bg-dangerBg text-espresso rounded-lg border border-blush">
+                <p class="font-medium">Registration Error:</p>
+                <p><%= errorMessage%></p>
+            </div>
+            <% } %>
+
+            <!-- Display Success Messages -->
+            <%
+                String successMessage = (String) request.getAttribute("successMessage");
+                if (successMessage != null) {
+            %>
+            <div class="mb-6 p-4 bg-successBg text-successText rounded-lg border border-blush">
+                <p class="font-medium">Success!</p>
+                <p><%= successMessage%></p>
+            </div>
+            <% }%>
+
+            <form id="registerForm" action="../register" method="POST" 
                   class="grid grid-cols-1 md:grid-cols-2 gap-8"
                   enctype="multipart/form-data">
-                
+
                 <!-- LEFT COLUMN -->
                 <div class="flex flex-col gap-6">
                     <!-- Role Selection -->
                     <div>
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Account Type</h2>
-                        
+
                         <fieldset>
                             <legend class="block text-sm font-medium mb-2 text-espresso">Register As <span class="text-dusty">*</span></legend>
                             <div class="flex gap-6">
@@ -96,7 +121,7 @@
                     <!-- Account Information Section -->
                     <div>
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Account Information</h2>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label for="username" class="block text-sm font-medium mb-1 text-espresso">
@@ -136,7 +161,7 @@
                     <!-- Personal Information Section -->
                     <div>
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Personal Information</h2>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label for="name" class="block text-sm font-medium mb-1 text-espresso">
@@ -172,10 +197,11 @@
                                     NRIC <span class="text-dusty">*</span>
                                 </label>
                                 <input id="nric" name="nric" type="text" required
-                                       pattern="\d{6}-\d{2}-\d{4}"
                                        class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition"
-                                       placeholder="000000-00-0000"
-                                       title="Format: 000000-00-0000" />
+                                       placeholder="000000000000"
+                                       pattern="\d{12}"
+                                       title="Enter 12-digit NRIC without dashes" />
+                                <p class="text-xs text-espresso/70 mt-1">Enter 12-digit NRIC without dashes</p>
                             </div>
 
                             <div>
@@ -195,13 +221,13 @@
                     <div id="instructor_fields" class="flex flex-col gap-6">
                         <div>
                             <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Professional Information</h2>
-                            
+
                             <div class="space-y-4">
                                 <div>
                                     <label for="yearOfExperience" class="block text-sm font-medium mb-1 text-espresso">
                                         Years of Experience <span class="text-dusty">*</span>
                                     </label>
-                                    <input id="yearOfExperience" name="yearOfExperience" type="number" min="0"
+                                    <input id="yearOfExperience" name="yearOfExperience" type="number" min="0" required
                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition"
                                            placeholder="Enter years of experience" />
                                 </div>
@@ -214,7 +240,7 @@
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal" id="certification_title">
                             Certification / Supporting Document
                         </h2>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label for="certification" class="block text-sm font-medium mb-1 text-espresso" id="certification_label">
@@ -225,7 +251,7 @@
                                        class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal file:text-whitePure hover:file:bg-tealHover" />
                                 <p class="text-xs text-espresso/70 mt-1" id="certification_help">
                                     For Instructor: Teaching certification. For Admin: Identification or authorization document.<br>
-                                    Accepted formats: PDF, JPG, PNG, DOC (Max: 5MB)
+                                    Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)
                                 </p>
                             </div>
                         </div>
@@ -234,7 +260,7 @@
                     <!-- Profile Image Section -->
                     <div>
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Profile Image</h2>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <label for="profileImage" class="block text-sm font-medium mb-1 text-espresso">
@@ -245,7 +271,7 @@
                                        class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal file:text-whitePure hover:file:bg-tealHover" />
                                 <p class="text-xs text-espresso/70 mt-1">Accepted formats: JPG, PNG (Max: 2MB)</p>
                             </div>
-                            
+
                             <div class="w-32 h-32 border-2 border-dashed border-blush rounded-lg flex items-center justify-center overflow-hidden bg-cloud/50">
                                 <img id="profilePreview" src="" alt="Profile Preview" class="hidden w-full h-full object-cover" />
                                 <span id="placeholderText" class="text-espresso/40 text-sm text-center p-2">Preview will appear here</span>
@@ -256,7 +282,7 @@
                     <!-- Address Section -->
                     <div>
                         <h2 class="text-lg font-medium text-dusty mb-4 pb-2 border-b border-petal">Address</h2>
-                        
+
                         <div>
                             <label for="address" class="block text-sm font-medium mb-1 text-espresso">
                                 Full Address <span class="text-dusty">*</span>
@@ -286,7 +312,7 @@
 
                     <p class="text-center text-sm text-espresso/70 pt-2 border-t border-petal">
                         Already have an account?
-                        <a href="login.jsp" class="text-teal hover:text-tealHover font-semibold ml-1 transition-colors">Login here</a>
+                        <a href="login.jsp" class="text-teal hover:text-tealHover hover:underline underline-offset-2 font-semibold ml-1 transition-colors">Login here</a>
                     </p>
                 </div>
             </form>
@@ -303,17 +329,17 @@
                 const certificationHelp = document.getElementById('certification_help');
                 const adminLabel = document.getElementById('adminLabel');
                 const instructorLabel = document.getElementById('instructorLabel');
-                
+
                 if (role === 'admin') {
                     // Hide year of experience for admin
                     instructorFields.classList.add('hidden');
                     yearOfExperience.removeAttribute('required');
-                    
+
                     // Update certification labels for admin
                     certificationTitle.textContent = 'Supporting Document';
                     certificationLabel.innerHTML = 'Identification / Authorization Document <span class="text-dusty">*</span>';
-                    certificationHelp.innerHTML = 'For Admin: Please upload identification document or authorization letter.<br>Accepted formats: PDF, JPG, PNG, DOC (Max: 5MB)';
-                    
+                    certificationHelp.innerHTML = 'For Admin: Please upload identification document or authorization letter.<br>Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)';
+
                     // Update label styling
                     adminLabel.classList.add('border-dusty', 'bg-blush/30');
                     instructorLabel.classList.remove('border-dusty', 'bg-blush/30');
@@ -321,12 +347,12 @@
                     // Show year of experience for instructor
                     instructorFields.classList.remove('hidden');
                     yearOfExperience.setAttribute('required', 'required');
-                    
+
                     // Update certification labels for instructor
                     certificationTitle.textContent = 'Certification Document';
                     certificationLabel.innerHTML = 'Teaching Certification <span class="text-dusty">*</span>';
-                    certificationHelp.innerHTML = 'For Instructor: Please upload your teaching certification.<br>Accepted formats: PDF, JPG, PNG, DOC (Max: 5MB)';
-                    
+                    certificationHelp.innerHTML = 'For Instructor: Please upload your teaching certification.<br>Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)';
+
                     // Update label styling
                     instructorLabel.classList.add('border-dusty', 'bg-blush/30');
                     adminLabel.classList.remove('border-dusty', 'bg-blush/30');
@@ -334,9 +360,9 @@
             }
 
             // Initialize on page load
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 toggleForms();
-                
+
                 // Add styling to the checked radio's label
                 const checkedRadio = document.querySelector('input[name="reg_role"]:checked');
                 if (checkedRadio.value === 'admin') {
@@ -347,11 +373,11 @@
             });
 
             // Preview profile image
-            document.getElementById('profileImage').addEventListener('change', function(e) {
+            document.getElementById('profileImage').addEventListener('change', function (e) {
                 const file = e.target.files[0];
                 if (file) {
                     const reader = new FileReader();
-                    reader.onload = function(event) {
+                    reader.onload = function (event) {
                         document.getElementById('profilePreview').src = event.target.result;
                         document.getElementById('profilePreview').classList.remove('hidden');
                         document.getElementById('placeholderText').classList.add('hidden');
@@ -364,20 +390,20 @@
             function checkUsername() {
                 const username = document.getElementById('username').value;
                 const feedback = document.getElementById('usernameFeedback');
-                
+
                 if (username.length < 3) {
                     feedback.textContent = 'Username must be at least 3 characters';
                     feedback.className = 'text-xs mt-1 text-warningText';
                     return false;
                 }
-                
+
                 // Simulate checking if username exists
                 if (username.includes('admin') || username.includes('root')) {
                     feedback.textContent = 'Username is not available';
                     feedback.className = 'text-xs mt-1 text-dangerText';
                     return false;
                 }
-                
+
                 feedback.textContent = 'Username is available';
                 feedback.className = 'text-xs mt-1 text-successTextDark';
                 return true;
@@ -388,13 +414,13 @@
                 const email = document.getElementById('email').value;
                 const feedback = document.getElementById('emailFeedback');
                 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                
+
                 if (!emailPattern.test(email)) {
                     feedback.textContent = 'Please enter a valid email address';
                     feedback.className = 'text-xs mt-1 text-warningText';
                     return false;
                 }
-                
+
                 feedback.textContent = '';
                 return true;
             }
@@ -404,82 +430,121 @@
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirm_password').value;
                 const feedback = document.getElementById('passwordFeedback');
-                
+
                 if (password.length < 6) {
                     feedback.textContent = 'Password must be at least 6 characters';
                     feedback.className = 'text-xs text-warningText';
                     return false;
                 }
-                
+
                 if (password !== confirmPassword) {
                     feedback.textContent = 'Passwords do not match';
                     feedback.className = 'text-xs text-dangerText';
                     return false;
                 }
-                
+
                 feedback.textContent = 'Passwords match ✓';
                 feedback.className = 'text-xs text-successTextDark';
                 return true;
             }
 
-            // Form submission
-            function submitReg(e) {
-                e.preventDefault();
-                
-                // Get selected role
+            // Form validation before submission
+            function validateForm() {
                 const role = document.querySelector('input[name="reg_role"]:checked').value;
-                
+
                 // Validate all fields
                 if (!checkUsername() || !checkEmail() || !validatePassword()) {
                     alert('Please correct the errors in the form');
-                    return;
+                    return false;
                 }
-                
+
                 // Check terms
                 if (!document.getElementById('terms').checked) {
                     alert('You must agree to the terms and conditions');
-                    return;
+                    return false;
                 }
-                
+
                 // Validate required fields based on role
                 if (role === 'instructor') {
                     const yearOfExperience = document.getElementById('yearOfExperience').value;
                     if (!yearOfExperience || yearOfExperience < 0) {
                         alert('Please enter valid years of experience for Instructor');
-                        return;
+                        return false;
                     }
                 }
-                
+
                 // Validate certification file
                 const certification = document.getElementById('certification').files[0];
                 if (!certification) {
                     alert('Document upload is required for registration');
-                    return;
+                    return false;
                 }
-                
+
                 if (certification.size > 5 * 1024 * 1024) {
                     alert('Document file must be less than 5MB');
-                    return;
+                    return false;
                 }
-                
-                // Validate file sizes
+
+                // Validate file extensions for certification
+                const certFilename = certification.name.toLowerCase();
+                if (!certFilename.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/)) {
+                    alert('Certification file must be PDF, JPG, PNG, DOC, or DOCX format');
+                    return false;
+                }
+
+                // Validate file sizes for profile image
                 const profileImage = document.getElementById('profileImage').files[0];
                 if (profileImage && profileImage.size > 2 * 1024 * 1024) {
                     alert('Profile image must be less than 2MB');
-                    return;
+                    return false;
                 }
-                
-                // If all validations pass
-                const message = role === 'admin' 
-                    ? 'Admin account registration submitted successfully!' 
-                    : 'Instructor registration submitted successfully! Please wait for admin approval.';
-                
-                alert(message);
-                
-                // In real application, this would submit to server
-                // For now, redirect to login
-                window.location.href = 'login.jsp';
+
+                // Validate file extensions for profile image
+                if (profileImage) {
+                    const profileFilename = profileImage.name.toLowerCase();
+                    if (!profileFilename.match(/\.(jpg|jpeg|png)$/)) {
+                        alert('Profile image must be JPG or PNG format');
+                        return false;
+                    }
+                }
+
+                // Validate NRIC format
+                const nric = document.getElementById('nric').value;
+                if (!nric.match(/^\d{12}$/)) {
+                    alert('NRIC must be exactly 12 digits without dashes');
+                    return false;
+                }
+
+                // Validate date of birth
+                const bod = document.getElementById('bod').value;
+                if (!bod) {
+                    alert('Date of Birth is required');
+                    return false;
+                }
+
+                // Calculate age
+                const birthDate = new Date(bod);
+                const today = new Date();
+                let age = today.getFullYear() - birthDate.getFullYear();
+                const monthDiff = today.getMonth() - birthDate.getMonth();
+                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                    age--;
+                }
+
+                if (age < 18) {
+                    alert('You must be at least 18 years old to register');
+                    return false;
+                }
+
+                return true;
             }
+
+            // Add form validation on submit
+            document.getElementById('registerForm').addEventListener('submit', function (e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                }
+            });
         </script>
     </body>
 </html>

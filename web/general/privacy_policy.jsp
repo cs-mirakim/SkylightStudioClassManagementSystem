@@ -1,4 +1,13 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%
+    // Check if user is logged in
+    if (!SessionUtil.isLoggedIn(session)) {
+        // Redirect to login page if not logged in
+        response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_this_page");
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
