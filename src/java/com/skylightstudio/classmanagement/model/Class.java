@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Time;
 
-public class Clazz implements Serializable {
+public class Class implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -22,7 +22,7 @@ public class Clazz implements Serializable {
     private String qrcodeFilePath;
     private Integer adminID;
 
-    public Clazz() {
+    public Class() {
     }
 
     public void setClassID(Integer classID) {
