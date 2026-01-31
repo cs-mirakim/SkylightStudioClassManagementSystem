@@ -107,7 +107,7 @@ public class InstructorDAO {
 
     // Get instructor by username (keep for other uses)
     public Instructor getInstructorByUsername(String username) throws SQLException {
-        String sql = "SELECT * FROM instructor WHERE username = ? AND status = 'active'";
+        String sql = "SELECT * FROM instructor WHERE username = ?";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -193,38 +193,57 @@ public class InstructorDAO {
 
     // Update instructor
     public boolean updateInstructor(Instructor instructor) throws SQLException {
-        String sql = "UPDATE instructor SET name = ?, email = ?, phone = ?, nric = ?, "
+        String sql = "UPDATE instructor SET username = ?, name = ?, email = ?, phone = ?, nric = ?, "
                 + "profileImageFilePath = ?, BOD = ?, certificationFilePath = ?, "
                 + "yearOfExperience = ?, address = ?, status = ? WHERE instructorID = ?";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, instructor.getName());
-            stmt.setString(2, instructor.getEmail());
-            stmt.setString(3, instructor.getPhone());
-            stmt.setString(4, instructor.getNric());
-            stmt.setString(5, instructor.getProfileImageFilePath());
+            // TAMBAH: username sebagai parameter pertama
+            stmt.setString(1, instructor.getUsername());
+            stmt.setString(2, instructor.getName());
+            stmt.setString(3, instructor.getEmail());
+            stmt.setString(4, instructor.getPhone());
+            stmt.setString(5, instructor.getNric());
+            stmt.setString(6, instructor.getProfileImageFilePath());
 
             if (instructor.getBod() != null) {
-                stmt.setDate(6, instructor.getBod());
+                stmt.setDate(7, instructor.getBod());
             } else {
-                stmt.setNull(6, Types.DATE);
+                stmt.setNull(7, Types.DATE);
             }
 
-            stmt.setString(7, instructor.getCertificationFilePath());
+            stmt.setString(8, instructor.getCertificationFilePath());
 
             if (instructor.getYearOfExperience() != null) {
-                stmt.setInt(8, instructor.getYearOfExperience());
+                stmt.setInt(9, instructor.getYearOfExperience());
             } else {
-                stmt.setNull(8, Types.INTEGER);
+                stmt.setNull(9, Types.INTEGER);
             }
 
-            stmt.setString(9, instructor.getAddress());
-            stmt.setString(10, instructor.getStatus());
-            stmt.setInt(11, instructor.getInstructorID());
+            stmt.setString(10, instructor.getAddress());
+            stmt.setString(11, instructor.getStatus());
+            stmt.setInt(12, instructor.getInstructorID());
 
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isUsernameExists(String username, int excludeInstructorID) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM instructor WHERE username = ? AND instructorID != ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            stmt.setInt(2, excludeInstructorID);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
         }
     }
 
@@ -280,6 +299,85 @@ public class InstructorDAO {
             int rows = stmt.executeUpdate();
             System.out.println("[InstructorDAO] Password updated for email " + email + ": " + (rows > 0));
             return rows > 0;
+        }
+    }
+
+    // Method untuk update instructor status dengan reviewedBy
+    public boolean updateInstructorStatus(int instructorID, String status, int reviewedBy) throws SQLException {
+        String sql;
+
+        if (reviewedBy > 0) {
+            sql = "UPDATE instructor SET status = ?, reviewedBy = ?, reviewedAt = CURRENT_TIMESTAMP "
+                    + "WHERE instructorID = ?";
+        } else {
+            sql = "UPDATE instructor SET status = ? WHERE instructorID = ?";
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            if (reviewedBy > 0) {
+                stmt.setString(1, status);
+                stmt.setInt(2, reviewedBy);
+                stmt.setInt(3, instructorID);
+            } else {
+                stmt.setString(1, status);
+                stmt.setInt(2, instructorID);
+            }
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    // Method untuk get instructor by registerID
+    public Instructor getInstructorByRegisterId(int registerID) throws SQLException {
+        String sql = "SELECT * FROM instructor WHERE registerID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, registerID);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                Instructor instructor = new Instructor();
+                instructor.setInstructorID(rs.getInt("instructorID"));
+                instructor.setRegisterID(rs.getInt("registerID"));
+                instructor.setUsername(rs.getString("username"));
+                instructor.setPassword(rs.getString("password"));
+                instructor.setName(rs.getString("name"));
+                instructor.setEmail(rs.getString("email"));
+                instructor.setPhone(rs.getString("phone"));
+                instructor.setNric(rs.getString("nric"));
+                instructor.setProfileImageFilePath(rs.getString("profileImageFilePath"));
+                instructor.setBod(rs.getDate("BOD"));
+                instructor.setCertificationFilePath(rs.getString("certificationFilePath"));
+                instructor.setYearOfExperience(rs.getInt("yearOfExperience"));
+                instructor.setAddress(rs.getString("address"));
+                instructor.setStatus(rs.getString("status"));
+                instructor.setDateJoined(rs.getTimestamp("dateJoined"));
+                instructor.setReviewedBy(rs.getInt("reviewedBy"));
+                instructor.setReviewedAt(rs.getTimestamp("reviewedAt"));
+
+                return instructor;
+            }
+            return null;
+        }
+    }
+
+    // Update instructor status and review info
+    public boolean updateInstructorReview(int instructorID, String status, int reviewedBy) throws SQLException {
+        String sql = "UPDATE instructor SET status = ?, reviewedBy = ?, reviewedAt = CURRENT_TIMESTAMP "
+                + "WHERE instructorID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, status);
+            stmt.setInt(2, reviewedBy);
+            stmt.setInt(3, instructorID);
+
+            return stmt.executeUpdate() > 0;
         }
     }
 }

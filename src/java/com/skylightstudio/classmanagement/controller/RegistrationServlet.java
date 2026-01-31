@@ -5,6 +5,9 @@ import com.skylightstudio.classmanagement.dao.AdminDAO;
 import com.skylightstudio.classmanagement.dao.InstructorDAO;
 import com.skylightstudio.classmanagement.model.Admin;
 import com.skylightstudio.classmanagement.model.Instructor;
+import com.skylightstudio.classmanagement.util.SessionUtil;
+import com.skylightstudio.classmanagement.util.EmailUtility;
+import com.skylightstudio.classmanagement.util.DBConnection;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -12,9 +15,13 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletContext;
@@ -48,7 +55,7 @@ public class RegistrationServlet extends HttpServlet {
         }
     }
 
-    // ========== NEW METHOD: SAVE FILE LIKE OTHER PROJECT ==========
+    // ========== FILE SAVING METHOD ==========
     private String saveUploadedFile(Part filePart, HttpServletRequest request,
             String username, String fileType, String userRole) throws IOException {
 
@@ -168,7 +175,7 @@ public class RegistrationServlet extends HttpServlet {
         }
     }
 
-    // ========== METHOD FROM OTHER PROJECT (PROVEN TO WORK) ==========
+    // ========== METHOD TO SAVE FILE TO MULTIPLE LOCATIONS ==========
     private boolean saveFileToMultipleLocations(Part filePart, String... filePaths) throws IOException {
         try (InputStream input = filePart.getInputStream()) {
             // Read all data first
@@ -198,7 +205,405 @@ public class RegistrationServlet extends HttpServlet {
     }
 
     @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String action = request.getParameter("action");
+
+        // Handle get registrations data for review page
+        if ("getRegistrations".equals(action)) {
+            getRegistrationData(request, response);
+        } else {
+            // Original redirect to registration page
+            response.sendRedirect(request.getContextPath() + "/general/register_account.jsp");
+        }
+    }
+
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String action = request.getParameter("action");
+
+        if ("approve".equals(action) || "reject".equals(action)) {
+            processRegistrationReview(request, response, action);
+        } else {
+            // Original registration logic
+            processNewRegistration(request, response);
+        }
+    }
+
+    // ========== METHOD: Handle registration review (approve/reject) ==========
+    private void processRegistrationReview(HttpServletRequest request, HttpServletResponse response, String action)
+            throws ServletException, IOException {
+
+        logger.info("\n=== REGISTRATION REVIEW START ===");
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession();
+        PrintWriter out = response.getWriter();
+
+        try {
+            // Check if admin is logged in
+            if (!SessionUtil.checkAdminAccess(session)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                out.print("{\"success\": false, \"message\": \"Admin access required\"}");
+                return;
+            }
+
+            // Get parameters
+            String registerIDStr = request.getParameter("registerID");
+            String instructorIDStr = request.getParameter("instructorID");
+            String adminMessage = request.getParameter("message");
+
+            if (registerIDStr == null || instructorIDStr == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"success\": false, \"message\": \"Missing required parameters\"}");
+                return;
+            }
+
+            int registerID = Integer.parseInt(registerIDStr);
+            int instructorID = Integer.parseInt(instructorIDStr);
+            int adminID = SessionUtil.getUserId(session);
+
+            // Get instructor details for email
+            InstructorDAO instructorDAO = new InstructorDAO();
+            Instructor instructor = instructorDAO.getInstructorById(instructorID);
+
+            if (instructor == null) {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                out.print("{\"success\": false, \"message\": \"Instructor not found\"}");
+                return;
+            }
+
+            // Determine statuses based on action
+            String registrationStatus;
+            String instructorStatus;
+
+            if ("approve".equals(action)) {
+                registrationStatus = "approved";
+                instructorStatus = "active";
+            } else {
+                registrationStatus = "rejected";
+                instructorStatus = "inactive";
+            }
+
+            // Update both registration and instructor
+            RegistrationDAO registrationDAO = new RegistrationDAO();
+            boolean updated = registrationDAO.updateRegistrationAndInstructorStatus(
+                    registerID, registrationStatus, adminMessage,
+                    instructorID, instructorStatus, adminID);
+
+            if (updated) {
+                // Send email notification
+                try {
+                    ServletContext context = getServletContext();
+                    boolean emailSent = EmailUtility.sendRegistrationDecisionEmail(
+                            context,
+                            instructor.getEmail(),
+                            instructor.getName(),
+                            "approve".equals(action),
+                            adminMessage);
+
+                    if (emailSent) {
+                        logger.info("✓ Email sent to " + instructor.getEmail());
+                    } else {
+                        logger.warning("✗ Failed to send email to " + instructor.getEmail());
+                    }
+                } catch (Exception e) {
+                    logger.log(Level.WARNING, "Error sending email: " + e.getMessage(), e);
+                }
+
+                logger.info("✓ Registration " + action + "ed successfully for registerID: " + registerID);
+                out.print("{\"success\": true, \"message\": \"Registration " + action + "ed successfully\"}");
+            } else {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                out.print("{\"success\": false, \"message\": \"Failed to update registration\"}");
+            }
+
+        } catch (NumberFormatException e) {
+            logger.log(Level.SEVERE, "Invalid parameter format", e);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            out.print("{\"success\": false, \"message\": \"Invalid parameter format\"}");
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Database error", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"success\": false, \"message\": \"Database error: " + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"success\": false, \"message\": \"Unexpected error: " + e.getMessage() + "\"}");
+        } finally {
+            out.flush();
+            logger.info("=== REGISTRATION REVIEW END ===\n");
+        }
+    }
+
+    // ========== METHOD: Get registration data for review page ==========
+    private void getRegistrationData(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession();
+        PrintWriter out = response.getWriter();
+
+        try {
+            // Check if admin is logged in
+            if (!SessionUtil.checkAdminAccess(session)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                out.print("{\"success\": false, \"message\": \"Admin access required\"}");
+                return;
+            }
+
+            // Get registration data
+            RegistrationDAO registrationDAO = new RegistrationDAO();
+            List<Map<String, Object>> registrations = registrationDAO.getAllInstructorRegistrations();
+
+            // Convert to JSON
+            StringBuilder json = new StringBuilder();
+            json.append("{\"success\": true, \"data\": [");
+
+            for (int i = 0; i < registrations.size(); i++) {
+                Map<String, Object> reg = registrations.get(i);
+
+                json.append("{");
+                json.append("\"id\": ").append(reg.get("instructorID")).append(",");
+                json.append("\"registerID\": ").append(reg.get("registerID")).append(",");
+                json.append("\"name\": \"").append(escapeJson(reg.get("name").toString())).append("\",");
+                json.append("\"email\": \"").append(escapeJson(reg.get("email").toString())).append("\",");
+                json.append("\"phone\": \"").append(escapeJson(reg.get("phone").toString())).append("\",");
+                json.append("\"nric\": \"").append(escapeJson(reg.get("nric").toString())).append("\",");
+                json.append("\"bod\": \"").append(reg.get("bod")).append("\",");
+                json.append("\"yearOfExperience\": ").append(reg.get("yearOfExperience")).append(",");
+                json.append("\"address\": \"").append(escapeJson(reg.get("address").toString())).append("\",");
+                json.append("\"registerDate\": \"").append(reg.get("registerDate")).append("\",");
+                json.append("\"status\": \"").append(reg.get("registrationStatus")).append("\",");
+
+                // Handle file paths
+                String profileImagePath = reg.get("profileImageFilePath") != null
+                        ? reg.get("profileImageFilePath").toString() : "profile_pictures/instructor/dummy.png";
+                String certificationPath = reg.get("certificationFilePath") != null
+                        ? reg.get("certificationFilePath").toString() : "certifications/instructor/dummy.pdf";
+
+                json.append("\"profileImagePath\": \"").append(profileImagePath).append("\",");
+                json.append("\"certification\": \"").append(certificationPath).append("\"");
+
+                json.append("}");
+
+                if (i < registrations.size() - 1) {
+                    json.append(",");
+                }
+            }
+
+            json.append("]}");
+
+            out.print(json.toString());
+            logger.info("✓ Sent " + registrations.size() + " registration records");
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "Database error", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"success\": false, \"message\": \"Database error: " + e.getMessage() + "\"}");
+        } catch (Exception e) {
+            logger.log(Level.SEVERE, "Unexpected error", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            out.print("{\"success\": false, \"message\": \"Unexpected error: " + e.getMessage() + "\"}");
+        } finally {
+            out.flush();
+        }
+    }
+
+    // ========== HELPER METHOD: Escape JSON strings ==========
+    private String escapeJson(String input) {
+        if (input == null) {
+            return "";
+        }
+        return input.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    // ========== UPDATED METHOD: Delete rejected records before new registration ==========
+    // SOLUSI BARU: Hapuskan SEMUA record rejected dengan data yang sama sebelum buat registration baru
+    private void deleteRejectedRecords(String email, String username, String nric) throws SQLException {
+        Connection conn = null;
+        PreparedStatement deleteStmt = null;
+
+        logger.info("=== DELETE REJECTED RECORDS START ===");
+        logger.info("Email: " + email + ", Username: " + username + ", NRIC: " + nric);
+
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // 1. Cari semua rejected instructor dengan data yang sama
+            String findSql = "SELECT i.instructorID, i.registerID, i.profileImageFilePath, i.certificationFilePath "
+                    + "FROM instructor i "
+                    + "JOIN registration r ON i.registerID = r.registerID "
+                    + "WHERE r.status = 'rejected' "
+                    + "AND (i.email = ? OR i.username = ? OR i.nric = ?)";
+
+            try (PreparedStatement findStmt = conn.prepareStatement(findSql)) {
+                findStmt.setString(1, email);
+                findStmt.setString(2, username);
+                findStmt.setString(3, nric);
+
+                ResultSet rs = findStmt.executeQuery();
+
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    int instructorID = rs.getInt("instructorID");
+                    int registerID = rs.getInt("registerID");
+                    String profileImagePath = rs.getString("profileImageFilePath");
+                    String certificationPath = rs.getString("certificationFilePath");
+
+                    logger.info("Found rejected record #" + count + ":");
+                    logger.info("  instructorID: " + instructorID);
+                    logger.info("  registerID: " + registerID);
+                    logger.info("  profileImagePath: " + profileImagePath);
+                    logger.info("  certificationPath: " + certificationPath);
+
+                    // 2. Hapuskan file-file fizikal jika ada
+                    deletePhysicalFiles(profileImagePath, certificationPath);
+
+                    // 3. Hapuskan dari table class_confirmation (jika ada)
+                    String deleteConfirmationSql = "DELETE FROM class_confirmation WHERE instructorID = ?";
+                    try (PreparedStatement deleteConfStmt = conn.prepareStatement(deleteConfirmationSql)) {
+                        deleteConfStmt.setInt(1, instructorID);
+                        int deletedConf = deleteConfStmt.executeUpdate();
+                        if (deletedConf > 0) {
+                            logger.info("  Deleted " + deletedConf + " class confirmation records");
+                        }
+                    }
+
+                    // 4. Hapuskan dari table feedback (jika ada)
+                    String deleteFeedbackSql = "DELETE FROM feedback WHERE instructorID = ?";
+                    try (PreparedStatement deleteFeedbackStmt = conn.prepareStatement(deleteFeedbackSql)) {
+                        deleteFeedbackStmt.setInt(1, instructorID);
+                        int deletedFeedback = deleteFeedbackStmt.executeUpdate();
+                        if (deletedFeedback > 0) {
+                            logger.info("  Deleted " + deletedFeedback + " feedback records");
+                        }
+                    }
+
+                    // 5. Hapuskan instructor
+                    String deleteInstructorSql = "DELETE FROM instructor WHERE instructorID = ?";
+                    try (PreparedStatement deleteInstStmt = conn.prepareStatement(deleteInstructorSql)) {
+                        deleteInstStmt.setInt(1, instructorID);
+                        int deletedInst = deleteInstStmt.executeUpdate();
+                        logger.info("  Deleted instructor: " + (deletedInst > 0 ? "SUCCESS" : "FAILED"));
+                    }
+
+                    // 6. Hapuskan registration
+                    String deleteRegistrationSql = "DELETE FROM registration WHERE registerID = ?";
+                    try (PreparedStatement deleteRegStmt = conn.prepareStatement(deleteRegistrationSql)) {
+                        deleteRegStmt.setInt(1, registerID);
+                        int deletedReg = deleteRegStmt.executeUpdate();
+                        logger.info("  Deleted registration: " + (deletedReg > 0 ? "SUCCESS" : "FAILED"));
+                    }
+                }
+
+                if (count == 0) {
+                    logger.info("No rejected records found to delete.");
+                } else {
+                    logger.info("Successfully deleted " + count + " rejected records.");
+                }
+            }
+
+            conn.commit();
+            logger.info("=== DELETE REJECTED RECORDS END (COMMITTED) ===");
+
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE, "✗ ERROR in deleteRejectedRecords: " + e.getMessage(), e);
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                    logger.info("Transaction rolled back due to error.");
+                } catch (SQLException ex) {
+                    logger.log(Level.SEVERE, "Error during rollback: " + ex.getMessage(), ex);
+                }
+            }
+            throw e;
+        } finally {
+            if (deleteStmt != null) {
+                try {
+                    deleteStmt.close();
+                } catch (SQLException e) {
+                    /* ignore */ }
+            }
+            if (conn != null) {
+                try {
+                    conn.setAutoCommit(true);
+                    conn.close();
+                } catch (SQLException e) {
+                    logger.log(Level.WARNING, "Error closing connection: " + e.getMessage(), e);
+                }
+            }
+        }
+    }
+
+    // ========== HELPER METHOD: Delete physical files ==========
+    private void deletePhysicalFiles(String profileImagePath, String certificationPath) {
+        try {
+            if (profileImagePath != null && !profileImagePath.isEmpty()
+                    && !profileImagePath.equals("profile_pictures/instructor/dummy.png")) {
+                // Delete from webapp directory
+                ServletContext context = getServletContext();
+                String webappPath = context.getRealPath("") + profileImagePath;
+                File webappFile = new File(webappPath);
+                if (webappFile.exists()) {
+                    boolean deleted = webappFile.delete();
+                    logger.info("  Deleted profile image (webapp): " + (deleted ? "SUCCESS" : "FAILED"));
+                }
+
+                // Delete from project directory (development)
+                try {
+                    File projectFile = new File("web/" + profileImagePath);
+                    if (projectFile.exists()) {
+                        boolean deleted = projectFile.delete();
+                        logger.info("  Deleted profile image (project): " + (deleted ? "SUCCESS" : "FAILED"));
+                    }
+                } catch (Exception e) {
+                    // Ignore if project path doesn't exist
+                }
+            }
+
+            if (certificationPath != null && !certificationPath.isEmpty()
+                    && !certificationPath.equals("certifications/instructor/dummy.pdf")) {
+                // Delete from webapp directory
+                ServletContext context = getServletContext();
+                String webappPath = context.getRealPath("") + certificationPath;
+                File webappFile = new File(webappPath);
+                if (webappFile.exists()) {
+                    boolean deleted = webappFile.delete();
+                    logger.info("  Deleted certification (webapp): " + (deleted ? "SUCCESS" : "FAILED"));
+                }
+
+                // Delete from project directory (development)
+                try {
+                    File projectFile = new File("web/" + certificationPath);
+                    if (projectFile.exists()) {
+                        boolean deleted = projectFile.delete();
+                        logger.info("  Deleted certification (project): " + (deleted ? "SUCCESS" : "FAILED"));
+                    }
+                } catch (Exception e) {
+                    // Ignore if project path doesn't exist
+                }
+            }
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Error deleting physical files: " + e.getMessage(), e);
+        }
+    }
+
+    // ========== UPDATED REGISTRATION METHOD - WITH REJECTED RECORDS DELETION ==========
+    private void processNewRegistration(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         logger.info("\n=== REGISTRATION START ===");
@@ -235,7 +640,19 @@ public class RegistrationServlet extends HttpServlet {
                 throw new Exception("NRIC must be 12 digits.");
             }
 
-            // Check existing data
+            // TAMBAH: Delete rejected records TERLEBIH DAHULU untuk instructor
+            if ("instructor".equals(userType)) {
+                try {
+                    logger.info("Deleting rejected records for instructor...");
+                    deleteRejectedRecords(email, username, nric);
+                    logger.info("✓ Rejected records deletion completed for: " + email);
+                } catch (SQLException e) {
+                    logger.log(Level.WARNING, "⚠ Warning in rejected records deletion: " + e.getMessage(), e);
+                    // Jangan throw exception, continue dengan registration biasa
+                }
+            }
+
+            // Sekarang check existing data (DAOs sudah exclude rejected)
             RegistrationDAO registrationDAO = new RegistrationDAO();
 
             if (registrationDAO.isUsernameTaken(username)) {
@@ -357,11 +774,5 @@ public class RegistrationServlet extends HttpServlet {
         } finally {
             logger.info("=== REGISTRATION END ===\n");
         }
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        response.sendRedirect(request.getContextPath() + "/general/register_account.jsp");
     }
 }

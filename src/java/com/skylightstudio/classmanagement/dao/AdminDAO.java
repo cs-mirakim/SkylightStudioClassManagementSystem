@@ -99,7 +99,7 @@ public class AdminDAO {
 
     // Get admin by username (keep for other uses)
     public Admin getAdminByUsername(String username) throws SQLException {
-        String sql = "SELECT * FROM admin WHERE username = ? AND status = 'active'";
+        String sql = "SELECT * FROM admin WHERE username = ?";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -151,31 +151,50 @@ public class AdminDAO {
 
     // Update admin
     public boolean updateAdmin(Admin admin) throws SQLException {
-        String sql = "UPDATE admin SET name = ?, email = ?, phone = ?, nric = ?, "
+        String sql = "UPDATE admin SET username = ?, name = ?, email = ?, phone = ?, nric = ?, "
                 + "profileImageFilePath = ?, BOD = ?, certificationFilePath = ?, "
                 + "address = ?, status = ? WHERE adminID = ?";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, admin.getName());
-            stmt.setString(2, admin.getEmail());
-            stmt.setString(3, admin.getPhone());
-            stmt.setString(4, admin.getNric());
-            stmt.setString(5, admin.getProfileImageFilePath());
+            // TAMBAH: username sebagai parameter pertama
+            stmt.setString(1, admin.getUsername());
+            stmt.setString(2, admin.getName());
+            stmt.setString(3, admin.getEmail());
+            stmt.setString(4, admin.getPhone());
+            stmt.setString(5, admin.getNric());
+            stmt.setString(6, admin.getProfileImageFilePath());
 
             if (admin.getBod() != null) {
-                stmt.setDate(6, admin.getBod());
+                stmt.setDate(7, admin.getBod());
             } else {
-                stmt.setNull(6, Types.DATE);
+                stmt.setNull(7, Types.DATE);
             }
 
-            stmt.setString(7, admin.getCertificationFilePath());
-            stmt.setString(8, admin.getAddress());
-            stmt.setString(9, admin.getStatus());
-            stmt.setInt(10, admin.getAdminID());
+            stmt.setString(8, admin.getCertificationFilePath());
+            stmt.setString(9, admin.getAddress());
+            stmt.setString(10, admin.getStatus());
+            stmt.setInt(11, admin.getAdminID());
 
             return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean isUsernameExists(String username, int excludeAdminID) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM admin WHERE username = ? AND adminID != ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, username);
+            stmt.setInt(2, excludeAdminID);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+            return false;
         }
     }
 

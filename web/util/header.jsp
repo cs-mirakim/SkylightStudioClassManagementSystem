@@ -10,31 +10,47 @@
     }
 
     // Get user info from session
-    String userName = SessionUtil.getUserName(session);
     String userRole = SessionUtil.getUserRole(session);
-    String userEmail = SessionUtil.getUserEmail(session);
     Integer userId = SessionUtil.getUserId(session);
+    String userEmail = SessionUtil.getUserEmail(session);
+
+    // Initialize username and name
+    String userName = "";
+    String username = "";
+
+    // Get user object based on role
+    Admin admin = null;
+    Instructor instructor = null;
+
+    if ("admin".equals(userRole)) {
+        admin = SessionUtil.getAdminObject(session);
+        if (admin != null) {
+            userName = admin.getName(); // Full name
+            username = admin.getUsername(); // Username
+        }
+    } else if ("instructor".equals(userRole)) {
+        instructor = SessionUtil.getInstructorObject(session);
+        if (instructor != null) {
+            userName = instructor.getName(); // Full name
+            username = instructor.getUsername(); // Username
+        }
+    }
 
     // Get profile image path
     String profileImagePath = null;
     String avatarLetter = "U";
 
-    if ("admin".equals(userRole)) {
-        Admin admin = SessionUtil.getAdminObject(session);
-        if (admin != null && admin.getProfileImageFilePath() != null) {
-            profileImagePath = "../" + admin.getProfileImageFilePath();
-        }
-        if (userName != null && !userName.isEmpty()) {
-            avatarLetter = userName.substring(0, 1).toUpperCase();
-        }
-    } else if ("instructor".equals(userRole)) {
-        Instructor instructor = SessionUtil.getInstructorObject(session);
-        if (instructor != null && instructor.getProfileImageFilePath() != null) {
-            profileImagePath = "../" + instructor.getProfileImageFilePath();
-        }
-        if (userName != null && !userName.isEmpty()) {
-            avatarLetter = userName.substring(0, 1).toUpperCase();
-        }
+    if (admin != null && admin.getProfileImageFilePath() != null) {
+        profileImagePath = "../" + admin.getProfileImageFilePath();
+    } else if (instructor != null && instructor.getProfileImageFilePath() != null) {
+        profileImagePath = "../" + instructor.getProfileImageFilePath();
+    }
+
+    // Determine avatar letter from username
+    if (username != null && !username.isEmpty()) {
+        avatarLetter = username.substring(0, 1).toUpperCase();
+    } else if (userName != null && !userName.isEmpty()) {
+        avatarLetter = userName.substring(0, 1).toUpperCase();
     }
 
     // Determine inbox badge count (temporary - guna dummy)
@@ -86,7 +102,7 @@
            class="relative p-2 rounded-xl hover:bg-petal/50 transition-all text-espresso/60 hover:text-dusty"
            aria-label="Inbox">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25 2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path>
             </svg>
             <span class="absolute top-2 right-2 bg-dusty text-whitePure text-[8px] font-bold rounded-full h-3.5 w-3.5 flex items-center justify-center ring-2 ring-whitePure">
                 <%= inboxCount%>
@@ -100,8 +116,9 @@
                 <span class="text-[9px] font-bold text-espresso/40 uppercase tracking-tighter">
                     <%= displayRole%>
                 </span>
+                <!-- TUKAR: Dari "Hi, [Full Name]" kepada "Hi, [Username]" -->
                 <span class="text-sm font-bold text-espresso group-hover:text-dusty transition-colors">
-                    Hi, <%= userName != null ? userName : "User"%>
+                    Hi, <%= username != null ? username : (userName != null ? userName : "User")%>
                 </span>
             </div>
             <div class="w-9 h-9 bg-blush text-dusty rounded-lg flex items-center justify-center text-sm font-black shadow-sm ring-1 ring-dusty/10 transition-colors group-hover:bg-dusty group-hover:text-whitePure overflow-hidden">

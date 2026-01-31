@@ -45,7 +45,7 @@ public class ProfileServlet extends HttpServlet {
         }
     }
 
-    // ========== UNIFIED FILE SAVING METHOD (SAMA SEPERTI REGISTRATION) ==========
+    // ========== UNIFIED FILE SAVING METHOD ==========
     private String saveUploadedFile(Part filePart, HttpServletRequest request,
             String username, String fileType, String userRole) throws IOException {
 
@@ -304,13 +304,13 @@ public class ProfileServlet extends HttpServlet {
         }
 
         // Get form parameters
+        String username = request.getParameter("username");
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
         String nric = request.getParameter("nric");
         String bodStr = request.getParameter("bod");
         String address = request.getParameter("address");
-        String status = request.getParameter("status");
 
         // Get file parts
         Part profileImagePart = request.getPart("profileImage");
@@ -320,6 +320,22 @@ public class ProfileServlet extends HttpServlet {
         String currentPassword = request.getParameter("currentPassword");
         String newPassword = request.getParameter("newPassword");
         String confirmPassword = request.getParameter("confirmPassword");
+
+        // Validate username uniqueness across BOTH tables (admin & instructor)
+        if (!username.equals(admin.getUsername())) {
+            // Check in admin table (exclude current admin)
+            Admin existingAdmin = adminDAO.getAdminByUsername(username);
+            if (existingAdmin != null && existingAdmin.getAdminID() != userId) {
+                throw new Exception("Username already taken by another admin");
+            }
+
+            // Check in instructor table
+            InstructorDAO instructorDAO = new InstructorDAO();
+            Instructor existingInstructor = instructorDAO.getInstructorByUsername(username);
+            if (existingInstructor != null) {
+                throw new Exception("Username already taken by an instructor");
+            }
+        }
 
         // Validate email uniqueness (if changed)
         if (!email.equals(currentEmail)) {
@@ -365,7 +381,7 @@ public class ProfileServlet extends HttpServlet {
 
             // Save new profile image USING THE SAME METHOD
             profileImagePath = saveUploadedFile(profileImagePart, request,
-                    admin.getUsername(), "profile", "admin");
+                    username, "profile", "admin");
 
             // Update only if new file was saved
             if (profileImagePath != null) {
@@ -384,7 +400,7 @@ public class ProfileServlet extends HttpServlet {
 
             // Save new certification USING THE SAME METHOD
             certificationPath = saveUploadedFile(certificationPart, request,
-                    admin.getUsername(), "certification", "admin");
+                    username, "certification", "admin");
 
             // Update only if new file was saved
             if (certificationPath != null) {
@@ -413,15 +429,17 @@ public class ProfileServlet extends HttpServlet {
         }
 
         // Update admin object
+        admin.setUsername(username);
         admin.setName(name);
         admin.setEmail(email);
         admin.setPhone(phone);
         admin.setNric(nric);
         admin.setBod(bod);
         admin.setAddress(address);
-        admin.setStatus(status);
+        // Note: Status removed - not editable by user
 
         logger.info("Updating admin with data:");
+        logger.info("Username: " + username);
         logger.info("Name: " + name);
         logger.info("Email: " + email);
         logger.info("BOD: " + bod);
@@ -454,13 +472,13 @@ public class ProfileServlet extends HttpServlet {
         }
 
         // Get form parameters
+        String username = request.getParameter("username");
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String phone = request.getParameter("phone");
         String nric = request.getParameter("nric");
         String bodStr = request.getParameter("bod");
         String address = request.getParameter("address");
-        String status = request.getParameter("status");
         String yearOfExperienceStr = request.getParameter("yearOfExperience");
 
         // Get file parts
@@ -471,6 +489,22 @@ public class ProfileServlet extends HttpServlet {
         String currentPassword = request.getParameter("currentPassword");
         String newPassword = request.getParameter("newPassword");
         String confirmPassword = request.getParameter("confirmPassword");
+
+        // Validate username uniqueness across BOTH tables (admin & instructor)
+        if (!username.equals(instructor.getUsername())) {
+            // Check in instructor table (exclude current instructor)
+            Instructor existingInstructor = instructorDAO.getInstructorByUsername(username);
+            if (existingInstructor != null && existingInstructor.getInstructorID() != userId) {
+                throw new Exception("Username already taken by another instructor");
+            }
+
+            // Check in admin table
+            AdminDAO adminDAO = new AdminDAO();
+            Admin existingAdmin = adminDAO.getAdminByUsername(username);
+            if (existingAdmin != null) {
+                throw new Exception("Username already taken by an admin");
+            }
+        }
 
         // Validate email uniqueness (if changed)
         if (!email.equals(currentEmail)) {
@@ -516,7 +550,7 @@ public class ProfileServlet extends HttpServlet {
 
             // Save new profile image USING THE SAME METHOD
             profileImagePath = saveUploadedFile(profileImagePart, request,
-                    instructor.getUsername(), "profile", "instructor");
+                    username, "profile", "instructor");
 
             // Update only if new file was saved
             if (profileImagePath != null) {
@@ -535,7 +569,7 @@ public class ProfileServlet extends HttpServlet {
 
             // Save new certification USING THE SAME METHOD
             certificationPath = saveUploadedFile(certificationPart, request,
-                    instructor.getUsername(), "certification", "instructor");
+                    username, "certification", "instructor");
 
             // Update only if new file was saved
             if (certificationPath != null) {
@@ -575,6 +609,7 @@ public class ProfileServlet extends HttpServlet {
         }
 
         // Update instructor object
+        instructor.setUsername(username);
         instructor.setName(name);
         instructor.setEmail(email);
         instructor.setPhone(phone);
@@ -582,9 +617,10 @@ public class ProfileServlet extends HttpServlet {
         instructor.setBod(bod);
         instructor.setYearOfExperience(yearOfExperience);
         instructor.setAddress(address);
-        instructor.setStatus(status);
+        // Note: Status removed - not editable by user
 
         logger.info("Updating instructor with data:");
+        logger.info("Username: " + username);
         logger.info("Name: " + name);
         logger.info("Email: " + email);
         logger.info("BOD: " + bod);
