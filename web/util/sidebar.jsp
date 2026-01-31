@@ -1,4 +1,25 @@
-<%-- sidebar.jsp --%>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+
+<%
+    // Check if user is logged in
+    if (!SessionUtil.isLoggedIn(session)) {
+        response.sendRedirect("../general/login.jsp");
+        return;
+    }
+
+    // Get user role from session
+    String userRole = SessionUtil.getUserRole(session);
+    String userName = SessionUtil.getUserName(session);
+
+    // Determine display role text
+    String displayRole = "User";
+    if ("admin".equals(userRole)) {
+        displayRole = "Admin";
+    } else if ("instructor".equals(userRole)) {
+        displayRole = "Instructor";
+    }
+%>
+
 <div id="sidebar-overlay" class="fixed inset-0 bg-espresso/40 backdrop-blur-sm hidden z-40" aria-hidden="true"></div>
 
 <aside id="sidebar"
@@ -19,24 +40,34 @@
             <legend class="px-2 text-[10px] font-bold uppercase tracking-widest text-espresso/40">User Type</legend>
             <div class="flex gap-4 mt-1 px-1">
                 <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-espresso/70">
-                    <input type="radio" name="sidebar_role" value="admin" checked class="w-4 h-4 accent-dusty"/>
+                    <input type="radio" name="sidebar_role" value="admin" 
+                           <%= "admin".equals(userRole) ? "checked" : ""%>
+                           class="w-4 h-4 accent-dusty" disabled/>
                     <span>ADMIN</span>
                 </label>
                 <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-espresso/70">
-                    <input type="radio" name="sidebar_role" value="instructor" class="w-4 h-4 accent-dusty"/>
+                    <input type="radio" name="sidebar_role" value="instructor"
+                           <%= "instructor".equals(userRole) ? "checked" : ""%>
+                           class="w-4 h-4 accent-dusty" disabled/>
                     <span>INSTRUCTOR</span>
                 </label>
+            </div>
+            <div class="mt-2 text-center">
+                <span class="text-xs text-espresso/60">
+                    Logged in as: <strong><%= userName != null ? userName : "User"%></strong>
+                </span>
             </div>
         </fieldset>
     </div>
 
     <nav id="sidebar-menu" class="flex-1 overflow-y-auto custom-scrollbar" aria-label="Sidebar navigation">
+        <!-- Menu akan di-render oleh sidebar.js -->
     </nav>
 
     <div class="p-4 border-t border-petal flex-shrink-0 bg-cloud/50">
         <button id="sidebar-logout"
-           class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-dusty text-whitePure font-bold hover:bg-dustyHover transition-all shadow-lg shadow-dusty/20 active:scale-[0.98]"
-           title="Logout">
+                class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl bg-dusty text-whitePure font-bold hover:bg-dustyHover transition-all shadow-lg shadow-dusty/20 active:scale-[0.98]"
+                title="Logout">
             Logout
         </button>
     </div>
@@ -61,7 +92,7 @@
             </p>
             <div class="flex items-center gap-2 p-3 rounded-lg bg-cloud/50 border border-petal">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-dusty flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
                 <p class="text-xs text-espresso/70">
                     Your session will be terminated and you'll need to login again.
@@ -71,6 +102,10 @@
 
         <!-- Buttons -->
         <div class="flex flex-col gap-2">
+            <form id="logoutForm" action="<%= request.getContextPath()%>/authenticate" method="GET" style="display: none;">
+                <input type="hidden" name="action" value="logout">
+            </form>
+
             <button onclick="performLogout()"
                     class="w-full bg-dusty hover:bg-dustyHover text-whitePure p-3 rounded-lg font-medium transition-colors">
                 Yes, Logout
@@ -95,72 +130,38 @@
 </style>
 
 <script>
-    // Logout functions langsung dalam sidebar.jsp
+    // Logout functions
     function openLogoutModal() {
         document.getElementById('logoutModal').classList.remove('hidden');
     }
-    
+
     function closeLogoutModal() {
         document.getElementById('logoutModal').classList.add('hidden');
     }
-    
+
     function performLogout() {
-        // Clear client-side storage
-        clearSessionData();
-        
-        // Create a form to submit logout request
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '../general/login.jsp'; // You can change this to your actual logout endpoint
-        
-        // Add CSRF token if needed
-        const csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = 'csrf_token';
-        csrfToken.value = getCsrfToken(); // Implement this function if you have CSRF protection
-        form.appendChild(csrfToken);
-        
-        document.body.appendChild(form);
-        form.submit();
-        
-        // For demo purposes, redirect to login page
-        // window.location.href = '../general/login.jsp';
+        // Submit logout form yang guna AuthenticationServlet
+        document.getElementById('logoutForm').submit();
     }
-    
-    function clearSessionData() {
-        // Clear any localStorage items
-        localStorage.removeItem('sessionToken');
-        localStorage.removeItem('userData');
-        localStorage.removeItem('lastLogin');
-        
-        // Clear any sessionStorage items
-        sessionStorage.clear();
-    }
-    
-    function getCsrfToken() {
-        // If you have CSRF protection, implement this function
-        // For example: return document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        return '';
-    }
-    
+
     // Event listeners for logout modal
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const logoutBtn = document.getElementById('sidebar-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', openLogoutModal);
         }
-        
+
         // Close modal with Escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeLogoutModal();
             }
         });
-        
+
         // Close modal when clicking outside
         const logoutModal = document.getElementById('logoutModal');
         if (logoutModal) {
-            logoutModal.addEventListener('click', function(e) {
+            logoutModal.addEventListener('click', function (e) {
                 if (e.target.id === 'logoutModal') {
                     closeLogoutModal();
                 }

@@ -1,4 +1,18 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%
+    // Check if user is instructor
+    if (!SessionUtil.checkInstructorAccess(session)) {
+        // Always redirect to login with appropriate message
+        if (!SessionUtil.isLoggedIn(session)) {
+            response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
+        } else {
+            // If logged in but not instructor
+            response.sendRedirect("../general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
+        }
+        return;
+    }
+%>
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -8,10 +22,10 @@
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-        
+
         <!-- Font Awesome for icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-        
+
         <!-- Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
 
@@ -88,9 +102,9 @@
                             <span class="absolute -top-2 -right-2 bg-dangerText text-whitePure text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
                         </div>
                     </div>
-                    
+
                     <!-- Removed filter tabs -->
-                    
+
                     <div class="notification-scroll space-y-3 max-h-80 overflow-y-auto pr-2">
                         <!-- Notification 1: New Class Created -->
                         <div class="p-4 rounded-lg bg-infoBg/5 border border-infoBg/20 status-unread notification-item">
@@ -120,7 +134,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Notification 2: Class Reminder -->
                         <div class="p-4 rounded-lg bg-blush/10 border border-blush/20 notification-item">
                             <div class="flex items-start">
@@ -151,7 +165,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Notification 3: Admin Cancellation -->
                         <div class="p-4 rounded-lg bg-dangerBg/5 border border-dangerBg/20 status-unread notification-item">
                             <div class="flex items-start">
@@ -180,7 +194,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Notification 4: Pending Update -->
                         <div class="p-4 rounded-lg bg-warningBg/5 border border-warningBg/20 status-unread notification-item">
                             <div class="flex items-start">
@@ -209,7 +223,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Notification 5: Tomorrow's Class -->
                         <div class="p-4 rounded-lg bg-successBg/5 border border-successBg/20 notification-item">
                             <div class="flex items-start">
@@ -242,7 +256,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- View all link -->
                     <div class="mt-6 pt-4 border-t border-blush">
                         <a href="#" 
@@ -259,22 +273,22 @@
 
         <!-- Footer -->
         <jsp:include page="../util/footer.jsp" />
-        
+
         <!-- Sidebar -->
         <jsp:include page="../util/sidebar.jsp" />
         <script src="../util/sidebar.js"></script>
 
         <script>
             // Highlight current page in sidebar
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 highlightCurrentPage();
             });
-            
+
             function highlightCurrentPage() {
                 // Highlight current page in sidebar
                 const currentPage = 'inboxMessages_instructor.jsp';
                 const sidebarLinks = document.querySelectorAll('#sidebar a');
-                
+
                 sidebarLinks.forEach(link => {
                     const href = link.getAttribute('href');
                     if (href && href.includes(currentPage)) {
