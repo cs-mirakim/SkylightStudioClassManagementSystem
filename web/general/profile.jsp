@@ -3,6 +3,7 @@
 <%@ page import="com.skylightstudio.classmanagement.model.Instructor" %>
 <%@ page import="java.text.SimpleDateFormat" %>
 <%@ page import="java.util.Date" %>
+<%@ page import="java.io.File" %>
 
 <%
     // Check if user is logged in
@@ -93,7 +94,29 @@
     // Default profile image if none
     String profileImageDisplay = "";
     if (profileImagePath != null && !profileImagePath.isEmpty()) {
-        profileImageDisplay = "../" + profileImagePath;
+        // Check if file exists before setting display path
+        try {
+            String realPath = application.getRealPath("/");
+            String fullPath = realPath + profileImagePath;
+            File profileFile = new File(fullPath);
+            if (profileFile.exists()) {
+                profileImageDisplay = request.getContextPath() + "/" + profileImagePath;
+            } else {
+                // Generate initial letter for avatar if file doesn't exist
+                String avatarLetter = "U";
+                if (name != null && !name.isEmpty()) {
+                    avatarLetter = name.substring(0, 1).toUpperCase();
+                }
+                profileImageDisplay = "https://via.placeholder.com/200x200?text=" + avatarLetter;
+            }
+        } catch (Exception e) {
+            // Generate initial letter for avatar
+            String avatarLetter = "U";
+            if (name != null && !name.isEmpty()) {
+                avatarLetter = name.substring(0, 1).toUpperCase();
+            }
+            profileImageDisplay = "https://via.placeholder.com/200x200?text=" + avatarLetter;
+        }
     } else {
         // Generate initial letter for avatar
         String avatarLetter = "U";
@@ -101,6 +124,24 @@
             avatarLetter = name.substring(0, 1).toUpperCase();
         }
         profileImageDisplay = "https://via.placeholder.com/200x200?text=" + avatarLetter;
+    }
+
+    // Check if certification file exists
+    boolean certificationExists = false;
+    String certificationDisplayPath = "";
+    if (certificationPath != null && !certificationPath.isEmpty()) {
+        try {
+            String realPath = application.getRealPath("/");
+            String fullPath = realPath + certificationPath;
+            File certFile = new File(fullPath);
+            if (certFile.exists()) {
+                certificationExists = true;
+                certificationDisplayPath = request.getContextPath() + "/" + certificationPath;
+            }
+        } catch (Exception e) {
+            // File doesn't exist or can't be accessed
+            certificationExists = false;
+        }
     }
 
     // Check if in edit mode
@@ -118,11 +159,13 @@
 <html lang="en">
     <head>
         <title>My Profile - Skylight Studio</title>
+        <meta charset="UTF-8">
 
         <!-- Font Roboto -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
         <!-- Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
 
@@ -177,6 +220,33 @@
                 }
             }
         </script>
+
+        <style>
+            /* Modal Responsiveness */
+            @media (max-width: 768px) {
+                #certModal > div {
+                    margin: 0.5rem;
+                    max-height: 90vh;
+                    max-width: 95vw;
+                }
+            }
+
+            /* Ensure iframe takes full space */
+            .pdf-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                background: white;
+            }
+
+            /* Image preview styling */
+            .img-preview {
+                max-width: 100%;
+                height: auto;
+                max-height: 70vh;
+                object-fit: contain;
+            }
+        </style>
     </head>
 
     <body class="bg-cloud font-sans text-espresso flex flex-col min-h-screen">
@@ -213,7 +283,7 @@
                             <a href="?edit=true"
                                class="px-4 py-2 bg-dusty hover:bg-dustyHover text-whitePure rounded-lg font-medium transition-colors text-sm flex items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2v5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                                 Edit Profile
                             </a>
@@ -288,8 +358,8 @@
                                     <img id="profilePreview" 
                                          src="<%= profileImageDisplay%>" 
                                          alt="Profile Image" 
-                                         class="w-full h-full object-cover" 
-                                         onerror="this.src='https://via.placeholder.com/200x200?text=No+Image'" />
+                                         class="w-full h-full object-cover"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/200x200?text=No+Image';" />
                                 </div>
 
                                 <% if (editMode) { %>
@@ -329,6 +399,21 @@
                                     <% } else {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
                                         <%= name%>
+                                    </div>
+                                    <% } %>
+                                </div>
+
+                                <div>
+                                    <label for="username" class="block text-sm font-medium mb-1 text-espresso">
+                                        Username
+                                    </label>
+                                    <% if (editMode) {%>
+                                    <input id="username" name="username" type="text" required
+                                           value="<%= username%>"
+                                           class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
+                                    <% } else {%>
+                                    <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
+                                        <%= username%>
                                     </div>
                                     <% } %>
                                 </div>
@@ -422,16 +507,7 @@
                             </h3>
 
                             <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-1 text-espresso">
-                                        Username
-                                    </label>
-                                    <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
-                                        <%= username%>
-                                    </div>
-                                    <p class="text-xs text-espresso/70 mt-1">Username cannot be changed</p>
-                                </div>
-
+                                <!-- User ID - TAK BOLEH EDIT -->
                                 <div>
                                     <label class="block text-sm font-medium mb-1 text-espresso">
                                         User ID
@@ -441,6 +517,7 @@
                                     </div>
                                 </div>
 
+                                <!-- Date Joined - TAK BOLEH EDIT -->
                                 <div>
                                     <label class="block text-sm font-medium mb-1 text-espresso">
                                         Date Joined
@@ -450,21 +527,14 @@
                                     </div>
                                 </div>
 
+                                <!-- Role - TAK BOLEH EDIT -->
                                 <div>
-                                    <label for="status" class="block text-sm font-medium mb-1 text-espresso">
-                                        Account Status
+                                    <label class="block text-sm font-medium mb-1 text-espresso">
+                                        Role
                                     </label>
-                                    <% if (editMode) {%>
-                                    <select id="status" name="status"
-                                            class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition">
-                                        <option value="active" <%= "active".equals(status) ? "selected" : ""%>>Active</option>
-                                        <option value="inactive" <%= "inactive".equals(status) ? "selected" : ""%>>Inactive</option>
-                                    </select>
-                                    <% } else {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg text-espresso">
-                                        <%= status.substring(0, 1).toUpperCase() + status.substring(1)%>
+                                        <%= userRole.equals("admin") ? "Administrator" : "Instructor"%>
                                     </div>
-                                    <% } %>
                                 </div>
                             </div>
                         </div>
@@ -507,17 +577,29 @@
                                     <label class="block text-sm font-medium mb-1 text-espresso">
                                         Current Document
                                     </label>
-                                    <% if (certificationPath != null && !certificationPath.isEmpty()) {%>
+                                    <% if (certificationExists) {%>
                                     <div class="p-3 bg-cloud border border-blush rounded-lg">
                                         <div class="flex justify-between items-center">
                                             <span class="text-espresso truncate">
                                                 <%= certificationFileName%>
                                             </span>
                                             <button type="button" 
-                                                    onclick="openCertificationModal('<%= "../" + certificationPath%>', '<%= certificationFileName%>')"
-                                                    class="text-dusty hover:text-dustyHover font-medium text-sm">
-                                                View
+                                                    onclick="viewCertification('<%= certificationDisplayPath%>', '<%= certificationFileName%>')"
+                                                    class="px-3 py-1.5 bg-teal hover:bg-tealHover text-whitePure rounded-lg font-medium transition-colors text-sm flex items-center gap-2">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                </svg>
+                                                View Document
                                             </button>
+                                        </div>
+                                    </div>
+                                    <% } else if (certificationPath != null && !certificationPath.isEmpty()) {%>
+                                    <div class="p-3 bg-cloud border border-blush rounded-lg">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-espresso/60 truncate">
+                                                <%= certificationFileName%> (File not found)
+                                            </span>
                                         </div>
                                     </div>
                                     <% } else { %>
@@ -540,7 +622,7 @@
                                         Accepted formats: PDF, JPG, PNG, DOC (Max: 5MB)
                                     </p>
                                 </div>
-                                <% } else if (certificationPath == null || certificationPath.isEmpty()) { %>
+                                <% } else if (!certificationExists) { %>
                                 <p class="text-sm text-espresso/70">
                                     Click "Edit Profile" to upload a document
                                 </p>
@@ -620,38 +702,42 @@
 
         </main>
 
-        <!-- Certification Modal -->
-        <div id="certificationModal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
-            <div class="bg-whitePure rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-                <!-- Modal Header -->
-                <div class="flex items-center justify-between p-6 border-b border-petal">
-                    <h3 class="text-xl font-semibold text-espresso" id="modalTitle">Document Preview</h3>
-                    <button onclick="closeCertificationModal()" 
-                            class="p-2 rounded-full hover:bg-blush text-espresso/60 hover:text-espresso transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+        <!-- SIMPLE CERTIFICATION VIEWER MODAL -->
+        <div id="certModal" class="fixed inset-0 z-[70] hidden">
+            <div class="fixed inset-0 bg-black/70" onclick="closeCert()"></div>
 
-                <!-- Modal Content -->
-                <div class="flex-1 overflow-auto p-6" id="modalContent">
-                    <!-- Content will be loaded here -->
-                </div>
+            <div class="fixed inset-0 flex items-center justify-center p-2 sm:p-4">
+                <div class="bg-whitePure rounded-lg shadow-2xl w-full max-w-5xl h-[95vh] flex flex-col">
 
-                <!-- Modal Footer -->
-                <div class="p-4 border-t border-petal flex justify-end gap-3">
-                    <a id="downloadLink" href="#" target="_blank"
-                       class="px-4 py-2 bg-teal hover:bg-tealHover text-whitePure rounded-lg font-medium transition-colors text-sm flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Download
-                    </a>
-                    <button onclick="closeCertificationModal()"
-                            class="px-4 py-2 bg-cloud hover:bg-blush text-espresso rounded-lg font-medium transition-colors text-sm border border-blush">
-                        Close
-                    </button>
+                    <div class="flex items-center justify-between p-4 border-b border-blush">
+                        <h3 id="certModalTitle" class="text-lg font-semibold text-espresso">Document Viewer</h3>
+                        <button onclick="closeCert()" class="text-espresso/40 hover:text-espresso">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-hidden p-2">
+                        <iframe id="certIframe" class="w-full h-full border-none"></iframe>
+                    </div>
+
+                    <div class="p-4 border-t border-blush flex justify-between items-center">
+                        <div id="fileInfo" class="text-sm text-espresso/70"></div>
+                        <div class="flex gap-3">
+                            <a id="downloadLink" href="#" target="_blank" download
+                               class="px-4 py-2 bg-teal hover:bg-tealHover text-whitePure rounded-lg font-medium transition-colors text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download
+                            </a>
+                            <button onclick="closeCert()"
+                                    class="px-4 py-2 border border-dusty text-dusty rounded-lg hover:bg-blush transition-colors">
+                                Close
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -661,244 +747,305 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-                        // Preview profile image when new file is selected (only in edit mode)
-                        function previewProfileImage(event) {
-                            const file = event.target.files[0];
-                            if (file) {
-                                // Validate file size (2MB max)
-                                if (file.size > 2 * 1024 * 1024) {
-                                    alert('Profile image must be less than 2MB');
-                                    event.target.value = '';
-                                    return;
-                                }
+                                // Preview profile image when new file is selected (only in edit mode)
+                                function previewProfileImage(event) {
+                                    const file = event.target.files[0];
+                                    if (file) {
+                                        // Validate file size (2MB max)
+                                        if (file.size > 2 * 1024 * 1024) {
+                                            alert('Profile image must be less than 2MB');
+                                            event.target.value = '';
+                                            return;
+                                        }
 
-                                // Validate file type
-                                const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-                                if (!validTypes.includes(file.type)) {
-                                    alert('Only JPG and PNG images are allowed');
-                                    event.target.value = '';
-                                    return;
-                                }
+                                        // Validate file type
+                                        const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+                                        if (!validTypes.includes(file.type)) {
+                                            alert('Only JPG and PNG images are allowed');
+                                            event.target.value = '';
+                                            return;
+                                        }
 
-                                const reader = new FileReader();
-                                reader.onload = function (e) {
-                                    document.getElementById('profilePreview').src = e.target.result;
-                                };
-                                reader.readAsDataURL(file);
-                            }
-                        }
-
-                        // Password validation (only in edit mode)
-                        function validatePassword() {
-                            const currentPassword = document.getElementById('currentPassword');
-                            const newPassword = document.getElementById('newPassword');
-                            const confirmPassword = document.getElementById('confirmPassword');
-                            const feedback = document.getElementById('passwordFeedback');
-
-                            if (!currentPassword || !newPassword || !confirmPassword)
-                                return true;
-
-                            // Check if any password field is filled
-                            const anyFilled = currentPassword.value || newPassword.value || confirmPassword.value;
-
-                            if (!anyFilled) {
-                                feedback.textContent = 'Leave password fields empty if you don\'t want to change password';
-                                feedback.className = 'text-xs mt-2 text-espresso/70';
-                                return true;
-                            }
-
-                            // All password fields must be filled
-                            if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
-                                feedback.textContent = 'Please fill all password fields to change password';
-                                feedback.className = 'text-xs mt-2 text-warningText';
-                                return false;
-                            }
-
-                            if (newPassword.value.length < 6) {
-                                feedback.textContent = 'New password must be at least 6 characters';
-                                feedback.className = 'text-xs mt-2 text-warningText';
-                                return false;
-                            }
-
-                            if (newPassword.value !== confirmPassword.value) {
-                                feedback.textContent = 'New passwords do not match';
-                                feedback.className = 'text-xs mt-2 text-dangerText';
-                                return false;
-                            }
-
-                            feedback.textContent = 'Passwords valid ?';
-                            feedback.className = 'text-xs mt-2 text-successTextDark';
-                            return true;
-                        }
-
-                        // File size validation
-                        function validateFileSize(fileInput, maxSizeMB, fieldName) {
-                            if (fileInput && fileInput.files.length > 0) {
-                                const fileSize = fileInput.files[0].size / 1024 / 1024; // in MB
-                                if (fileSize > maxSizeMB) {
-                                    alert(fieldName + ' must be less than ' + maxSizeMB + 'MB');
-                                    fileInput.value = '';
-                                    return false;
-                                }
-
-                                // Validate file types
-                                const file = fileInput.files[0];
-                                const fileName = file.name.toLowerCase();
-
-                                if (fileInput.id === 'profileImageInput') {
-                                    if (!fileName.match(/\.(jpg|jpeg|png)$/)) {
-                                        alert('Profile image must be JPG or PNG format');
-                                        fileInput.value = '';
-                                        return false;
-                                    }
-                                } else if (fileInput.id === 'certificationInput') {
-                                    if (!fileName.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/)) {
-                                        alert('Document must be PDF, JPG, PNG, DOC, or DOCX format');
-                                        fileInput.value = '';
-                                        return false;
+                                        const reader = new FileReader();
+                                        reader.onload = function (e) {
+                                            document.getElementById('profilePreview').src = e.target.result;
+                                        };
+                                        reader.readAsDataURL(file);
                                     }
                                 }
-                            }
-                            return true;
-                        }
 
-                        // Certification Modal functions
-                        function openCertificationModal(fileUrl, fileName) {
-                            document.getElementById('modalTitle').textContent = fileName;
-                            document.getElementById('downloadLink').href = fileUrl;
+                                // Password validation (only in edit mode)
+                                function validatePassword() {
+                                    const currentPassword = document.getElementById('currentPassword');
+                                    const newPassword = document.getElementById('newPassword');
+                                    const confirmPassword = document.getElementById('confirmPassword');
+                                    const feedback = document.getElementById('passwordFeedback');
 
-                            const modalContent = document.getElementById('modalContent');
-                            const fileExt = fileName.split('.').pop().toLowerCase();
+                                    if (!currentPassword || !newPassword || !confirmPassword)
+                                        return true;
 
-                            if (fileExt === 'pdf') {
-                                // Show PDF embed
-                                modalContent.innerHTML = `
-                        <div class="w-full h-[70vh]">
-                            <embed src="${fileUrl}" type="application/pdf" width="100%" height="100%" />
-                            <p class="text-xs text-espresso/70 mt-2 text-center">
-                                If PDF doesn't load, <a href="${fileUrl}" target="_blank" class="text-dusty hover:underline">click here to open</a>
-                            </p>
-                        </div>
-                    `;
-                            } else if (['jpg', 'jpeg', 'png'].includes(fileExt)) {
-                                // Show image
-                                modalContent.innerHTML = `
-                        <div class="flex justify-center">
-                            <img src="${fileUrl}" alt="${fileName}" class="max-w-full max-h-[70vh] object-contain rounded-lg" />
-                        </div>
-                    `;
-                            } else {
-                                // Show download link for other formats
-                                modalContent.innerHTML = `
-                        <div class="text-center p-8">
-                            <svg class="w-16 h-16 mx-auto text-dusty mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            <h4 class="text-lg font-medium text-espresso mb-2">Document Preview Not Available</h4>
-                            <p class="text-espresso/70 mb-4">This document format cannot be previewed in browser.</p>
-                            <p class="text-sm text-espresso/70">Please download the file to view it.</p>
-                        </div>
-                    `;
-                            }
+                                    // Check if any password field is filled
+                                    const anyFilled = currentPassword.value || newPassword.value || confirmPassword.value;
 
-                            document.getElementById('certificationModal').classList.remove('hidden');
-                        }
+                                    if (!anyFilled) {
+                                        feedback.textContent = 'Leave password fields empty if you don\'t want to change password';
+                                        feedback.className = 'text-xs mt-2 text-espresso/70';
+                                        return true;
+                                    }
 
-                        function closeCertificationModal() {
-                            document.getElementById('certificationModal').classList.add('hidden');
-                            document.getElementById('modalContent').innerHTML = '';
-                        }
+                                    // All password fields must be filled
+                                    if (!currentPassword.value || !newPassword.value || !confirmPassword.value) {
+                                        feedback.textContent = 'Please fill all password fields to change password';
+                                        feedback.className = 'text-xs mt-2 text-warningText';
+                                        return false;
+                                    }
 
-                        // Form submission validation
+                                    if (newPassword.value.length < 6) {
+                                        feedback.textContent = 'New password must be at least 6 characters';
+                                        feedback.className = 'text-xs mt-2 text-warningText';
+                                        return false;
+                                    }
+
+                                    if (newPassword.value !== confirmPassword.value) {
+                                        feedback.textContent = 'New passwords do not match';
+                                        feedback.className = 'text-xs mt-2 text-dangerText';
+                                        return false;
+                                    }
+
+                                    feedback.textContent = 'Passwords valid ?';
+                                    feedback.className = 'text-xs mt-2 text-successTextDark';
+                                    return true;
+                                }
+
+                                // File size validation
+                                function validateFileSize(fileInput, maxSizeMB, fieldName) {
+                                    if (fileInput && fileInput.files.length > 0) {
+                                        const fileSize = fileInput.files[0].size / 1024 / 1024; // in MB
+                                        if (fileSize > maxSizeMB) {
+                                            alert(fieldName + ' must be less than ' + maxSizeMB + 'MB');
+                                            fileInput.value = '';
+                                            return false;
+                                        }
+
+                                        // Validate file types
+                                        const file = fileInput.files[0];
+                                        const fileName = file.name.toLowerCase();
+
+                                        if (fileInput.id === 'profileImageInput') {
+                                            if (!fileName.match(/\.(jpg|jpeg|png)$/)) {
+                                                alert('Profile image must be JPG or PNG format');
+                                                fileInput.value = '';
+                                                return false;
+                                            }
+                                        } else if (fileInput.id === 'certificationInput') {
+                                            if (!fileName.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/)) {
+                                                alert('Document must be PDF, JPG, PNG, DOC, or DOCX format');
+                                                fileInput.value = '';
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                    return true;
+                                }
+
+                                // SIMPLE document viewer function - USING IFRAME
+                                function viewCertification(fileUrl, fileName) {
+                                    console.log("Opening document:", fileName, "at URL:", fileUrl);
+
+                                    // Set modal title and download link
+                                    document.getElementById('certModalTitle').textContent = fileName;
+                                    document.getElementById('downloadLink').href = fileUrl;
+                                    document.getElementById('downloadLink').download = fileName;
+
+                                    // Clear previous content
+                                    const iframe = document.getElementById('certIframe');
+                                    const fileInfo = document.getElementById('fileInfo');
+
+                                    // Get file extension
+                                    const fileExt = fileName.split('.').pop().toLowerCase();
+
+                                    // Set file info
+                                    if (fileExt === 'pdf') {
+                                        fileInfo.textContent = 'PDF Document ? Browser Viewer';
+                                    } else if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExt)) {
+                                        fileInfo.textContent = 'Image ? ' + fileName;
+                                    } else if (['doc', 'docx'].includes(fileExt)) {
+                                        fileInfo.textContent = 'Word Document ? Download required';
+                                    } else {
+                                        fileInfo.textContent = fileName + ' ? Download required';
+                                    }
+
+                                    // Set iframe source
+                                    if (['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp'].includes(fileExt)) {
+                                        // Direct view for PDF and images
+                                        iframe.src = fileUrl;
+                                        iframe.style.display = 'block';
+                                    } else {
+                                        // Show message for non-viewable files
+                                        iframe.srcdoc = `
+                                            <!DOCTYPE html>
+                                            <html>
+                                            <head>
+                                                <style>
+                                                    body {
+                                                        font-family: Arial, sans-serif;
+                                                        display: flex;
+                                                        justify-content: center;
+                                                        align-items: center;
+                                                        height: 100vh;
+                                                        margin: 0;
+                                                        background: #f8f9fa;
+                                                    }
+                                                    .message {
+                                                        text-align: center;
+                                                        padding: 40px;
+                                                        background: white;
+                                                        border-radius: 8px;
+                                                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                                                        max-width: 500px;
+                                                    }
+                                                    .icon {
+                                                        font-size: 48px;
+                                                        margin-bottom: 20px;
+                                                        color: #B36D6D;
+                                                    }
+                                                    h3 {
+                                                        color: #3D3434;
+                                                        margin-bottom: 10px;
+                                                    }
+                                                    p {
+                                                        color: #666;
+                                                        margin-bottom: 20px;
+                                                    }
+                                                </style>
+                                            </head>
+                                            <body>
+                                                <div class="message">
+                                                    <div class="icon">?</div>
+                                                    <h3>Preview Not Available</h3>
+                                                    <p>This file format (.${fileExt}) cannot be previewed directly in the browser.</p>
+                                                    <p>Please use the download button to view the file with appropriate software.</p>
+                                                </div>
+                                            </body>
+                                            </html>
+                                        `;
+                                        iframe.style.display = 'block';
+                                    }
+
+                                    // Show modal
+                                    document.getElementById('certModal').classList.remove('hidden');
+                                }
+
+                                function closeCert() {
+                                    document.getElementById('certModal').classList.add('hidden');
+                                    const iframe = document.getElementById('certIframe');
+                                    iframe.src = 'about:blank';
+                                    document.getElementById('fileInfo').textContent = '';
+                                }
+
+                                // Form submission validation
             <% if (editMode) { %>
-                        document.getElementById('profileForm').addEventListener('submit', function (e) {
-                            e.preventDefault();
+                                document.getElementById('profileForm').addEventListener('submit', function (e) {
+                                    e.preventDefault();
 
-                            // Validate file sizes
-                            const profileImage = document.getElementById('profileImageInput');
-                            const certification = document.getElementById('certificationInput');
+                                    // Validate file sizes
+                                    const profileImage = document.getElementById('profileImageInput');
+                                    const certification = document.getElementById('certificationInput');
 
-                            if (!validateFileSize(profileImage, 2, 'Profile image') ||
-                                    !validateFileSize(certification, 5, 'Document')) {
-                                return;
-                            }
+                                    if (!validateFileSize(profileImage, 2, 'Profile image') ||
+                                            !validateFileSize(certification, 5, 'Document')) {
+                                        return;
+                                    }
 
-                            // Validate passwords if entered
-                            if (!validatePassword()) {
-                                return;
-                            }
+                                    // Validate passwords if entered
+                                    if (!validatePassword()) {
+                                        return;
+                                    }
 
-                            // Validate NRIC format
-                            const nric = document.getElementById('nric');
-                            if (nric && nric.value && !nric.value.match(/^\d{12}$/)) {
-                                alert('NRIC must be exactly 12 digits without dashes');
-                                nric.focus();
-                                return;
-                            }
+                                    // Validate username uniqueness (will be checked on server)
+                                    const usernameInput = document.getElementById('username');
+                                    if (usernameInput && usernameInput.value.trim().length < 3) {
+                                        alert('Username must be at least 3 characters');
+                                        usernameInput.focus();
+                                        return;
+                                    }
 
-                            // Validate date of birth (optional)
-                            const bod = document.getElementById('bod');
-                            if (bod && bod.value) {
-                                const birthDate = new Date(bod.value);
-                                const today = new Date();
-                                let age = today.getFullYear() - birthDate.getFullYear();
-                                const monthDiff = today.getMonth() - birthDate.getMonth();
-                                if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                                    age--;
-                                }
+                                    // Validate NRIC format
+                                    const nric = document.getElementById('nric');
+                                    if (nric && nric.value && !nric.value.match(/^\d{12}$/)) {
+                                        alert('NRIC must be exactly 12 digits without dashes');
+                                        nric.focus();
+                                        return;
+                                    }
 
-                                if (age < 18) {
-                                    alert('You must be at least 18 years old');
-                                    bod.focus();
-                                    return;
-                                }
-                            }
+                                    // Validate date of birth (optional)
+                                    const bod = document.getElementById('bod');
+                                    if (bod && bod.value) {
+                                        const birthDate = new Date(bod.value);
+                                        const today = new Date();
+                                        let age = today.getFullYear() - birthDate.getFullYear();
+                                        const monthDiff = today.getMonth() - birthDate.getMonth();
+                                        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                                            age--;
+                                        }
 
-                            // Validate email format
-                            const email = document.getElementById('email');
-                            if (email && email.value) {
-                                const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                                if (!emailPattern.test(email.value)) {
-                                    alert('Please enter a valid email address');
-                                    email.focus();
-                                    return;
-                                }
-                            }
+                                        if (age < 18) {
+                                            alert('You must be at least 18 years old');
+                                            bod.focus();
+                                            return;
+                                        }
+                                    }
 
-                            // Show confirmation dialog
-                            if (confirm('Are you sure you want to save all changes?')) {
-                                // Submit the form
-                                this.submit();
-                            }
-                        });
+                                    // Validate email format
+                                    const email = document.getElementById('email');
+                                    if (email && email.value) {
+                                        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                        if (!emailPattern.test(email.value)) {
+                                            alert('Please enter a valid email address');
+                                            email.focus();
+                                            return;
+                                        }
+                                    }
+
+                                    // Show confirmation dialog
+                                    if (confirm('Are you sure you want to save all changes?')) {
+                                        // Submit the form
+                                        this.submit();
+                                    }
+                                });
             <% } %>
 
-                        // Initialize password validation listeners
+                                // Initialize password validation listeners
             <% if (editMode) { %>
-                        const currentPasswordInput = document.getElementById('currentPassword');
-                        const newPasswordInput = document.getElementById('newPassword');
-                        const confirmPasswordInput = document.getElementById('confirmPassword');
+                                const currentPasswordInput = document.getElementById('currentPassword');
+                                const newPasswordInput = document.getElementById('newPassword');
+                                const confirmPasswordInput = document.getElementById('confirmPassword');
 
-                        if (currentPasswordInput && newPasswordInput && confirmPasswordInput) {
-                            currentPasswordInput.addEventListener('input', validatePassword);
-                            newPasswordInput.addEventListener('input', validatePassword);
-                            confirmPasswordInput.addEventListener('input', validatePassword);
-                        }
+                                if (currentPasswordInput && newPasswordInput && confirmPasswordInput) {
+                                    currentPasswordInput.addEventListener('input', validatePassword);
+                                    newPasswordInput.addEventListener('input', validatePassword);
+                                    confirmPasswordInput.addEventListener('input', validatePassword);
+                                }
             <% }%>
 
-                        // Close modal with Escape key
-                        document.addEventListener('keydown', function (e) {
-                            if (e.key === 'Escape') {
-                                closeCertificationModal();
-                            }
-                        });
+                                // Close modal with Escape key
+                                document.addEventListener('keydown', function (e) {
+                                    if (e.key === 'Escape') {
+                                        closeCert();
+                                    }
+                                });
 
-                        // Close modal when clicking outside
-                        document.getElementById('certificationModal').addEventListener('click', function (e) {
-                            if (e.target.id === 'certificationModal') {
-                                closeCertificationModal();
-                            }
-                        });
+                                // Close modal when clicking outside
+                                document.getElementById('certModal').addEventListener('click', function (e) {
+                                    if (e.target.id === 'certModal') {
+                                        closeCert();
+                                    }
+                                });
+
+                                // Ensure profile image shows placeholder on error
+                                document.getElementById('profilePreview').addEventListener('error', function () {
+                                    this.src = 'https://via.placeholder.com/200x200?text=No+Image';
+                                });
         </script>
 
     </body>

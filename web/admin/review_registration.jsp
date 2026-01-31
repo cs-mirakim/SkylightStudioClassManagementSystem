@@ -60,7 +60,9 @@
                             chipSand: '#D9C5B2',
                             chipTeal: '#6D9B9B',
                             certBlue: '#4F8A8B',
-                            certBlueHover: '#3D6B6C'
+                            certBlueHover: '#3D6B6C',
+                            filterActive: '#4F8A8B',
+                            filterHover: '#3D6B6C'
                         }
                     }
                 }
@@ -168,6 +170,64 @@
             td .uniform-button {
                 min-width: 140px;
             }
+
+            /* Status filter pill styles */
+            .filter-pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 1rem;
+                border-radius: 9999px;
+                font-size: 0.875rem;
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                border: 2px solid transparent;
+            }
+
+            .filter-pill.active {
+                background-color: #4F8A8B;
+                color: white;
+                border-color: #4F8A8B;
+            }
+
+            .filter-pill.inactive {
+                background-color: white;
+                color: #3D3434;
+                border: 2px solid #F2D1D1;
+            }
+
+            .filter-pill.inactive:hover {
+                background-color: #FDF8F8;
+                border-color: #E8BEBE;
+            }
+
+            .filter-count {
+                font-size: 0.75rem;
+                background-color: rgba(255, 255, 255, 0.2);
+                padding: 0.125rem 0.5rem;
+                border-radius: 9999px;
+                margin-left: 0.25rem;
+            }
+
+            .filter-pill.inactive .filter-count {
+                background-color: #F2D1D1;
+                color: #3D3434;
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 3px solid rgba(0,0,0,.1);
+                border-radius: 50%;
+                border-top-color: #4F8A8B;
+                animation: spin 1s ease-in-out infinite;
+            }
+
+            @keyframes spin {
+                to { transform: rotate(360deg); }
+            }
         </style>
     </head>
 
@@ -186,49 +246,75 @@
                                 Instructor Registration Review
                             </h2>
                             <p class="text-sm text-espresso/60">
-                                Manage and review all pending instructor registration applications
+                                Manage and review all instructor registration applications
                             </p>
                         </div>
                         <div class="flex items-center gap-2">
                             <div class="text-sm bg-cloud px-3 py-1.5 rounded-lg border border-blush">
                                 <span class="text-espresso/60">Total:</span>
-                                <span id="totalApplications" class="font-medium text-espresso ml-1">8</span>
+                                <span id="totalApplications" class="font-medium text-espresso ml-1">0</span>
                             </div>
                             <div class="text-sm bg-cloud px-3 py-1.5 rounded-lg border border-blush">
                                 <span class="text-espresso/60">Pending:</span>
-                                <span id="pendingApplications" class="font-medium text-warningText ml-1">5</span>
+                                <span id="pendingApplications" class="font-medium text-warningText ml-1">0</span>
                             </div>
                             <div class="text-sm bg-cloud px-3 py-1.5 rounded-lg border border-blush">
                                 <span class="text-espresso/60">Approved:</span>
-                                <span id="approvedApplications" class="font-medium text-successTextDark ml-1">2</span>
+                                <span id="approvedApplications" class="font-medium text-successTextDark ml-1">0</span>
                             </div>
                             <div class="text-sm bg-cloud px-3 py-1.5 rounded-lg border border-blush">
                                 <span class="text-espresso/60">Rejected:</span>
-                                <span id="rejectedApplications" class="font-medium text-dangerText ml-1">1</span>
+                                <span id="rejectedApplications" class="font-medium text-dangerText ml-1">0</span>
                             </div>
+                            <button onclick="loadRegistrations(true)" class="ml-2 bg-dusty hover:bg-dustyHover text-whitePure px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center gap-2">
+                                <svg id="refreshIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                <span>Refresh</span>
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Filters Section -->
+                <!-- Enhanced Filters Section with Status Tabs -->
                 <div class="mb-6">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <span class="text-sm font-medium text-espresso">Filter by:</span>
-
-                        <!-- Status Filter -->
-                        <div class="relative">
-                            <select id="statusFilter" class="appearance-none bg-whitePure border border-blush rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-dusty focus:border-dusty cursor-pointer">
-                                <option value="all">All Status</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="rejected">Rejected</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-espresso/60">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                                </svg>
+                    <!-- Status Filter Tabs -->
+                    <div class="mb-4">
+                        <div class="flex flex-wrap items-center gap-2 mb-3">
+                            <span class="text-sm font-medium text-espresso">Status:</span>
+                            <div class="flex flex-wrap gap-2">
+                                <button onclick="filterByStatus('all')" id="filter-all" class="filter-pill active">
+                                    All
+                                    <span id="count-all" class="filter-count">0</span>
+                                </button>
+                                <button onclick="filterByStatus('pending')" id="filter-pending" class="filter-pill inactive">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Pending
+                                    <span id="count-pending" class="filter-count">0</span>
+                                </button>
+                                <button onclick="filterByStatus('approved')" id="filter-approved" class="filter-pill inactive">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Approved
+                                    <span id="count-approved" class="filter-count">0</span>
+                                </button>
+                                <button onclick="filterByStatus('rejected')" id="filter-rejected" class="filter-pill inactive">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    Rejected
+                                    <span id="count-rejected" class="filter-count">0</span>
+                                </button>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Additional Filters -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="text-sm font-medium text-espresso">Additional Filters:</span>
 
                         <!-- Date Filter -->
                         <div class="relative">
@@ -259,20 +345,46 @@
                             </div>
                         </div>
 
-                        <!-- Apply Filter Button -->
-                        <button onclick="applyFilters()" class="bg-dusty hover:bg-dustyHover text-whitePure px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                        <!-- Search by Name -->
+                        <div class="relative">
+                            <div class="relative">
+                                <input type="text" id="searchName" placeholder="Search by name..." class="bg-whitePure border border-blush rounded-lg px-4 py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-dusty focus:border-dusty w-64">
+                                <svg class="absolute left-3 top-2.5 h-5 w-5 text-espresso/40" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Apply All Filters Button -->
+                        <button onclick="applyAllFilters()" class="bg-dusty hover:bg-dustyHover text-whitePure px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
                             Apply Filters
                         </button>
 
-                        <!-- Reset Filter Button -->
-                        <button onclick="resetFilters()" class="bg-petal hover:bg-blushHover text-espresso px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
-                            Reset Filters
+                        <!-- Reset All Filters Button -->
+                        <button onclick="resetAllFilters()" class="bg-petal hover:bg-blushHover text-espresso px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            Reset All
                         </button>
                     </div>
                 </div>
 
+                <!-- Current Filters Display -->
+                <div id="activeFiltersDisplay" class="mb-4 hidden">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-sm font-medium text-espresso">Active Filters:</span>
+                        <div id="activeFiltersList" class="flex flex-wrap gap-2">
+                            <!-- Active filters will be displayed here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="text-center py-12">
+                    <div class="loading-spinner mx-auto mb-4"></div>
+                    <p class="text-espresso/50">Loading registration data...</p>
+                </div>
+
                 <!-- Table Section -->
-                <div class="flex-1 overflow-x-auto">
+                <div class="flex-1 overflow-x-auto" id="tableContainer" style="display: none;">
                     <table class="w-full">
                         <thead>
                             <tr class="border-b-2 border-espresso/20">
@@ -297,11 +409,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <p class="mt-4 text-espresso/50">No registrations found matching your filters.</p>
+                        <button onclick="resetAllFilters()" class="mt-3 bg-dusty hover:bg-dustyHover text-whitePure px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                            Reset Filters
+                        </button>
                     </div>
                 </div>
 
                 <!-- Pagination -->
-                <div class="mt-8 pt-6 border-t border-espresso/10">
+                <div class="mt-8 pt-6 border-t border-espresso/10" id="paginationContainer" style="display: none;">
                     <div class="flex items-center justify-between">
                         <div class="text-sm text-espresso/60">
                             Showing <span id="currentRange">0-0</span> of <span id="totalRegistrations">0</span> registrations
@@ -312,7 +427,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                                 </svg>
                             </button>
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-1" id="pageNumbers">
                                 <!-- Page numbers will be inserted here by JavaScript -->
                             </div>
                             <button id="nextPage" onclick="changePage(currentPage + 1)" class="pagination-btn p-2 rounded-lg border border-blush text-espresso/60 hover:text-espresso disabled:opacity-50 disabled:cursor-not-allowed" disabled>
@@ -367,151 +482,125 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-                // Dummy data for registrations
-                var dummyRegistrations = [
-                    {
-                        id: 1,
-                        name: "Ahmad bin Ali",
-                        email: "ahmad.ali@example.com",
-                        phone: "012-3456789",
-                        nric: "900101-01-1234",
-                        bod: "1990-01-01",
-                        yearOfExperience: 3,
-                        address: "123 Jalan Merdeka, Kuala Lumpur",
-                        registerDate: "2024-01-15 10:30:00",
-                        status: "pending",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 2,
-                        name: "Siti binti Mohd",
-                        email: "siti.mohd@example.com",
-                        phone: "013-9876543",
-                        nric: "880215-02-5678",
-                        bod: "1988-02-15",
-                        yearOfExperience: 7,
-                        address: "456 Jalan Tunku, Petaling Jaya",
-                        registerDate: "2024-01-10 14:20:00",
-                        status: "approved",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 3,
-                        name: "Rajesh Kumar",
-                        email: "rajesh.k@example.com",
-                        phone: "011-2233445",
-                        nric: "850530-03-9012",
-                        bod: "1985-05-30",
-                        yearOfExperience: 12,
-                        address: "789 Jalan SS2, Petaling Jaya",
-                        registerDate: "2024-01-05 09:15:00",
-                        status: "rejected",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 4,
-                        name: "Mei Ling Tan",
-                        email: "meiling.tan@example.com",
-                        phone: "016-7788990",
-                        nric: "920710-04-3456",
-                        bod: "1992-07-10",
-                        yearOfExperience: 1,
-                        address: "321 Jalan Bukit Bintang, Kuala Lumpur",
-                        registerDate: "2024-01-20 16:45:00",
-                        status: "pending",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 5,
-                        name: "David Chen",
-                        email: "david.chen@example.com",
-                        phone: "017-5566778",
-                        nric: "870825-05-7890",
-                        bod: "1987-08-25",
-                        yearOfExperience: 8,
-                        address: "654 Jalan Puchong, Puchong",
-                        registerDate: "2024-01-18 11:10:00",
-                        status: "pending",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 6,
-                        name: "Nor Azizah Abdullah",
-                        email: "nor.azizah@example.com",
-                        phone: "019-3344556",
-                        nric: "891212-06-1234",
-                        bod: "1989-12-12",
-                        yearOfExperience: 4,
-                        address: "987 Jalan Damansara, Damansara",
-                        registerDate: "2024-01-12 13:25:00",
-                        status: "approved",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 7,
-                        name: "Kumaravel Muthu",
-                        email: "kumaravel@example.com",
-                        phone: "018-6677889",
-                        nric: "830404-07-5678",
-                        bod: "1983-04-04",
-                        yearOfExperience: 15,
-                        address: "147 Jalan Klang, Klang",
-                        registerDate: "2024-01-08 15:40:00",
-                        status: "pending",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    },
-                    {
-                        id: 8,
-                        name: "Sarah Johnson",
-                        email: "sarah.j@example.com",
-                        phone: "014-8899001",
-                        nric: "940606-08-9012",
-                        bod: "1994-06-06",
-                        yearOfExperience: 0,
-                        address: "258 Jalan Bangsar, Bangsar",
-                        registerDate: "2024-01-22 08:50:00",
-                        status: "pending",
-                        certification: "../certifications/instructor/dummy.pdf"
-                    }
-                ];
-
                 // Global variables
                 var currentPage = 1;
                 var registrationsPerPage = 5;
                 var filteredRegistrations = [];
+                var allRegistrations = [];
                 var currentPdfUrl = null;
                 var currentActionRegId = null;
                 var currentActionType = null;
                 var currentDetailsRegId = null;
 
+                // Filter state
+                var currentStatusFilter = 'all';
+                var currentDateFilter = 'newest';
+                var currentExperienceFilter = 'all';
+                var currentSearchName = '';
+
                 // DOM elements
                 var registrationTable = document.getElementById('registrationTable');
                 var noResultsState = document.getElementById('noResultsState');
+                var loadingState = document.getElementById('loadingState');
+                var tableContainer = document.getElementById('tableContainer');
+                var paginationContainer = document.getElementById('paginationContainer');
                 var totalApplications = document.getElementById('totalApplications');
                 var pendingApplications = document.getElementById('pendingApplications');
+                var activeFiltersDisplay = document.getElementById('activeFiltersDisplay');
+                var activeFiltersList = document.getElementById('activeFiltersList');
+                var refreshIcon = document.getElementById('refreshIcon');
 
                 // Initialize page
                 document.addEventListener('DOMContentLoaded', function () {
-                    // Load registrations
-                    filteredRegistrations = dummyRegistrations.slice();
+                    // Load registrations from server
+                    loadRegistrations(false);
 
-                    // Update statistics
-                    updateStatistics();
-
-                    // Display initial data
-                    updateDisplay();
+                    // Initialize search input event listener
+                    document.getElementById('searchName').addEventListener('keyup', function (event) {
+                        if (event.key === 'Enter') {
+                            applyAllFilters();
+                        }
+                    });
                 });
+
+                // Load registrations from server
+                function loadRegistrations(showLoading) {
+                    if (showLoading) {
+                        loadingState.style.display = 'block';
+                        tableContainer.style.display = 'none';
+                        paginationContainer.style.display = 'none';
+                        refreshIcon.classList.add('loading-spinner');
+                    }
+
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', '../register?action=getRegistrations', true);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            refreshIcon.classList.remove('loading-spinner');
+
+                            if (xhr.status === 200) {
+                                try {
+                                    var response = JSON.parse(xhr.responseText);
+                                    if (response.success) {
+                                        allRegistrations = response.data;
+
+                                        // Initialize with all registrations
+                                        filteredRegistrations = allRegistrations.slice();
+
+                                        // Update statistics
+                                        updateStatistics();
+                                        updateFilterCounts();
+
+                                        // Display data
+                                        currentPage = 1;
+                                        updateDisplay();
+
+                                        // Show table and pagination
+                                        loadingState.style.display = 'none';
+                                        tableContainer.style.display = 'block';
+                                        paginationContainer.style.display = 'block';
+                                    } else {
+                                        showError('Failed to load data: ' + response.message);
+                                    }
+                                } catch (e) {
+                                    showError('Error parsing response: ' + e.message);
+                                }
+                            } else if (xhr.status === 401) {
+                                window.location.href = '../general/login.jsp?error=admin_access_required';
+                            } else {
+                                showError('Server error: ' + xhr.status);
+                            }
+                        }
+                    };
+
+                    xhr.send();
+                }
+
+                // Show error message
+                function showError(message) {
+                    loadingState.innerHTML = '<div class="text-center py-12">' +
+                            '<svg class="mx-auto h-16 w-16 text-dangerText" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>' +
+                            '</svg>' +
+                            '<p class="mt-4 text-dangerText">' + message + '</p>' +
+                            '<button onclick="loadRegistrations(true)" class="mt-3 bg-dusty hover:bg-dustyHover text-whitePure px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">' +
+                            'Try Again' +
+                            '</button>' +
+                            '</div>';
+                }
 
                 // Update statistics function
                 function updateStatistics() {
-                    var total = dummyRegistrations.length;
-                    var pending = dummyRegistrations.filter(function (reg) {
+                    var total = allRegistrations.length;
+                    var pending = allRegistrations.filter(function (reg) {
                         return reg.status === 'pending';
                     }).length;
-                    var approved = dummyRegistrations.filter(function (reg) {
+                    var approved = allRegistrations.filter(function (reg) {
                         return reg.status === 'approved';
                     }).length;
-                    var rejected = dummyRegistrations.filter(function (reg) {
+                    var rejected = allRegistrations.filter(function (reg) {
                         return reg.status === 'rejected';
                     }).length;
 
@@ -521,27 +610,63 @@
                     document.getElementById('rejectedApplications').textContent = rejected;
                 }
 
+                // Update filter counts function
+                function updateFilterCounts() {
+                    var allCount = allRegistrations.length;
+                    var pendingCount = allRegistrations.filter(function (reg) {
+                        return reg.status === 'pending';
+                    }).length;
+                    var approvedCount = allRegistrations.filter(function (reg) {
+                        return reg.status === 'approved';
+                    }).length;
+                    var rejectedCount = allRegistrations.filter(function (reg) {
+                        return reg.status === 'rejected';
+                    }).length;
+
+                    document.getElementById('count-all').textContent = allCount;
+                    document.getElementById('count-pending').textContent = pendingCount;
+                    document.getElementById('count-approved').textContent = approvedCount;
+                    document.getElementById('count-rejected').textContent = rejectedCount;
+                }
+
                 // Stop propagation function
                 function stopPropagation(event) {
                     event.stopPropagation();
                 }
 
-                // Apply filters function (manual - triggered by button)
-                function applyFilters() {
-                    var statusFilter = document.getElementById('statusFilter').value;
-                    var dateFilter = document.getElementById('dateFilter').value;
-                    var experienceFilter = document.getElementById('experienceFilter').value;
+                // Filter by status function
+                function filterByStatus(status) {
+                    currentStatusFilter = status;
 
-                    filteredRegistrations = dummyRegistrations.filter(function (reg) {
+                    // Update active status filter pills
+                    document.querySelectorAll('.filter-pill').forEach(function (pill) {
+                        pill.classList.remove('active');
+                        pill.classList.add('inactive');
+                    });
+
+                    document.getElementById('filter-' + status).classList.remove('inactive');
+                    document.getElementById('filter-' + status).classList.add('active');
+
+                    // Apply all filters
+                    applyAllFilters();
+                }
+
+                // Apply all filters function
+                function applyAllFilters() {
+                    currentDateFilter = document.getElementById('dateFilter').value;
+                    currentExperienceFilter = document.getElementById('experienceFilter').value;
+                    currentSearchName = document.getElementById('searchName').value.toLowerCase().trim();
+
+                    filteredRegistrations = allRegistrations.filter(function (reg) {
                         // Status filter
-                        if (statusFilter !== 'all' && reg.status !== statusFilter) {
+                        if (currentStatusFilter !== 'all' && reg.status !== currentStatusFilter) {
                             return false;
                         }
 
                         // Experience filter
-                        if (experienceFilter !== 'all') {
+                        if (currentExperienceFilter !== 'all') {
                             var exp = reg.yearOfExperience;
-                            switch (experienceFilter) {
+                            switch (currentExperienceFilter) {
                                 case '0-2':
                                     if (exp > 2)
                                         return false;
@@ -561,6 +686,13 @@
                             }
                         }
 
+                        // Name search filter
+                        if (currentSearchName !== '') {
+                            if (!reg.name.toLowerCase().includes(currentSearchName)) {
+                                return false;
+                            }
+                        }
+
                         return true;
                     });
 
@@ -569,23 +701,110 @@
                         var dateA = new Date(a.registerDate);
                         var dateB = new Date(b.registerDate);
 
-                        if (dateFilter === 'newest') {
+                        if (currentDateFilter === 'newest') {
                             return dateB - dateA;
                         } else {
                             return dateA - dateB;
                         }
                     });
 
+                    // Update active filters display
+                    updateActiveFiltersDisplay();
+
                     currentPage = 1;
                     updateDisplay();
                 }
 
-                // Reset filters function
-                function resetFilters() {
-                    document.getElementById('statusFilter').value = 'all';
+                // Update active filters display
+                function updateActiveFiltersDisplay() {
+                    activeFiltersList.innerHTML = '';
+
+                    var hasActiveFilters = false;
+
+                    // Status filter
+                    if (currentStatusFilter !== 'all') {
+                        hasActiveFilters = true;
+                        var statusText = currentStatusFilter.charAt(0).toUpperCase() + currentStatusFilter.slice(1);
+                        activeFiltersList.innerHTML += `
+                            <div class="flex items-center gap-1 bg-cloud border border-blush rounded-full px-3 py-1 text-xs">
+                                <span class="text-espresso/60">Status:</span>
+                                <span class="font-medium text-espresso ml-1">${statusText}</span>
+                                <button onclick="removeStatusFilter()" class="ml-1 text-espresso/40 hover:text-espresso">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    // Experience filter
+                    if (currentExperienceFilter !== 'all') {
+                        hasActiveFilters = true;
+                        var expText = currentExperienceFilter;
+                        activeFiltersList.innerHTML += `
+                            <div class="flex items-center gap-1 bg-cloud border border-blush rounded-full px-3 py-1 text-xs">
+                                <span class="text-espresso/60">Experience:</span>
+                                <span class="font-medium text-espresso ml-1">${expText}</span>
+                                <button onclick="removeExperienceFilter()" class="ml-1 text-espresso/40 hover:text-espresso">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    // Search filter
+                    if (currentSearchName !== '') {
+                        hasActiveFilters = true;
+                        activeFiltersList.innerHTML += `
+                            <div class="flex items-center gap-1 bg-cloud border border-blush rounded-full px-3 py-1 text-xs">
+                                <span class="text-espresso/60">Search:</span>
+                                <span class="font-medium text-espresso ml-1">"${currentSearchName}"</span>
+                                <button onclick="removeSearchFilter()" class="ml-1 text-espresso/40 hover:text-espresso">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        `;
+                    }
+
+                    // Show/hide active filters display
+                    if (hasActiveFilters) {
+                        activeFiltersDisplay.classList.remove('hidden');
+                    } else {
+                        activeFiltersDisplay.classList.add('hidden');
+                    }
+                }
+
+                // Remove status filter
+                function removeStatusFilter() {
+                    filterByStatus('all');
+                }
+
+                // Remove experience filter
+                function removeExperienceFilter() {
+                    document.getElementById('experienceFilter').value = 'all';
+                    currentExperienceFilter = 'all';
+                    applyAllFilters();
+                }
+
+                // Remove search filter
+                function removeSearchFilter() {
+                    document.getElementById('searchName').value = '';
+                    currentSearchName = '';
+                    applyAllFilters();
+                }
+
+                // Reset all filters function
+                function resetAllFilters() {
                     document.getElementById('dateFilter').value = 'newest';
                     document.getElementById('experienceFilter').value = 'all';
-                    applyFilters();
+                    document.getElementById('searchName').value = '';
+
+                    filterByStatus('all');
                 }
 
                 // Update display function
@@ -623,11 +842,15 @@
                     var statusText = reg.status.charAt(0).toUpperCase() + reg.status.slice(1);
                     var expText = reg.yearOfExperience + ' year' + (reg.yearOfExperience !== 1 ? 's' : '');
 
+                    // Handle file paths - add ../ prefix
+                    var profileImagePath = reg.profileImagePath ? ('../' + reg.profileImagePath) : '../profile_pictures/instructor/dummy.png';
+                    var certificationPath = reg.certification ? ('../' + reg.certification) : '../certifications/instructor/dummy.pdf';
+
                     row.innerHTML =
                             '<td class="py-4 px-4">' +
                             '<div class="flex items-center gap-3">' +
                             '<div class="w-10 h-10 rounded-full overflow-hidden bg-petal flex-shrink-0">' +
-                            '<img src="../profile_pictures/instructor/dummy.png" alt="Profile" class="w-full h-full object-cover">' +
+                            '<img src="' + profileImagePath + '" alt="Profile" class="w-full h-full object-cover" onerror="this.src=\'../profile_pictures/instructor/dummy.png\'">' +
                             '</div>' +
                             '<div>' +
                             '<div class="font-medium text-espresso">' + reg.name + '</div>' +
@@ -658,7 +881,7 @@
                             '</button>' +
                             '</td>' +
                             '<td class="py-4 px-4">' +
-                            '<button onclick="viewPdf(\'' + reg.certification + '\')" class="uniform-button cert-badge hover:certBlueHover">' +
+                            '<button onclick="viewPdf(\'' + certificationPath + '\')" class="uniform-button cert-badge hover:certBlueHover">' +
                             '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>' +
                             '</svg>' +
@@ -668,13 +891,13 @@
                             '<td class="py-4 px-4">' +
                             '<div class="flex flex-col gap-2">' +
                             (reg.status === 'pending' ?
-                                    '<button onclick="showApproveModal(' + reg.id + ')" class="uniform-button bg-successBg hover:bg-successBg/80 text-successTextDark">' +
+                                    '<button onclick="showApproveModal(' + reg.id + ', ' + reg.registerID + ')" class="uniform-button bg-successBg hover:bg-successBg/80 text-successTextDark">' +
                                     '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' +
                                     '</svg>' +
                                     '<span>Approve</span>' +
                                     '</button>' +
-                                    '<button onclick="showRejectModal(' + reg.id + ')" class="uniform-button bg-dangerBg hover:bg-dangerBg/80 text-dangerText">' +
+                                    '<button onclick="showRejectModal(' + reg.id + ', ' + reg.registerID + ')" class="uniform-button bg-dangerBg hover:bg-dangerBg/80 text-dangerText">' +
                                     '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>' +
                                     '</svg>' +
@@ -705,7 +928,7 @@
                     nextBtn.disabled = currentPage === totalPages;
 
                     // Update page numbers
-                    var pageNumbersContainer = document.querySelector('.flex.items-center.space-x-1');
+                    var pageNumbersContainer = document.getElementById('pageNumbers');
                     pageNumbersContainer.innerHTML = '';
 
                     // Always show first page
@@ -768,13 +991,18 @@
                 }
 
                 // View details modal function
-                function viewDetails(regId) {
-                    currentDetailsRegId = regId;
-                    var reg = dummyRegistrations.find(function (r) {
-                        return r.id === regId;
+                function viewDetails(instructorId) {
+                    var reg = allRegistrations.find(function (r) {
+                        return r.id === instructorId;
                     });
                     if (!reg)
                         return;
+
+                    currentDetailsRegId = instructorId;
+
+                    // Handle file paths - add ../ prefix
+                    var profileImagePath = reg.profileImagePath ? ('../' + reg.profileImagePath) : '../profile_pictures/instructor/dummy.png';
+                    var certificationPath = reg.certification ? ('../' + reg.certification) : '../certifications/instructor/dummy.pdf';
 
                     var modalContent = document.querySelector('#modalOverlay .modal-content');
                     modalContent.innerHTML =
@@ -790,7 +1018,7 @@
                             '<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">' +
                             '<div class="col-span-1">' +
                             '<div class="w-40 h-40 rounded-lg overflow-hidden bg-petal mx-auto mb-4">' +
-                            '<img src="../profile_pictures/instructor/dummy.png" alt="Profile" class="w-full h-full object-cover">' +
+                            '<img src="' + profileImagePath + '" alt="Profile" class="w-full h-full object-cover" onerror="this.src=\'../profile_pictures/instructor/dummy.png\'">' +
                             '</div>' +
                             '<h4 class="text-center text-lg font-semibold text-espresso">' + reg.name + '</h4>' +
                             '<p class="text-center text-espresso/60 mb-2">Instructor Applicant</p>' +
@@ -835,7 +1063,7 @@
                             '</div>' +
                             '<div class="mt-3">' +
                             '<span class="text-xs text-espresso/40 block mb-1">Certification:</span>' +
-                            '<button onclick="viewPdf(\'' + reg.certification + '\')" class="uniform-button cert-badge hover:certBlueHover">' +
+                            '<button onclick="viewPdf(\'' + certificationPath + '\')" class="uniform-button cert-badge hover:certBlueHover">' +
                             '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>' +
                             '</svg>' +
@@ -853,13 +1081,13 @@
                             '<div class="border-t border-espresso/10 pt-4">' +
                             (reg.status === 'pending' ?
                                     '<div class="flex justify-end gap-3">' +
-                                    '<button onclick="showRejectModal(' + reg.id + ')" class="uniform-button bg-dangerBg hover:bg-dangerBg/80 text-dangerText">' +
+                                    '<button onclick="showRejectModal(' + reg.id + ', ' + reg.registerID + ')" class="uniform-button bg-dangerBg hover:bg-dangerBg/80 text-dangerText">' +
                                     '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>' +
                                     '</svg>' +
                                     '<span>Reject</span>' +
                                     '</button>' +
-                                    '<button onclick="showApproveModal(' + reg.id + ')" class="uniform-button bg-successBg hover:bg-successBg/80 text-successTextDark">' +
+                                    '<button onclick="showApproveModal(' + reg.id + ', ' + reg.registerID + ')" class="uniform-button bg-successBg hover:bg-successBg/80 text-successTextDark">' +
                                     '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
                                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>' +
                                     '</svg>' +
@@ -906,9 +1134,16 @@
                 }
 
                 // Show approve modal function
-                function showApproveModal(regId) {
-                    currentActionRegId = regId;
+                function showApproveModal(instructorId, registerId) {
+                    currentActionRegId = instructorId;
                     currentActionType = 'approve';
+
+                    // Find registration
+                    var reg = allRegistrations.find(function (r) {
+                        return r.id === instructorId;
+                    });
+                    if (!reg)
+                        return;
 
                     var modalContent = document.querySelector('#actionModalOverlay .modal-content');
                     modalContent.innerHTML =
@@ -936,7 +1171,7 @@
                             '</div>' +
                             '<div class="flex justify-end gap-3">' +
                             '<button onclick="closeActionModal()" class="bg-petal hover:bg-blushHover text-espresso px-6 py-2 rounded-lg font-medium transition-colors duration-200">Cancel</button>' +
-                            '<button onclick="processAction()" class="bg-successBg hover:bg-successBg/80 text-successTextDark px-6 py-2 rounded-lg font-medium transition-colors duration-200">Approve Registration</button>' +
+                            '<button onclick="processAction(' + registerId + ', ' + instructorId + ')" class="bg-successBg hover:bg-successBg/80 text-successTextDark px-6 py-2 rounded-lg font-medium transition-colors duration-200">Approve Registration</button>' +
                             '</div>' +
                             '</div>';
 
@@ -944,9 +1179,16 @@
                 }
 
                 // Show reject modal function
-                function showRejectModal(regId) {
-                    currentActionRegId = regId;
+                function showRejectModal(instructorId, registerId) {
+                    currentActionRegId = instructorId;
                     currentActionType = 'reject';
+
+                    // Find registration
+                    var reg = allRegistrations.find(function (r) {
+                        return r.id === instructorId;
+                    });
+                    if (!reg)
+                        return;
 
                     var modalContent = document.querySelector('#actionModalOverlay .modal-content');
                     modalContent.innerHTML =
@@ -974,7 +1216,7 @@
                             '</div>' +
                             '<div class="flex justify-end gap-3">' +
                             '<button onclick="closeActionModal()" class="bg-petal hover:bg-blushHover text-espresso px-6 py-2 rounded-lg font-medium transition-colors duration-200">Cancel</button>' +
-                            '<button onclick="processAction()" class="bg-dangerBg hover:bg-dangerBg/80 text-dangerText px-6 py-2 rounded-lg font-medium transition-colors duration-200">Reject Registration</button>' +
+                            '<button onclick="processAction(' + registerId + ', ' + instructorId + ')" class="bg-dangerBg hover:bg-dangerBg/80 text-dangerText px-6 py-2 rounded-lg font-medium transition-colors duration-200">Reject Registration</button>' +
                             '</div>' +
                             '</div>';
 
@@ -988,8 +1230,8 @@
                     currentActionType = null;
                 }
 
-                // Process action function
-                function processAction() {
+                // Process action function - Send to server
+                function processAction(registerId, instructorId) {
                     var message = document.getElementById('actionMessage').value;
 
                     if (currentActionType === 'reject' && !message.trim()) {
@@ -997,31 +1239,63 @@
                         return;
                     }
 
-                    var regIndex = dummyRegistrations.findIndex(function (r) {
-                        return r.id === currentActionRegId;
-                    });
-                    if (regIndex !== -1) {
-                        dummyRegistrations[regIndex].status = currentActionType === 'approve' ? 'approved' : 'rejected';
+                    // Show loading
+                    var modalContent = document.querySelector('#actionModalOverlay .modal-content');
+                    modalContent.innerHTML =
+                            '<div class="p-6">' +
+                            '<div class="flex flex-col items-center justify-center py-8">' +
+                            '<div class="loading-spinner mb-4"></div>' +
+                            '<p class="text-espresso/60">Processing ' + currentActionType + '...</p>' +
+                            '</div>' +
+                            '</div>';
 
-                        // Simulate saving action message (in real app, this would go to database)
-                        console.log('Action: ' + currentActionType.toUpperCase() + ' for registration ID: ' + currentActionRegId);
-                        console.log('Message: ' + (message || 'No message provided'));
+                    // Prepare data
+                    var formData = new FormData();
+                    formData.append('action', currentActionType);
+                    formData.append('registerID', registerId);
+                    formData.append('instructorID', instructorId);
+                    formData.append('message', message || '');
 
-                        applyFilters();
-                        updateStatistics();
+                    // Send request
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', '../register', true);
 
-                        // Close action modal but NOT details modal
-                        closeActionModal();
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                try {
+                                    var response = JSON.parse(xhr.responseText);
+                                    if (response.success) {
+                                        // Success - reload data
+                                        alert('Registration ' + currentActionType + 'ed successfully!');
+                                        loadRegistrations(true);
 
-                        // If details modal is open, refresh it
-                        if (currentDetailsRegId === currentActionRegId) {
-                            viewDetails(currentActionRegId);
+                                        // Close modal
+                                        closeActionModal();
+
+                                        // If details modal is open, close it
+                                        if (currentDetailsRegId === currentActionRegId) {
+                                            closeModal();
+                                        }
+                                    } else {
+                                        alert('Error: ' + response.message);
+                                        closeActionModal();
+                                    }
+                                } catch (e) {
+                                    alert('Error parsing response');
+                                    closeActionModal();
+                                }
+                            } else if (xhr.status === 401) {
+                                alert('Session expired. Please login again.');
+                                window.location.href = '../general/login.jsp';
+                            } else {
+                                alert('Server error: ' + xhr.status);
+                                closeActionModal();
+                            }
                         }
+                    };
 
-                        // Show success message
-                        var actionText = currentActionType === 'approve' ? 'approved' : 'rejected';
-                        alert('Registration ' + actionText + ' successfully!');
-                    }
+                    xhr.send(formData);
                 }
         </script>
 
