@@ -472,13 +472,14 @@
 
         <!-- FullCalendar JS -->
         <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
-
         <script>
+                        // Store current instructor ID globally
+                        const CURRENT_INSTRUCTOR_ID = '<%= SessionUtil.getCurrentInstructorId(session) != null ? SessionUtil.getCurrentInstructorId(session) : ""%>';
+
                         // Initialize calendar when page loads
                         document.addEventListener('DOMContentLoaded', function () {
+                            console.log('Current Instructor ID from session:', CURRENT_INSTRUCTOR_ID);
                             initializeCalendar();
-
-                            // Highlight current page in sidebar
                             highlightCurrentPage();
 
                             // Close modal when clicking outside
@@ -499,124 +500,6 @@
                         function initializeCalendar() {
                             var calendarEl = document.getElementById('calendar');
 
-                            // Sample data with different statuses
-                            var sampleEvents = [
-                                {
-                                    id: '1',
-                                    title: 'Yoga Basics',
-                                    start: getNextMonday() + 'T10:00:00',
-                                    end: getNextMonday() + 'T11:30:00',
-                                    status: 'available', // available, confirmed, pending
-                                    className: 'fc-event-available',
-                                    extendedProps: {
-                                        location: 'Room 101',
-                                        description: 'Beginner yoga class focusing on basic poses and breathing techniques. Suitable for all fitness levels.',
-                                        capacity: 20,
-                                        currentStudents: 15,
-                                        mainInstructor: null, // null or instructor object
-                                        reliefInstructor: null, // null or instructor object
-                                        instructorStatus: null, // null, 'confirmed', 'pending'
-                                        instructorId: null // will be set when instructor confirms
-                                    }
-                                },
-                                {
-                                    id: '2',
-                                    title: 'Advanced Pilates',
-                                    start: getNextWednesday() + 'T14:00:00',
-                                    end: getNextWednesday() + 'T15:30:00',
-                                    status: 'available',
-                                    className: 'fc-event-available',
-                                    extendedProps: {
-                                        location: 'Studio A',
-                                        description: 'Advanced pilates for experienced students. Focus on core strength and flexibility.',
-                                        capacity: 15,
-                                        currentStudents: 12,
-                                        mainInstructor: {
-                                            id: 'instr_002',
-                                            name: 'Sarah Johnson',
-                                            initials: 'SJ'
-                                        },
-                                        reliefInstructor: null,
-                                        instructorStatus: null,
-                                        instructorId: null
-                                    }
-                                },
-                                {
-                                    id: '3',
-                                    title: 'Morning Meditation',
-                                    start: getNextFriday() + 'T08:00:00',
-                                    end: getNextFriday() + 'T09:00:00',
-                                    status: 'confirmed',
-                                    className: 'fc-event-confirmed',
-                                    extendedProps: {
-                                        location: 'Zen Room',
-                                        description: 'Guided meditation session for stress relief and mindfulness.',
-                                        capacity: 25,
-                                        currentStudents: 18,
-                                        mainInstructor: {
-                                            id: 'instr_001',
-                                            name: 'You (John Doe)',
-                                            initials: 'JD'
-                                        },
-                                        reliefInstructor: null,
-                                        instructorStatus: 'confirmed',
-                                        instructorId: 'instr_001'
-                                    }
-                                },
-                                {
-                                    id: '4',
-                                    title: 'Zumba Dance',
-                                    start: getNextThursday() + 'T18:00:00',
-                                    end: getNextThursday() + 'T19:30:00',
-                                    status: 'pending',
-                                    className: 'fc-event-pending',
-                                    extendedProps: {
-                                        location: 'Dance Studio',
-                                        description: 'High-energy dance workout with Latin rhythms.',
-                                        capacity: 30,
-                                        currentStudents: 22,
-                                        mainInstructor: {
-                                            id: 'instr_003',
-                                            name: 'Maria Rodriguez',
-                                            initials: 'MR'
-                                        },
-                                        reliefInstructor: {
-                                            id: 'instr_001',
-                                            name: 'You (John Doe)',
-                                            initials: 'JD'
-                                        },
-                                        instructorStatus: 'pending',
-                                        instructorId: 'instr_001'
-                                    }
-                                },
-                                {
-                                    id: '5',
-                                    title: 'Cardio Kickboxing',
-                                    start: getNextTuesday() + 'T17:00:00',
-                                    end: getNextTuesday() + 'T18:30:00',
-                                    status: 'available',
-                                    className: 'fc-event-available',
-                                    extendedProps: {
-                                        location: 'Studio B',
-                                        description: 'High-intensity cardio workout with kickboxing moves.',
-                                        capacity: 25,
-                                        currentStudents: 20,
-                                        mainInstructor: {
-                                            id: 'instr_004',
-                                            name: 'Alex Chen',
-                                            initials: 'AC'
-                                        },
-                                        reliefInstructor: {
-                                            id: 'instr_005',
-                                            name: 'Lisa Wang',
-                                            initials: 'LW'
-                                        },
-                                        instructorStatus: null,
-                                        instructorId: null
-                                    }
-                                }
-                            ];
-
                             var calendar = new FullCalendar.Calendar(calendarEl, {
                                 initialView: 'dayGridMonth',
                                 headerToolbar: {
@@ -624,7 +507,9 @@
                                     center: 'title',
                                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                                 },
-                                events: sampleEvents,
+                                events: function (fetchInfo, successCallback, failureCallback) {
+                                    fetchEventsFromServer(successCallback, failureCallback);
+                                },
                                 eventClick: function (info) {
                                     showClassDetails(info.event);
                                 },
@@ -670,41 +555,11 @@
                                             hour12: true
                                         }
                                     }
-                                },
-                                eventDidMount: function (info) {
-                                    // Add status indicator to event
-                                    const status = info.event.extendedProps.status;
-                                    const badge = document.createElement('span');
-                                    badge.className = 'fc-event-status';
-                                    badge.style.cssText = `
-                            position: absolute;
-                            top: 2px;
-                            right: 2px;
-                            width: 6px;
-                            height: 6px;
-                            border-radius: 50%;
-                        `;
-
-                                    if (status === 'confirmed') {
-                                        badge.style.backgroundColor = '#1B5E20';
-                                    } else if (status === 'pending') {
-                                        badge.style.backgroundColor = '#E65100';
-                                    }
-
-                                    info.el.appendChild(badge);
-
-                                    // Add tooltip
-                                    let tooltipText = info.event.title;
-                                    if (status === 'confirmed') {
-                                        tooltipText += ' (You are teaching)';
-                                    } else if (status === 'pending') {
-                                        tooltipText += ' (You are in relief queue)';
-                                    }
-                                    info.el.title = tooltipText;
                                 }
                             });
 
                             calendar.render();
+                            window.calendar = calendar;
 
                             // Update calendar size after render
                             setTimeout(function () {
@@ -715,58 +570,196 @@
                             window.addEventListener('resize', function () {
                                 calendar.updateSize();
                             });
+                        }
 
-                            // Show/hide no classes message
-                            if (sampleEvents.length === 0) {
-                                document.getElementById('calendar-container').classList.add('hidden');
-                                document.getElementById('noClassesMessage').classList.remove('hidden');
-                            }
+                        function fetchEventsFromServer(successCallback, failureCallback) {
+                            console.log('Fetching events from database via servlet...');
 
-                            // Store calendar instance globally
-                            window.calendar = calendar;
+                            fetch('../ClassConfirmationServlet?action=getClasses', {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Cache-Control': 'no-cache'
+                                }
+                            })
+                                    .then(function (response) {
+                                        console.log('Response status:', response.status);
+
+                                        if (response.status === 401 || response.status === 403) {
+                                            alert('Session expired. Please login again.');
+                                            window.location.href = "../general/login.jsp";
+                                            return null;
+                                        }
+
+                                        if (!response.ok) {
+                                            throw new Error('Server returned ' + response.status + ': ' + response.statusText);
+                                        }
+
+                                        return response.text().then(function (text) {
+                                            console.log('Raw response:', text);
+                                            try {
+                                                return JSON.parse(text);
+                                            } catch (e) {
+                                                console.error('Failed to parse JSON:', e);
+                                                console.error('Invalid JSON:', text);
+                                                throw new Error('Invalid JSON response from server');
+                                            }
+                                        });
+                                    })
+                                    .then(function (data) {
+                                        if (!data)
+                                            return;
+
+                                        console.log('Parsed data:', data);
+
+                                        if (data.error) {
+                                            console.error('Server error:', data.error);
+                                            alert('Error: ' + data.error);
+                                            failureCallback(data.error);
+                                            return;
+                                        }
+
+                                        if (data.events) {
+                                            console.log('Number of events from database:', data.events.length);
+
+                                            // Transform events to FullCalendar format
+                                            var events = data.events.map(function (event) {
+                                                // Ensure event has proper structure
+                                                const classId = event.id || event.classID || 'event_' + Math.random();
+                                                const currentInstructorIdNum = parseInt(CURRENT_INSTRUCTOR_ID);
+
+                                                const props = event.extendedProps || {};
+                                                const eventStatus = props.status || 'available';
+
+                                                // Determine if event should be shown based on status
+                                                let shouldShowEvent = true;
+
+                                                // Hide events that are "unavailable" (both instructors assigned, user not involved)
+                                                if (eventStatus === 'unavailable') {
+                                                    shouldShowEvent = false;
+                                                    console.log('Filtering out class ' + classId + ': Both instructors assigned, user not involved');
+                                                }
+
+                                                if (shouldShowEvent) {
+                                                    return {
+                                                        id: classId,
+                                                        title: event.title || event.className || 'Unnamed Class',
+                                                        start: event.start,
+                                                        end: event.end,
+                                                        className: event.className || 'fc-event-available',
+                                                        extendedProps: {
+                                                            status: eventStatus,
+                                                            location: props.location || 'Not specified',
+                                                            description: props.description || '',
+                                                            capacity: props.capacity || 0,
+                                                            currentStudents: props.currentStudents || 0,
+                                                            mainInstructor: props.mainInstructor || null,
+                                                            reliefInstructor: props.reliefInstructor || null,
+                                                            classId: classId,
+                                                            classStatus: props.classStatus || 'available'
+                                                        }
+                                                    };
+                                                } else {
+                                                    return null;
+                                                }
+                                            }).filter(function (event) {
+                                                return event !== null; // Remove null events
+                                            });
+
+                                            successCallback(events);
+
+                                            // Show/hide calendar based on events
+                                            if (events.length === 0) {
+                                                document.getElementById('calendar-container').classList.add('hidden');
+                                                document.getElementById('noClassesMessage').classList.remove('hidden');
+                                                console.log('No classes visible for current user');
+                                            } else {
+                                                document.getElementById('calendar-container').classList.remove('hidden');
+                                                document.getElementById('noClassesMessage').classList.add('hidden');
+                                                console.log('Calendar loaded with ' + events.length + ' events visible to current user');
+                                            }
+                                        } else {
+                                            console.error('Invalid response format - no events array:', data);
+                                            failureCallback('Invalid response format from server');
+                                        }
+                                    })
+                                    .catch(function (error) {
+                                        console.error('Error fetching events:', error);
+                                        alert('Error loading classes: ' + error.message);
+                                        failureCallback(error.message);
+
+                                        // Show no classes message
+                                        document.getElementById('calendar-container').classList.add('hidden');
+                                        document.getElementById('noClassesMessage').classList.remove('hidden');
+                                    });
                         }
 
                         function showClassDetails(event) {
                             const modal = document.getElementById('classModal');
                             const props = event.extendedProps;
 
+                            // Store event globally for button handlers
+                            window.currentEventDetails = props;
+
                             // Set modal content
                             document.getElementById('modalClassName').textContent = event.title;
+
+                            // Format date and time
+                            const startDate = new Date(event.start);
+                            const endDate = new Date(event.end);
                             document.getElementById('modalDateTime').textContent =
-                                    event.start.toLocaleDateString() + ' • ' +
-                                    event.start.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) + ' - ' +
-                                    event.end.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                                    startDate.toLocaleDateString('en-US', {
+                                        weekday: 'long',
+                                        year: 'numeric',
+                                        month: 'long',
+                                        day: 'numeric'
+                                    }) + ' • ' +
+                                    startDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) + ' - ' +
+                                    endDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 
                             // Calculate duration
-                            const durationMs = event.end - event.start;
+                            const durationMs = endDate - startDate;
                             const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
                             const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
                             document.getElementById('modalDuration').textContent =
                                     durationHours + 'h ' + durationMinutes + 'min';
 
-                            document.getElementById('modalLocation').textContent = props.location;
-                            document.getElementById('modalDescription').textContent = props.description;
-                            document.getElementById('modalCapacity').textContent = props.capacity + ' students';
-                            document.getElementById('modalStudents').textContent = props.currentStudents + ' students enrolled';
+                            document.getElementById('modalLocation').textContent = props.location || 'Not specified';
+                            document.getElementById('modalDescription').textContent = props.description || 'No description';
+                            document.getElementById('modalCapacity').textContent = (props.capacity || 0) + ' students';
+                            document.getElementById('modalStudents').textContent = (props.currentStudents || 0) + ' students enrolled';
 
-                            // Set status badge
+                            // Set status badge based on user's relationship to class
                             const statusBadge = document.getElementById('modalStatusBadge');
                             let statusText = '';
-                            if (props.status === 'available') {
-                                statusText = props.mainInstructor ? 'Available (Has Instructor)' : 'Available (No Instructor)';
-                            } else if (props.status === 'confirmed') {
-                                statusText = 'Confirmed (You\'re Teaching)';
-                            } else if (props.status === 'pending') {
-                                statusText = 'Pending (In Relief Queue)';
+                            let statusClass = '';
+
+                            const currentInstructorIdNum = parseInt(CURRENT_INSTRUCTOR_ID);
+                            const isMainInstructor = props.mainInstructor && parseInt(props.mainInstructor.id) === currentInstructorIdNum;
+                            const isReliefInstructor = props.reliefInstructor && parseInt(props.reliefInstructor.id) === currentInstructorIdNum;
+
+                            if (isMainInstructor) {
+                                statusText = 'Confirmed (You are Teaching)';
+                                statusClass = 'status-confirmed';
+                            } else if (isReliefInstructor) {
+                                statusText = 'Pending (You are in Relief Queue)';
+                                statusClass = 'status-pending';
+                            } else if (props.mainInstructor && !props.reliefInstructor) {
+                                statusText = 'Available (Relief Position)';
+                                statusClass = 'status-available';
+                            } else {
+                                statusText = 'Available (Main Position)';
+                                statusClass = 'status-available';
                             }
+
                             statusBadge.textContent = statusText;
-                            statusBadge.className = 'status-badge status-' + props.status;
+                            statusBadge.className = 'status-badge ' + statusClass;
 
                             // Display instructor information
                             displayInstructorInfo('mainInstructorContainer', props.mainInstructor, 'Main Instructor');
                             displayInstructorInfo('reliefInstructorContainer', props.reliefInstructor, 'Relief Instructor');
 
-                            // Show/hide action buttons based on status
+                            // Show/hide action buttons
                             const confirmBtn = document.getElementById('confirmBtn');
                             const pendingBtn = document.getElementById('pendingBtn');
                             const withdrawBtn = document.getElementById('withdrawBtn');
@@ -777,54 +770,41 @@
                             pendingBtn.classList.add('hidden');
                             withdrawBtn.classList.add('hidden');
 
-                            // Current instructor info (you)
-                            const currentInstructorId = 'instr_001'; // This should come from session/authentication
-                            const currentInstructorName = 'You (John Doe)';
-                            const currentInstructorInitials = 'JD';
+                            console.log('Current user status for this class:', props.status);
 
-                            // Check if user is already assigned to this class
-                            const isMainInstructor = props.mainInstructor && props.mainInstructor.id === currentInstructorId;
-                            const isReliefInstructor = props.reliefInstructor && props.reliefInstructor.id === currentInstructorId;
-                            const isAssigned = isMainInstructor || isReliefInstructor;
-
-                            // Determine button visibility based on class status and instructor assignments
-                            if (props.status === 'available') {
-                                if (!isAssigned) {
-                                    // User is not assigned to this class
-                                    if (!props.mainInstructor) {
-                                        // No main instructor - show BOTH Confirm and Pending buttons
-                                        confirmBtn.classList.remove('hidden');
-                                        pendingBtn.classList.remove('hidden');
-                                    } else if (props.mainInstructor && !props.reliefInstructor) {
-                                        // Has main instructor but no relief - show Pending button
-                                        pendingBtn.classList.remove('hidden');
-                                    }
-                                    // If both instructors are assigned, no buttons are shown
-                                } else {
-                                    // User is already assigned to this class - show Withdraw button
-                                    withdrawBtn.classList.remove('hidden');
-                                    if (isMainInstructor) {
-                                        withdrawBtnText.textContent = 'Withdraw as Main Instructor';
-                                    } else if (isReliefInstructor) {
-                                        withdrawBtnText.textContent = 'Withdraw as Relief Instructor';
-                                    }
+                            // LOGIC FOR BUTTON VISIBILITY:
+                            // 1. If current user is MAIN instructor
+                            if (isMainInstructor) {
+                                console.log('User is main instructor - Show WITHDRAW button');
+                                withdrawBtn.classList.remove('hidden');
+                                withdrawBtnText.textContent = 'Withdraw as Main Instructor';
+                            }
+                            // 2. If current user is RELIEF instructor
+                            else if (isReliefInstructor) {
+                                console.log('User is relief instructor - Show WITHDRAW button');
+                                withdrawBtn.classList.remove('hidden');
+                                withdrawBtnText.textContent = 'Cancel Relief Request';
+                            }
+                            // 3. If current user is NOT involved in this class
+                            else {
+                                // 3a. If class has NO instructors
+                                if (!props.mainInstructor && !props.reliefInstructor) {
+                                    console.log('Class has no instructors - Show CONFIRM button');
+                                    confirmBtn.classList.remove('hidden');
                                 }
-                            } else if (props.status === 'confirmed') {
-                                // You are the main instructor (confirmed status means you're teaching)
-                                if (isMainInstructor) {
-                                    withdrawBtn.classList.remove('hidden');
-                                    withdrawBtnText.textContent = 'Withdraw as Instructor';
+                                // 3b. If class has ONLY main instructor (no relief)
+                                else if (props.mainInstructor && !props.reliefInstructor) {
+                                    console.log('Class has main instructor but no relief - Show PENDING button');
+                                    pendingBtn.classList.remove('hidden');
                                 }
-                            } else if (props.status === 'pending') {
-                                // You are in the relief queue
-                                if (isReliefInstructor) {
-                                    withdrawBtn.classList.remove('hidden');
-                                    withdrawBtnText.textContent = 'Cancel Relief Request';
-                                }
+                                // Note: Case 3c (both instructors) should never reach here because 
+                                // those classes are filtered out in fetchEventsFromServer
                             }
 
-                            // Store current event ID for actions
-                            modal.setAttribute('data-event-id', event.id);
+                            // Store class ID in modal for button actions
+                            const classId = props.classId || event.id;
+                            modal.setAttribute('data-class-id', classId);
+                            console.log('Modal class ID set to:', classId);
 
                             // Show modal
                             modal.classList.remove('hidden');
@@ -836,220 +816,155 @@
                             container.innerHTML = '';
 
                             if (!instructor) {
-                                container.innerHTML = `
-                        <div class="text-center text-espresso/60 py-2">
-                            <i class="fas fa-user-slash mr-2"></i>
-                            No ${role.toLowerCase()} assigned
-                        </div>
-                    `;
+                                container.innerHTML = '<div class="text-center text-espresso/60 py-2">No ' + role.toLowerCase() + ' assigned</div>';
                             } else {
-                                const isYou = instructor.id === 'instr_001'; // Check if this is the current user
-                                container.innerHTML = `
-                        <div class="instructor-avatar">${instructor.initials}</div>
-                        <div class="instructor-details">
-                            <div class="instructor-name">${instructor.name}</div>
-                            <div class="instructor-role">${role} ${isYou ? '(You)' : ''}</div>
-                        </div>
-                    `;
+                                const currentInstructorIdNum = parseInt(CURRENT_INSTRUCTOR_ID);
+                                const isYou = parseInt(instructor.id) === currentInstructorIdNum;
+
+                                container.innerHTML =
+                                        '<div class="instructor-avatar">' + (instructor.initials || getInitials(instructor.name)) + '</div>' +
+                                        '<div class="instructor-details">' +
+                                        '<div class="instructor-name">' + (instructor.name || 'Unknown Instructor') + '</div>' +
+                                        '<div class="instructor-role">' + role + (isYou ? ' (You)' : '') + '</div>' +
+                                        '</div>';
                             }
+                        }
+
+                        function getInitials(name) {
+                            if (!name)
+                                return '??';
+                            const parts = name.split(' ');
+                            if (parts.length >= 2) {
+                                return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+                            }
+                            return name.substring(0, Math.min(2, name.length)).toUpperCase();
                         }
 
                         function closeModal() {
                             document.getElementById('classModal').classList.add('hidden');
                             document.body.style.overflow = 'auto';
+                            // Clear stored event details
+                            window.currentEventDetails = null;
                         }
 
                         function confirmClass() {
                             const modal = document.getElementById('classModal');
-                            const eventId = modal.getAttribute('data-event-id');
-                            const event = window.calendar.getEventById(eventId);
+                            const classId = modal.getAttribute('data-class-id');
+                            console.log('Confirm button clicked. Class ID from modal:', classId);
 
-                            if (event && confirm('Are you sure you want to confirm as the main instructor for this class?')) {
-                                // In production, send AJAX request to server
-                                simulateApiCall('confirm', eventId).then(success => {
-                                    if (success) {
-                                        // Update event status and instructor info
-                                        const currentInstructor = {
-                                            id: 'instr_001',
-                                            name: 'You (John Doe)',
-                                            initials: 'JD'
-                                        };
+                            if (!classId) {
+                                alert('Error: Class ID not found. Please try again.');
+                                return;
+                            }
 
-                                        event.setProp('status', 'confirmed');
-                                        event.setProp('className', 'fc-event-confirmed');
-                                        event.setExtendedProp('mainInstructor', currentInstructor);
-                                        event.setExtendedProp('instructorStatus', 'confirmed');
-                                        event.setExtendedProp('instructorId', 'instr_001');
-
-                                        // Show success message
-                                        alert('Successfully confirmed as main instructor for ' + event.title);
-                                        closeModal();
-
-                                        // Refresh calendar to show updated status
-                                        window.calendar.render();
-                                    }
-                                });
+                            if (confirm('Are you sure you want to confirm as the main instructor for this class?')) {
+                                sendActionToServer('confirm', classId);
                             }
                         }
 
                         function requestPending() {
                             const modal = document.getElementById('classModal');
-                            const eventId = modal.getAttribute('data-event-id');
-                            const event = window.calendar.getEventById(eventId);
+                            const classId = modal.getAttribute('data-class-id');
+                            console.log('Pending button clicked. Class ID from modal:', classId);
 
-                            if (event && confirm('Request to be added as relief instructor for this class?')) {
-                                // In production, send AJAX request to server
-                                simulateApiCall('pending', eventId).then(success => {
-                                    if (success) {
-                                        // Update event status and relief instructor info
-                                        const currentInstructor = {
-                                            id: 'instr_001',
-                                            name: 'You (John Doe)',
-                                            initials: 'JD'
-                                        };
+                            if (!classId) {
+                                alert('Error: Class ID not found. Please try again.');
+                                return;
+                            }
 
-                                        // Check if user is already main instructor (shouldn't happen but just in case)
-                                        if (event.extendedProps.mainInstructor &&
-                                                event.extendedProps.mainInstructor.id === 'instr_001') {
-                                            alert('You are already the main instructor for this class!');
-                                            return;
-                                        }
-
-                                        event.setProp('status', 'pending');
-                                        event.setProp('className', 'fc-event-pending');
-                                        event.setExtendedProp('reliefInstructor', currentInstructor);
-                                        event.setExtendedProp('instructorStatus', 'pending');
-                                        event.setExtendedProp('instructorId', 'instr_001');
-
-                                        // Show success message
-                                        alert('Successfully added to relief queue for ' + event.title);
-                                        closeModal();
-
-                                        // Refresh calendar
-                                        window.calendar.render();
-                                    }
-                                });
+                            if (confirm('Request to be added as relief instructor for this class?')) {
+                                sendActionToServer('requestRelief', classId);
                             }
                         }
 
                         function withdrawClass() {
                             const modal = document.getElementById('classModal');
-                            const eventId = modal.getAttribute('data-event-id');
-                            const event = window.calendar.getEventById(eventId);
-                            const props = event.extendedProps;
-                            const isMainInstructor = props.mainInstructor &&
-                                    props.mainInstructor.id === 'instr_001';
-                            const isReliefInstructor = props.reliefInstructor &&
-                                    props.reliefInstructor.id === 'instr_001';
+                            const classId = modal.getAttribute('data-class-id');
+                            console.log('Withdraw button clicked. Class ID from modal:', classId);
 
-                            let message = '';
-                            let actionType = '';
-
-                            if (isMainInstructor) {
-                                message = 'Are you sure you want to withdraw as the main instructor for this class?';
-                                actionType = 'withdraw_main';
-                            } else if (isReliefInstructor) {
-                                message = 'Are you sure you want to cancel your relief request for this class?';
-                                actionType = 'withdraw_relief';
+                            if (!classId) {
+                                alert('Error: Class ID not found. Please try again.');
+                                return;
                             }
 
-                            if (event && message && confirm(message)) {
-                                // In production, send AJAX request to server
-                                simulateApiCall(actionType, eventId).then(success => {
-                                    if (success) {
-                                        // Update event status based on withdrawal type
-                                        if (actionType === 'withdraw_main') {
-                                            // Withdrawing as main instructor - class becomes available
-                                            event.setProp('status', 'available');
-                                            event.setProp('className', 'fc-event-available');
-                                            event.setExtendedProp('mainInstructor', null);
-                                            event.setExtendedProp('instructorStatus', null);
-                                            event.setExtendedProp('instructorId', null);
+                            // Check user's role in this class
+                            const currentInstructorIdNum = parseInt(CURRENT_INSTRUCTOR_ID);
+                            const props = window.currentEventDetails;
 
-                                            alert('Successfully withdrawn as main instructor from ' + event.title);
-                                        } else if (actionType === 'withdraw_relief') {
-                                            // Withdrawing as relief instructor - remove from relief queue
-                                            if (props.status === 'pending') {
-                                                event.setProp('status', 'available');
-                                                event.setProp('className', 'fc-event-available');
-                                            }
-                                            event.setExtendedProp('reliefInstructor', null);
-                                            event.setExtendedProp('instructorStatus', null);
-                                            event.setExtendedProp('instructorId', null);
+                            let message = '';
+                            if (props.mainInstructor && parseInt(props.mainInstructor.id) === currentInstructorIdNum) {
+                                message = 'Are you sure you want to withdraw as the main instructor? The relief instructor will become the main instructor.';
+                            } else if (props.reliefInstructor && parseInt(props.reliefInstructor.id) === currentInstructorIdNum) {
+                                message = 'Are you sure you want to cancel your relief request?';
+                            } else {
+                                message = 'Are you sure you want to withdraw from this class?';
+                            }
 
-                                            alert('Successfully cancelled relief request for ' + event.title);
-                                        }
-
-                                        closeModal();
-
-                                        // Refresh calendar
-                                        window.calendar.render();
-                                    }
-                                });
+                            if (confirm(message)) {
+                                sendActionToServer('withdraw', classId);
                             }
                         }
 
-                        // Simulate API call (replace with actual AJAX call)
-                        function simulateApiCall(action, eventId) {
-                            return new Promise(resolve => {
-                                setTimeout(() => {
-                                    console.log(`${action} action for event ${eventId}`);
-                                                    // Simulate successful API response
-                                                    resolve(true);
+                        function sendActionToServer(action, classId) {
+                            console.log('Sending ' + action + ' for class ' + classId);
 
-                                                    // In production, handle errors:
-                                                    // if (error) {
-                                                    //     alert('Error: ' + error.message);
-                                                    //     resolve(false);
-                                                    // }
-                                                }, 500);
+                            // Create URL-encoded data
+                            const data = new URLSearchParams();
+                            data.append('action', action);
+                            data.append('classId', classId);
+
+                            console.log('Sending data:', data.toString());
+
+                            fetch('../ClassConfirmationServlet', {
+                                method: 'POST',
+                                body: data,
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded',
+                                    'Cache-Control': 'no-cache'
+                                }
+                            })
+                                    .then(function (response) {
+                                        console.log('Response status:', response.status);
+                                        console.log('Response OK:', response.ok);
+
+                                        if (!response.ok) {
+                                            // Try to get more details about the error
+                                            return response.text().then(function (text) {
+                                                console.log('Error response text:', text);
+                                                throw new Error('Server returned ' + response.status + ': ' + response.statusText + '. Response: ' + text);
                                             });
                                         }
-
-                                        function highlightCurrentPage() {
-                                            const currentPage = 'schedule_instructor.jsp';
-                                            const sidebarLinks = document.querySelectorAll('#sidebar a');
-
-                                            sidebarLinks.forEach(link => {
-                                                const href = link.getAttribute('href');
-                                                if (href && href.includes(currentPage)) {
-                                                    link.classList.add('bg-blush/30', 'text-dusty', 'font-medium');
-                                                    link.classList.remove('hover:bg-blush/20', 'text-espresso');
-                                                }
-                                            });
+                                        return response.json();
+                                    })
+                                    .then(function (data) {
+                                        console.log('Response from server:', data);
+                                        if (data.success) {
+                                            alert(data.message);
+                                            closeModal();
+                                            // Refresh calendar to show updated data
+                                            window.calendar.refetchEvents();
+                                        } else {
+                                            alert('Error: ' + data.message);
                                         }
+                                    })
+                                    .catch(function (error) {
+                                        console.error('Error:', error);
+                                        alert('Server error occurred: ' + error.message);
+                                    });
+                        }
 
-                                        // Helper functions for sample dates
-                                        function getNextMonday() {
-                                            var date = new Date();
-                                            date.setDate(date.getDate() + (1 + 7 - date.getDay()) % 7);
-                                            return date.toISOString().split('T')[0];
-                                        }
+                        function highlightCurrentPage() {
+                            const currentPage = 'schedule_instructor.jsp';
+                            const sidebarLinks = document.querySelectorAll('#sidebar a');
 
-                                        function getNextTuesday() {
-                                            var date = new Date();
-                                            date.setDate(date.getDate() + (2 + 7 - date.getDay()) % 7);
-                                            return date.toISOString().split('T')[0];
-                                        }
-
-                                        function getNextWednesday() {
-                                            var date = new Date();
-                                            date.setDate(date.getDate() + (3 + 7 - date.getDay()) % 7);
-                                            return date.toISOString().split('T')[0];
-                                        }
-
-                                        function getNextThursday() {
-                                            var date = new Date();
-                                            date.setDate(date.getDate() + (4 + 7 - date.getDay()) % 7);
-                                            return date.toISOString().split('T')[0];
-                                        }
-
-                                        function getNextFriday() {
-                                            var date = new Date();
-                                            date.setDate(date.getDate() + (5 + 7 - date.getDay()) % 7);
-                                            return date.toISOString().split('T')[0];
-                                        }
+                            sidebarLinks.forEach(function (link) {
+                                const href = link.getAttribute('href');
+                                if (href && href.includes(currentPage)) {
+                                    link.classList.add('bg-blush/30', 'text-dusty', 'font-medium');
+                                    link.classList.remove('hover:bg-blush/20', 'text-espresso');
+                                }
+                            });
+                        }
         </script>
-
     </body>
 </html>

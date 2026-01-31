@@ -608,7 +608,7 @@
                                     <i class="fas fa-search text-teal"></i>
                                     Available Classes
                                 </h2>
-                                <a href="view_class.jsp" class="text-teal text-sm font-medium hover:text-tealHover">
+                                <a href="schedule_instructor.jsp" class="text-teal text-sm font-medium hover:text-tealHover">
                                     Browse All →
                                 </a>
                             </div>
@@ -654,7 +654,7 @@
                             </div>
 
                             <div class="mt-6 pt-4 border-t border-petal">
-                                <a href="view_class.jsp" class="text-dusty font-medium text-sm hover:text-dustyHover flex items-center justify-center">
+                                <a href="schedule_instructor.jsp" class="text-dusty font-medium text-sm hover:text-dustyHover flex items-center justify-center">
                                     <i class="fas fa-plus-circle mr-2"></i>
                                     View All 8 Available Classes
                                 </a>
