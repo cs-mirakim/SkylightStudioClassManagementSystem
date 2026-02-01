@@ -259,4 +259,62 @@ public class ClassDAO {
         cls.setAdminID(rs.getInt("adminID"));
         return cls;
     }
+    
+        // Check if class can be deleted (no instructors assigned and more than 24 hours away)
+        public boolean canDeleteClass(int classId) {
+        String sql = "SELECT c.*, " +
+                    "(SELECT COUNT(*) FROM class_confirmation WHERE classID = c.classID AND action IN ('confirmed', 'pending')) as instructorCount " +
+                    "FROM class c WHERE classID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, classId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                int instructorCount = rs.getInt("instructorCount");
+
+                // Get the date and time from database
+                java.sql.Date sqlClassDate = rs.getDate("classDate");
+                java.sql.Time sqlClassTime = rs.getTime("classStartTime");
+
+                // Check if class has instructors
+                if (instructorCount > 0) {
+                    return false;
+                }
+
+                // Check if class is more than 24 hours away
+                java.util.Date now = new java.util.Date();
+
+                // Create a java.util.Date object from sql.Date and sql.Time
+                java.util.Date classDateTime = new java.util.Date(
+                    sqlClassDate.getTime() + sqlClassTime.getTime()
+                );
+
+                long hoursDifference = (classDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+                return hoursDifference > 24;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+    
+    // Delete class
+    public boolean deleteClass(int classId) {
+        String sql = "DELETE FROM class WHERE classID = ?";
+        
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, classId);
+            int rows = stmt.executeUpdate();
+            return rows > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
