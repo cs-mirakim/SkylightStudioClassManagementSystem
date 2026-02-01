@@ -205,4 +205,45 @@ public class ClassConfirmationDAO {
         }
         return cc.getAction();
     }
-}
+    
+    // Tambahkan method ini di ClassConfirmationDAO.java
+    public List<Map<String, Object>> getCancelledClasses() throws SQLException {
+        String sql = "SELECT cc.*, i.name as instructorName, i.email as instructorEmail, " +
+                     "c.className, c.classType, c.classLevel, c.classDate, " +
+                     "c.classStartTime, c.classEndTime, c.location " +
+                     "FROM class_confirmation cc " +
+                     "JOIN instructor i ON cc.instructorID = i.instructorID " +
+                     "JOIN class c ON cc.classID = c.classID " +
+                     "WHERE cc.action = 'cancelled' " +
+                     "ORDER BY cc.cancelledAt DESC";
+
+        List<Map<String, Object>> cancelledClasses = new ArrayList<>();
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Map<String, Object> cancelledClass = new HashMap<>();
+                cancelledClass.put("confirmID", rs.getInt("confirmID"));
+                cancelledClass.put("classID", rs.getInt("classID"));
+                cancelledClass.put("instructorID", rs.getInt("instructorID"));
+                cancelledClass.put("instructorName", rs.getString("instructorName"));
+                cancelledClass.put("instructorEmail", rs.getString("instructorEmail"));
+                cancelledClass.put("className", rs.getString("className"));
+                cancelledClass.put("classType", rs.getString("classType"));
+                cancelledClass.put("classLevel", rs.getString("classLevel"));
+                cancelledClass.put("classDate", rs.getDate("classDate"));
+                cancelledClass.put("classStartTime", rs.getTime("classStartTime"));
+                cancelledClass.put("classEndTime", rs.getTime("classEndTime"));
+                cancelledClass.put("location", rs.getString("location"));
+                cancelledClass.put("cancellationReason", rs.getString("cancellationReason"));
+                cancelledClass.put("cancelledAt", rs.getTimestamp("cancelledAt"));
+                cancelledClass.put("actionAt", rs.getTimestamp("actionAt"));
+
+                cancelledClasses.add(cancelledClass);
+            }
+        }
+        return cancelledClasses;
+    }
+    }

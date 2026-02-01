@@ -165,7 +165,9 @@ public class RegistrationDAO {
     }
 
     // ========== NEW METHOD: Get all instructor registrations with instructor details ==========
-    public List<Map<String, Object>> getAllInstructorRegistrations() throws SQLException {
+        public List<Map<String, Object>> getAllInstructorRegistrations() throws SQLException {
+        System.out.println("[DEBUG] RegistrationDAO.getAllInstructorRegistrations() called");
+
         String sql = "SELECT r.registerID, r.status as registrationStatus, r.registerDate, r.adminMessage, "
                 + "i.instructorID, i.username, i.name, i.email, i.phone, i.nric, i.profileImageFilePath, "
                 + "i.BOD, i.certificationFilePath, i.yearOfExperience, i.address, i.status as instructorStatus, "
@@ -175,13 +177,19 @@ public class RegistrationDAO {
                 + "WHERE r.userType = 'instructor' "
                 + "ORDER BY r.registerDate DESC";
 
+        System.out.println("[DEBUG] SQL: " + sql);
+
         List<Map<String, Object>> result = new ArrayList<>();
 
         try (Connection conn = DBConnection.getConnection();
                 Statement stmt = conn.createStatement();
                 ResultSet rs = stmt.executeQuery(sql)) {
 
+            System.out.println("[DEBUG] Connection successful, executing query");
+
+            int count = 0;
             while (rs.next()) {
+                count++;
                 Map<String, Object> registration = new HashMap<>();
 
                 // Registration details
@@ -191,7 +199,7 @@ public class RegistrationDAO {
                 registration.put("adminMessage", rs.getString("adminMessage"));
 
                 // Instructor details
-                registration.put("id", rs.getInt("instructorID")); // For JavaScript compatibility
+                registration.put("id", rs.getInt("instructorID"));
                 registration.put("instructorID", rs.getInt("instructorID"));
                 registration.put("username", rs.getString("username"));
                 registration.put("name", rs.getString("name"));
@@ -206,12 +214,16 @@ public class RegistrationDAO {
                 registration.put("instructorStatus", rs.getString("instructorStatus"));
                 registration.put("reviewedBy", rs.getInt("reviewedBy"));
                 registration.put("reviewedAt", rs.getTimestamp("reviewedAt"));
-
-                // For status filter - use registration status
                 registration.put("status", rs.getString("registrationStatus"));
 
                 result.add(registration);
             }
+
+            System.out.println("[DEBUG] Found " + count + " registrations");
+
+        } catch (SQLException e) {
+            System.err.println("[ERROR] SQLException in getAllInstructorRegistrations: " + e.getMessage());
+            throw e;
         }
         return result;
     }

@@ -22,9 +22,17 @@ public class DBConnection {
 
     public static Connection getConnection() throws SQLException {
         System.out.println("[DBConnection] Creating new connection...");
-        Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-        System.out.println("[DBConnection] Connection created successfully");
-        return conn;
+        try {
+            Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+            System.out.println("[DBConnection] Connection created successfully");
+            System.out.println("[DBConnection] Database: " + conn.getMetaData().getDatabaseProductName());
+            System.out.println("[DBConnection] URL: " + conn.getMetaData().getURL());
+            return conn;
+        } catch (SQLException e) {
+            System.err.println("[DBConnection] Error creating connection: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public static void closeConnection(Connection conn) {
@@ -37,6 +45,16 @@ public class DBConnection {
             } catch (SQLException e) {
                 System.err.println("[DBConnection] Error closing connection: " + e.getMessage());
             }
+        }
+    }
+    
+    // Test connection method
+    public static boolean testConnection() {
+        try (Connection conn = getConnection()) {
+            return conn != null && !conn.isClosed();
+        } catch (SQLException e) {
+            System.err.println("[DBConnection] Test failed: " + e.getMessage());
+            return false;
         }
     }
 }
