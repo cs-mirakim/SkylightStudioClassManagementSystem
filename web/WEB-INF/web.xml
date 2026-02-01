@@ -21,11 +21,11 @@
     </context-param>
     <context-param>
         <param-name>smtpUsername</param-name>
-        <param-value>2025159215@student.uitm.edu.my</param-value>
+        <param-value>amirhakiml2ews@gmail.com</param-value>
     </context-param>
     <context-param>
         <param-name>smtpPassword</param-name>
-        <param-value>jgtryhdnkcmixekt</param-value>
+        <param-value>svvzhehtouozvkzl</param-value>
     </context-param>
     <context-param>
         <param-name>smtpFromEmail</param-name>
