@@ -146,6 +146,7 @@
                 justify-content: center;
             }
 
+            /* QR Code Styles */
             .qr-container {
                 position: relative;
                 display: inline-block;
@@ -170,27 +171,83 @@
             }
 
             .qr-expanded {
-                position: absolute;
-                top: 70px;
-                left: 0;
-                z-index: 100;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-                padding: 15px;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                padding: 25px;
                 display: none;
-                width: 200px;
+                width: 280px;
                 text-align: center;
+                border: 3px solid #F2D1D1;
             }
 
             .qr-expanded img {
-                width: 160px;
-                height: 160px;
-                margin-bottom: 10px;
+                width: 200px;
+                height: 200px;
+                margin-bottom: 15px;
+                border-radius: 8px;
+                border: 1px solid #EFE1E1;
             }
 
             .qr-expanded.show {
                 display: block;
+                animation: fadeInScale 0.3s ease-out;
+            }
+
+            /* Add overlay for when QR is shown */
+            .qr-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                display: none;
+            }
+
+            .qr-overlay.show {
+                display: block;
+            }
+
+            @keyframes fadeInScale {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+
+            /* Add close button for QR modal */
+            .qr-close-btn {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: #EFE1E1;
+                border: none;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: #3D3434;
+                font-size: 16px;
+                transition: all 0.2s ease;
+            }
+
+            .qr-close-btn:hover {
+                background: #F2D1D1;
+                color: #B36D6D;
             }
 
             .main-container {
@@ -237,6 +294,113 @@
                 display: flex;
                 align-items: center;
                 gap: 0.5rem;
+            }
+
+            .section-title.no-border {
+                border-bottom: 0 !important;
+                padding-bottom: 0 !important;
+                margin-bottom: 0 !important;
+            }
+
+            /* Square QR Modal */
+            .qr-expanded {
+                width: 280px;
+                height: 380px;
+                padding: 25px;
+            }
+
+            .qr-expanded img {
+                width: 200px;
+                height: 200px;
+                object-fit: contain;
+            }
+
+            /* Weekly Calendar Grid Styles */
+            .week-calendar {
+                display: grid;
+                grid-template-columns: repeat(7, 1fr);
+                gap: 0.5rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .week-day {
+                background: #FDF8F8;
+                border-radius: 10px;
+                padding: 0.75rem;
+                border: 1px solid #EFE1E1;
+                min-height: 120px;
+                transition: all 0.2s ease;
+            }
+
+            .week-day:hover {
+                border-color: #F2D1D1;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(179, 109, 109, 0.1);
+            }
+
+            .week-day.today {
+                background: linear-gradient(135deg, #F2D1D1 0%, #EFE1E1 100%);
+                border: 2px solid #B36D6D;
+            }
+
+            .week-day-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid #EFE1E1;
+            }
+
+            .week-day-name {
+                font-size: 0.875rem;
+                font-weight: 600;
+                color: #3D3434;
+            }
+
+            .week-day-date {
+                font-size: 0.75rem;
+                color: #3D3434/70;
+                background: white;
+                padding: 0.125rem 0.375rem;
+                border-radius: 4px;
+            }
+
+            .week-day-classes {
+                display: flex;
+                flex-direction: column;
+                gap: 0.375rem;
+            }
+
+            .week-class-item {
+                font-size: 0.75rem;
+                padding: 0.375rem;
+                border-radius: 6px;
+                border-left: 3px solid;
+                background: white;
+            }
+
+            .week-class-item.confirm {
+                border-left-color: #1B5E20;
+                background-color: #A5D6A7;
+            }
+
+            .week-class-item.pending {
+                border-left-color: #E65100;
+                background-color: #FFCC80;
+            }
+
+            .week-class-time {
+                font-size: 0.7rem;
+                color: #3D3434/70;
+                margin-top: 0.125rem;
+            }
+
+            .week-class-title {
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         </style>
     </head>
@@ -332,10 +496,16 @@
                                                 <div class="qr-placeholder" onclick="toggleQR('qr1')">
                                                     <i class="fas fa-qrcode text-dusty text-xl"></i>
                                                 </div>
+                                                <div class="qr-overlay" id="overlay-qr1" onclick="closeAllQR()"></div>
                                                 <div class="qr-expanded" id="qr1">
+                                                    <button class="qr-close-btn" onclick="closeAllQR()">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    <h4 class="font-semibold text-espresso mb-2">Mat Pilates Beginner</h4>
+                                                    <p class="text-sm text-espresso/70 mb-4">9:00 AM • Studio A</p>
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Mat Pilates Beginner">
                                                     <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
+                                                            class="mt-4 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
                                                 </div>
@@ -374,10 +544,16 @@
                                                 <div class="qr-placeholder" onclick="toggleQR('qr2')">
                                                     <i class="fas fa-qrcode text-dusty text-xl"></i>
                                                 </div>
+                                                <div class="qr-overlay" id="overlay-qr2" onclick="closeAllQR()"></div>
                                                 <div class="qr-expanded" id="qr2">
+                                                    <button class="qr-close-btn" onclick="closeAllQR()">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    <h4 class="font-semibold text-espresso mb-2">Reformer Intermediate</h4>
+                                                    <p class="text-sm text-espresso/70 mb-4">2:00 PM • Studio B</p>
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Reformer Intermediate">
                                                     <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
+                                                            class="mt-4 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
                                                 </div>
@@ -408,10 +584,16 @@
                                                 <div class="qr-placeholder" onclick="toggleQR('qr3')">
                                                     <i class="fas fa-qrcode text-dusty text-xl"></i>
                                                 </div>
+                                                <div class="qr-overlay" id="overlay-qr3" onclick="closeAllQR()"></div>
                                                 <div class="qr-expanded" id="qr3">
+                                                    <button class="qr-close-btn" onclick="closeAllQR()">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                    <h4 class="font-semibold text-espresso mb-2">Advanced Pilates</h4>
+                                                    <p class="text-sm text-espresso/70 mb-4">6:00 PM • Studio A</p>
                                                     <img src="qr_codes/dummy.PNG" alt="QR Code for Advanced Pilates">
                                                     <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
+                                                            class="mt-4 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
                                                         <i class="fas fa-chart-bar mr-2"></i>View Feedback
                                                     </button>
                                                 </div>
@@ -423,71 +605,57 @@
                         </div>
                     </div>
 
-                    <!-- WEEK AT A GLANCE - NOW BELOW TODAY'S SCHEDULE -->
+                    <!-- WEEK OVERVIEW - NOW BELOW TODAY'S SCHEDULE -->
                     <div class="section-card">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="section-title">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="section-title" style="margin-bottom: 0; border-bottom: 0; padding-bottom: 0;">
                                 <i class="fas fa-calendar text-dusty"></i>
-                                Week at a Glance
+                                Week Overview
                             </h2>
-                            <span class="text-sm text-espresso/60">Nov 2024</span>
+                            <span class="text-sm text-espresso/60" id="current-week-range"></span>
                         </div>
 
-                        <!-- Calendar Header -->
-                        <div class="grid grid-cols-7 gap-1 mb-3">
-                            <div class="text-center text-xs font-medium text-espresso/60">Sun</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Mon</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Tue</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Wed</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Thu</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Fri</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Sat</div>
-                        </div>
-
-                        <!-- Calendar Days -->
-                        <div class="grid grid-cols-7 gap-1 mb-6" id="mini-calendar">
-                            <!-- Calendar days will be populated by JavaScript -->
-                        </div>
-
-                        <!-- Class Status Legend -->
-                        <div class="mt-6 pt-6 border-t border-petal">
-                            <h4 class="font-medium text-espresso mb-3">Class Status</h4>
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-dusty mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Your Class</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">3 classes</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-teal mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Available for Relief</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">2 classes</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-successTextDark mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Completed Relief</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">2 classes</span>
-                                </div>
+                        <!-- Weekly Calendar Grid -->
+                        <div class="mt-2 mb-6">
+                            <div class="week-calendar" id="week-calendar-grid">
+                                <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
 
-                        <!-- Quick Stats -->
-                        <div class="mt-6 pt-6 border-t border-petal">
-                            <h4 class="font-medium text-espresso mb-3">This Week</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="text-center p-3 rounded-lg bg-blush/20">
-                                    <div class="text-lg font-bold text-dusty">5</div>
-                                    <div class="text-xs text-espresso/70">Total Classes</div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-petal">
+                            <!-- Class Status Legend -->
+                            <div>
+                                <h4 class="font-medium text-espresso mb-3">Class Status</h4>
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full bg-successTextDark mr-2"></div>
+                                            <span class="text-sm text-espresso/70">Your Class (Confirm Placement)</span>
+                                        </div>
+                                        <span class="text-xs text-espresso/60">5 classes</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full bg-warningText mr-2"></div>
+                                            <span class="text-sm text-espresso/70">Pending Relief</span>
+                                        </div>
+                                        <span class="text-xs text-espresso/60">2 classes</span>
+                                    </div>
                                 </div>
-                                <div class="text-center p-3 rounded-lg bg-successBg/20">
-                                    <div class="text-lg font-bold text-successTextDark">2</div>
-                                    <div class="text-xs text-espresso/70">Relieved</div>
+                            </div>
+
+                            <!-- Quick Stats -->
+                            <div>
+                                <h4 class="font-medium text-espresso mb-3">This Week Summary</h4>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="text-center p-3 rounded-lg bg-successBg/20 border border-successBg/30">
+                                        <div class="text-lg font-bold text-successTextDark">5</div>
+                                        <div class="text-xs text-espresso/70">Total Confirm Class</div>
+                                    </div>
+                                    <div class="text-center p-3 rounded-lg bg-warningBg/20 border border-warningBg/30">
+                                        <div class="text-lg font-bold text-warningText">2</div>
+                                        <div class="text-xs text-espresso/70">Pending Relief</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -503,9 +671,6 @@
                                     <i class="fas fa-exchange-alt text-infoText"></i>
                                     Relief Class Updates
                                 </h2>
-                                <a href="pending.jsp" class="text-dusty text-sm font-medium hover:text-dustyHover">
-                                    History →
-                                </a>
                             </div>
 
                             <div class="space-y-4">
@@ -652,13 +817,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="mt-6 pt-4 border-t border-petal">
-                                <a href="schedule_instructor.jsp" class="text-dusty font-medium text-sm hover:text-dustyHover flex items-center justify-center">
-                                    <i class="fas fa-plus-circle mr-2"></i>
-                                    View All 8 Available Classes
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -671,93 +829,180 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-                                                        // Initialize when page loads
                                                         document.addEventListener('DOMContentLoaded', function () {
                                                             // Set current date
                                                             const now = new Date();
                                                             const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
                                                             document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
 
-                                                            // Initialize mini calendar
-                                                            initializeMiniCalendar();
+                                                            // Set week range
+                                                            const weekStart = new Date(now);
+                                                            weekStart.setDate(now.getDate() - now.getDay());
+                                                            const weekEnd = new Date(weekStart);
+                                                            weekEnd.setDate(weekStart.getDate() + 6);
 
-                                                            // Close QR when clicking outside
+                                                            const weekStartStr = weekStart.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+                                                            const weekEndStr = weekEnd.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+                                                            document.getElementById('current-week-range').textContent = weekStartStr + ' - ' + weekEndStr;
+
+                                                            // Initialize weekly calendar grid
+                                                            initializeWeekCalendarGrid();
+
+                                                            // Close QR when clicking outside overlay
                                                             document.addEventListener('click', function (event) {
-                                                                const qrExpanded = document.querySelectorAll('.qr-expanded.show');
-                                                                qrExpanded.forEach(qr => {
-                                                                    if (!qr.contains(event.target) && !event.target.closest('.qr-placeholder')) {
-                                                                        qr.classList.remove('show');
-                                                                    }
-                                                                });
+                                                                // If clicking on overlay, close all QR codes
+                                                                if (event.target.classList.contains('qr-overlay')) {
+                                                                    closeAllQR();
+                                                                }
+                                                                // If clicking outside QR modal and not on QR placeholder
+                                                                else if (!event.target.closest('.qr-expanded') && !event.target.closest('.qr-placeholder')) {
+                                                                    closeAllQR();
+                                                                }
+                                                            });
+
+                                                            // Close QR with Escape key
+                                                            document.addEventListener('keydown', function (event) {
+                                                                if (event.key === 'Escape') {
+                                                                    closeAllQR();
+                                                                }
                                                             });
                                                         });
 
-                                                        function initializeMiniCalendar() {
-                                                            const calendarEl = document.getElementById('mini-calendar');
+// BUANG SEMUA FUNCTION initializeMiniCalendar() DAN PAKAIANNYA
+
+                                                        function initializeWeekCalendarGrid() {
+                                                            const weekGrid = document.getElementById('week-calendar-grid');
                                                             const now = new Date();
-                                                            const currentMonth = now.getMonth();
-                                                            const currentYear = now.getFullYear();
-                                                            const currentDay = now.getDate();
+                                                            const today = now.getDate();
 
-                                                            // Get first day of month
-                                                            const firstDay = new Date(currentYear, currentMonth, 1);
-                                                            const startingDay = firstDay.getDay(); // 0 = Sunday
-
-                                                            // Get days in month
-                                                            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-                                                            // Days with classes (simulated data)
-                                                            const classDays = [12, 15, 18, 20, 22]; // Regular classes
-                                                            const reliefAvailableDays = [16, 19]; // Available for relief
-                                                            const completedReliefDays = [9, 14]; // Completed relief classes
-
-                                                            let calendarHTML = '';
-
-                                                            // Empty cells for days before month starts
-                                                            for (let i = 0; i < startingDay; i++) {
-                                                                calendarHTML += '<div class="calendar-day"></div>';
-                                                            }
-
-                                                            // Days of the month
-                                                            for (let day = 1; day <= daysInMonth; day++) {
-                                                                let dayClass = 'calendar-day';
-                                                                let dayContent = day;
-
-                                                                // Highlight today
-                                                                if (day === currentDay) {
-                                                                    dayClass += ' bg-dusty text-whitePure';
+                                                            // Dummy data for the week (Nov 11-17, 2024)
+                                                            const weekData = [
+                                                                {
+                                                                    dayName: "Sun",
+                                                                    date: 10,
+                                                                    classes: []
+                                                                },
+                                                                {
+                                                                    dayName: "Mon",
+                                                                    date: 11,
+                                                                    classes: [
+                                                                        {title: "Mat Pilates Beginner", time: "9:00 AM", type: "confirm"},
+                                                                        {title: "Advanced Pilates", time: "6:00 PM", type: "confirm"}
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    dayName: "Tue",
+                                                                    date: 12,
+                                                                    classes: [
+                                                                        {title: "Reformer Intermediate", time: "2:00 PM", type: "confirm"}
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    dayName: "Wed",
+                                                                    date: 13,
+                                                                    isToday: true,
+                                                                    classes: [
+                                                                        {title: "Mat Pilates Beginner", time: "9:00 AM", type: "confirm"},
+                                                                        {title: "Reformer Intermediate", time: "2:00 PM", type: "confirm"},
+                                                                        {title: "Advanced Pilates", time: "6:00 PM", type: "confirm"}
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    dayName: "Thu",
+                                                                    date: 14,
+                                                                    classes: [
+                                                                        {title: "Morning Flow Class", time: "8:00 AM", type: "pending"}
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    dayName: "Fri",
+                                                                    date: 15,
+                                                                    classes: [
+                                                                        {title: "Pilates for Seniors", time: "10:00 AM", type: "confirm"},
+                                                                        {title: "Evening Stretch", time: "5:30 PM", type: "pending"}
+                                                                    ]
+                                                                },
+                                                                {
+                                                                    dayName: "Sat",
+                                                                    date: 16,
+                                                                    classes: []
                                                                 }
-                                                                // Mark days with regular classes
-                                                                else if (classDays.includes(day)) {
-                                                                    dayClass += ' has-class';
-                                                                }
-                                                                // Mark days available for relief
-                                                                else if (reliefAvailableDays.includes(day)) {
-                                                                    dayClass += ' border-2 border-teal';
-                                                                }
-                                                                // Mark completed relief days
-                                                                else if (completedReliefDays.includes(day)) {
-                                                                    dayClass += ' border-2 border-successTextDark';
+                                                            ];
+
+                                                            let weekHTML = '';
+
+                                                            weekData.forEach(day => {
+                                                                const isToday = day.date === today;
+                                                                let dayClass = 'week-day';
+                                                                if (isToday) {
+                                                                    dayClass += ' today';
                                                                 }
 
-                                                                calendarHTML += `<div class="${dayClass}" title="${day} Nov ${currentYear}">${dayContent}</div>`;
-                                                            }
+                                                                weekHTML += '<div class="' + dayClass + '">';
+                                                                weekHTML += '<div class="week-day-header">';
+                                                                weekHTML += '<span class="week-day-name">' + day.dayName + '</span>';
+                                                                weekHTML += '<span class="week-day-date">' + day.date + '</span>';
+                                                                weekHTML += '</div>';
+                                                                weekHTML += '<div class="week-day-classes">';
 
-                                                            calendarEl.innerHTML = calendarHTML;
+                                                                if (day.classes.length > 0) {
+                                                                    day.classes.forEach(cls => {
+                                                                        weekHTML += '<div class="week-class-item ' + cls.type + '">';
+                                                                        weekHTML += '<div class="week-class-title">' + cls.title + '</div>';
+                                                                        weekHTML += '<div class="week-class-time">' + cls.time + '</div>';
+                                                                        weekHTML += '</div>';
+                                                                    });
+                                                                } else {
+                                                                    weekHTML += '<div class="text-center text-espresso/40 text-xs py-4">';
+                                                                    weekHTML += 'No classes';
+                                                                    weekHTML += '</div>';
+                                                                }
+
+                                                                weekHTML += '</div>';
+                                                                weekHTML += '</div>';
+                                                            });
+
+                                                            weekGrid.innerHTML = weekHTML;
+
+                                                            // Add click handlers to each day
+                                                            document.querySelectorAll('.week-day').forEach((dayElement, index) => {
+                                                                dayElement.addEventListener('click', function () {
+                                                                    const dayData = weekData[index];
+                                                                    if (dayData.classes.length > 0) {
+                                                                        let message = dayData.dayName + ', Nov ' + dayData.date + ':\n\n';
+                                                                        dayData.classes.forEach(cls => {
+                                                                            message += '• ' + cls.title + ' (' + cls.time + ') - ' +
+                                                                                    (cls.type === 'confirm' ? 'Confirm Placement' : 'Pending Relief') + '\n';
+                                                                        });
+                                                                        alert(message);
+                                                                    }
+                                                                });
+                                                            });
                                                         }
 
                                                         function toggleQR(qrId) {
-                                                            const qrElement = document.getElementById(qrId);
+                                                            // Close all other QR codes first
+                                                            closeAllQR();
 
-                                                            // Close all other QR codes
+                                                            const qrElement = document.getElementById(qrId);
+                                                            const overlayElement = document.getElementById('overlay-' + qrId);
+
+                                                            // Show current QR code
+                                                            qrElement.classList.add('show');
+                                                            if (overlayElement) {
+                                                                overlayElement.classList.add('show');
+                                                            }
+                                                        }
+
+                                                        function closeAllQR() {
+                                                            // Close all QR modals and overlays
                                                             document.querySelectorAll('.qr-expanded.show').forEach(qr => {
-                                                                if (qr.id !== qrId) {
-                                                                    qr.classList.remove('show');
-                                                                }
+                                                                qr.classList.remove('show');
                                                             });
 
-                                                            // Toggle current QR code
-                                                            qrElement.classList.toggle('show');
+                                                            document.querySelectorAll('.qr-overlay.show').forEach(overlay => {
+                                                                overlay.classList.remove('show');
+                                                            });
                                                         }
         </script>
 
