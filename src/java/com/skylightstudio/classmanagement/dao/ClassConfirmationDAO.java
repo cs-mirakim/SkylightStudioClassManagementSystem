@@ -6,6 +6,10 @@ import com.skylightstudio.classmanagement.util.DBConnection;
 import java.sql.*;
 import java.util.*;
 import java.sql.Date;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 
 public class ClassConfirmationDAO {
 
@@ -250,27 +254,26 @@ public class ClassConfirmationDAO {
         return cancelledClasses;
     }
 
-    // Add these methods to ClassConfirmationDAO.java
-// Get completed relief classes for instructor
+    // Fixed: Remove reference to booking table
     public List<Map<String, Object>> getCompletedReliefClasses(int instructorId) throws SQLException {
         List<Map<String, Object>> reliefClasses = new ArrayList<>();
 
         String sql = "SELECT c.classID, c.className, c.classType, c.classDate, "
                 + "c.classStartTime, c.classEndTime, c.location, "
                 + "cc.actionAt as confirmationDate, "
-                + "(SELECT COUNT(*) FROM booking b WHERE b.classID = c.classID) as studentsAttended, "
-                + "(SELECT AVG(f.rating) FROM feedback f WHERE f.classID = c.classID) as avgRating "
+                + "0 as studentsAttended, " // Since no booking table, set to 0
+                + "(SELECT AVG(f.overallRating) FROM feedback f WHERE f.classID = c.classID) as avgRating "
                 + "FROM class c "
                 + "JOIN class_confirmation cc ON c.classID = cc.classID "
                 + "WHERE cc.instructorID = ? "
                 + "AND cc.action = 'confirmed' "
-                + "AND c.classStatus = 'completed' "
+                + "AND c.classStatus = 'inactive' " // Assuming completed classes are inactive
                 + "AND c.classDate < CURRENT_DATE "
                 + "ORDER BY c.classDate DESC "
                 + "FETCH FIRST 5 ROWS ONLY";
 
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, instructorId);
             ResultSet rs = stmt.executeQuery();
@@ -283,11 +286,12 @@ public class ClassConfirmationDAO {
                 relief.put("location", rs.getString("location"));
                 relief.put("studentsAttended", rs.getInt("studentsAttended"));
 
+                // Handle null rating
                 double avgRating = rs.getDouble("avgRating");
-                if (!rs.wasNull()) {
-                    relief.put("rating", Math.round(avgRating * 10.0) / 10.0);
-                } else {
+                if (rs.wasNull()) {
                     relief.put("rating", "No ratings yet");
+                } else {
+                    relief.put("rating", String.format("%.1f", avgRating));
                 }
 
                 reliefClasses.add(relief);
@@ -296,13 +300,18 @@ public class ClassConfirmationDAO {
         return reliefClasses;
     }
 
-// Get pending relief positions for instructor
+    // Fixed: Get pending relief positions
     public List<Map<String, Object>> getPendingReliefPositions(int instructorId) throws SQLException {
         List<Map<String, Object>> pendingPositions = new ArrayList<>();
 
         String sql = "SELECT c.classID, c.className, "
-                + "(SELECT COUNT(*) FROM class_confirmation cc2 WHERE cc2.classID = c.classID AND cc2.action = 'pending' AND cc2.actionAt < cc.actionAt) + 1 as position, "
-                + "(SELECT i.name FROM class_confirmation cc3 JOIN instructor i ON cc3.instructorID = i.instructorID WHERE cc3.classID = c.classID AND cc3.action = 'pending' ORDER BY cc3.actionAt ASC FETCH FIRST 1 ROW ONLY) as firstInLine "
+                + "(SELECT COUNT(*) FROM class_confirmation cc2 "
+                + " WHERE cc2.classID = c.classID AND cc2.action = 'pending' "
+                + " AND cc2.actionAt < cc.actionAt) + 1 as position, "
+                + "(SELECT i.name FROM class_confirmation cc3 "
+                + " JOIN instructor i ON cc3.instructorID = i.instructorID "
+                + " WHERE cc3.classID = c.classID AND cc3.action = 'pending' "
+                + " ORDER BY cc3.actionAt ASC FETCH FIRST 1 ROW ONLY) as firstInLine "
                 + "FROM class c "
                 + "JOIN class_confirmation cc ON c.classID = cc.classID "
                 + "WHERE cc.instructorID = ? "
@@ -327,7 +336,7 @@ public class ClassConfirmationDAO {
         return pendingPositions;
     }
 
-// Get weekly summary statistics
+    // Fixed: Get weekly summary
     public Map<String, Object> getWeeklySummary(int instructorId, Date startDate, Date endDate) throws SQLException {
         Map<String, Object> summary = new HashMap<>();
 
@@ -351,6 +360,9 @@ public class ClassConfirmationDAO {
             if (rs.next()) {
                 summary.put("confirmedClasses", rs.getInt("confirmedClasses"));
                 summary.put("pendingClasses", rs.getInt("pendingClasses"));
+            } else {
+                summary.put("confirmedClasses", 0);
+                summary.put("pendingClasses", 0);
             }
         }
         return summary;

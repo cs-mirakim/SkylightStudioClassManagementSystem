@@ -481,20 +481,20 @@ public class ClassDAO {
         }
     }
 
-    // Add these methods to ClassDAO.java
-// Get today's classes for an instructor
+    // Fixed: Get today's classes for instructor
     public List<Map<String, Object>> getTodaysClassesForInstructor(int instructorId, Date currentDate) throws SQLException {
         List<Map<String, Object>> classes = new ArrayList<>();
 
         String sql = "SELECT c.*, "
-                + "(SELECT COUNT(*) FROM booking b WHERE b.classID = c.classID) as enrolledStudents, "
-                + "i.name as instructorName "
+                + "i.name as instructorName, "
+                + "cc.action as confirmationStatus "
                 + "FROM class c "
-                + "LEFT JOIN class_confirmation cc ON c.classID = cc.classID AND cc.action = 'confirmed' "
+                + "LEFT JOIN class_confirmation cc ON c.classID = cc.classID "
                 + "LEFT JOIN instructor i ON cc.instructorID = i.instructorID "
                 + "WHERE c.classDate = ? "
                 + "AND cc.instructorID = ? "
                 + "AND c.classStatus = 'active' "
+                + "AND cc.action IN ('confirmed', 'pending') "
                 + "ORDER BY c.classStartTime";
 
         try (Connection conn = DBConnection.getConnection();
@@ -518,23 +518,20 @@ public class ClassDAO {
                 classData.put("description", rs.getString("description"));
                 classData.put("classStatus", rs.getString("classStatus"));
                 classData.put("qrcodeFilePath", rs.getString("qrcodeFilePath"));
-                classData.put("enrolledStudents", rs.getInt("enrolledStudents"));
                 classData.put("instructorName", rs.getString("instructorName"));
+                classData.put("confirmationStatus", rs.getString("confirmationStatus"));
 
                 classes.add(classData);
             }
         }
         return classes;
     }
-
-// Get weekly classes for an instructor
+    // Fixed: Get weekly classes for instructor - REMOVE DAYNAME function
     public List<Map<String, Object>> getWeeklyClassesForInstructor(int instructorId, Date startDate, Date endDate) throws SQLException {
         List<Map<String, Object>> classes = new ArrayList<>();
 
         String sql = "SELECT c.*, "
-                + "cc.action as confirmationStatus, "
-                + "DAYNAME(c.classDate) as dayName, "
-                + "DAYOFMONTH(c.classDate) as dayOfMonth "
+                + "cc.action as confirmationStatus "
                 + "FROM class c "
                 + "LEFT JOIN class_confirmation cc ON c.classID = cc.classID "
                 + "WHERE c.classDate BETWEEN ? AND ? "
@@ -561,28 +558,25 @@ public class ClassDAO {
                 classData.put("classEndTime", rs.getTime("classEndTime"));
                 classData.put("location", rs.getString("location"));
                 classData.put("confirmationStatus", rs.getString("confirmationStatus"));
-                classData.put("dayName", rs.getString("dayName"));
-                classData.put("dayOfMonth", rs.getInt("dayOfMonth"));
 
                 classes.add(classData);
             }
         }
         return classes;
     }
-
-// Get instructor statistics
+    // Fixed: Get instructor statistics - Remove DAYOFMONTH if exists
     public Map<String, Object> getInstructorStatistics(int instructorId, int month, int year) throws SQLException {
         Map<String, Object> stats = new HashMap<>();
 
-        // Get classes this month
+        // Get classes this month - Apache Derby version
         String sqlClasses = "SELECT COUNT(DISTINCT c.classID) as classCount "
                 + "FROM class c "
                 + "JOIN class_confirmation cc ON c.classID = cc.classID "
                 + "WHERE cc.instructorID = ? "
                 + "AND cc.action = 'confirmed' "
-                + "AND MONTH(c.classDate) = ? "
-                + "AND YEAR(c.classDate) = ? "
-                + "AND c.classStatus = 'completed'";
+                + "AND EXTRACT(MONTH FROM c.classDate) = ? "  // Derby uses EXTRACT
+                + "AND EXTRACT(YEAR FROM c.classDate) = ? "
+                + "AND c.classStatus = 'inactive'";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sqlClasses)) {
@@ -594,14 +588,15 @@ public class ClassDAO {
 
             if (rs.next()) {
                 stats.put("classesThisMonth", rs.getInt("classCount"));
+            } else {
+                stats.put("classesThisMonth", 0);
             }
         }
 
         // Get average rating
-        String sqlRating = "SELECT AVG(f.rating) as avgRating "
+        String sqlRating = "SELECT AVG(f.overallRating) as avgRating "
                 + "FROM feedback f "
-                + "JOIN class c ON f.classID = c.classID "
-                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "JOIN class_confirmation cc ON f.classID = cc.classID "
                 + "WHERE cc.instructorID = ? "
                 + "AND cc.action = 'confirmed'";
 
@@ -618,6 +613,8 @@ public class ClassDAO {
                 } else {
                     stats.put("avgRating", Math.round(avgRating * 10.0) / 10.0);
                 }
+            } else {
+                stats.put("avgRating", 0.0);
             }
         }
 
@@ -638,18 +635,19 @@ public class ClassDAO {
 
             if (rs.next()) {
                 stats.put("todayClasses", rs.getInt("todayClasses"));
+            } else {
+                stats.put("todayClasses", 0);
             }
         }
 
         return stats;
     }
-
-// Get available classes for relief (classes without confirmed instructor)
+    // Fixed: Get available classes for relief
     public List<Map<String, Object>> getAvailableClassesForRelief(int instructorId) throws SQLException {
         List<Map<String, Object>> classes = new ArrayList<>();
 
         String sql = "SELECT c.*, "
-                + "(SELECT COUNT(*) FROM booking b WHERE b.classID = c.classID) as enrolledStudents, "
+                + "0 as enrolledStudents, " // No booking table
                 + "(SELECT COUNT(*) FROM class_confirmation cc2 WHERE cc2.classID = c.classID AND cc2.action IN ('confirmed', 'pending')) as instructorCount "
                 + "FROM class c "
                 + "WHERE c.classDate >= CURRENT_DATE "
@@ -681,5 +679,38 @@ public class ClassDAO {
             }
         }
         return classes;
+    }
+    // Get class with QR code path - ADD THIS METHOD
+    public Class getClassWithQRCode(int classId) throws SQLException {
+        String sql = "SELECT * FROM class WHERE classID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, classId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return mapResultSetToClass(rs);
+            }
+        }
+        return null;
+    }
+    
+    // Get instructor's joined year - ADD THIS METHOD
+    public int getInstructorJoinedYear(int instructorId) throws SQLException {
+        String sql = "SELECT YEAR(dateJoined) as joinedYear FROM instructor WHERE instructorID = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("joinedYear");
+            }
+        }
+        return 2022; // Default if not found
     }
 }

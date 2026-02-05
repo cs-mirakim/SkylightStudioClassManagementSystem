@@ -4,7 +4,9 @@ import com.skylightstudio.classmanagement.model.Feedback;
 import com.skylightstudio.classmanagement.util.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FeedbackDAO {
     
@@ -36,6 +38,15 @@ public class FeedbackDAO {
         "COUNT(*) as totalFeedbacks " +
         "FROM feedback WHERE instructorID = ? GROUP BY instructorID";
     
+    // NEW METHOD: Get average rating for a specific instructor
+    private static final String GET_AVERAGE_RATING = 
+        "SELECT AVG(CAST(overallRating AS DOUBLE)) as avgRating " +
+        "FROM feedback WHERE instructorID = ?";
+    
+    // NEW METHOD: Get feedback count for instructor
+    private static final String GET_FEEDBACK_COUNT = 
+        "SELECT COUNT(*) as feedbackCount FROM feedback WHERE instructorID = ?";
+    
     // Insert feedback - UPDATED to match new SQL
     public boolean insertFeedback(Feedback feedback) {
         Connection conn = null;
@@ -44,17 +55,6 @@ public class FeedbackDAO {
         try {
             conn = DBConnection.getConnection();
             pstmt = conn.prepareStatement(INSERT_FEEDBACK);
-            
-            System.out.println("[FeedbackDAO] Inserting feedback...");
-            System.out.println("  instructorID: " + feedback.getInstructorID());
-            System.out.println("  classID: " + feedback.getClassID());
-            System.out.println("  teachingSkill: " + feedback.getTeachingSkill());
-            System.out.println("  communication: " + feedback.getCommunication());
-            System.out.println("  supportInteraction: " + feedback.getSupportInteraction());
-            System.out.println("  punctuality: " + feedback.getPunctuality());
-            System.out.println("  overallRating: " + feedback.getOverallRating());
-            System.out.println("  comments: " + (feedback.getComments() != null ? "present" : "null"));
-            System.out.println("  feedbackDate: " + feedback.getFeedbackDate());
             
             pstmt.setInt(1, feedback.getInstructorID());
             pstmt.setInt(2, feedback.getClassID());
@@ -71,14 +71,9 @@ public class FeedbackDAO {
             }
             
             pstmt.setDate(9, feedback.getFeedbackDate());
-            // Removed submissionTime parameter as it's not in the table
             
             int rowsAffected = pstmt.executeUpdate();
-            boolean success = rowsAffected > 0;
-            
-            System.out.println("[FeedbackDAO] Insert feedback: " + (success ? "SUCCESS" : "FAILED"));
-            
-            return success;
+            return rowsAffected > 0;
             
         } catch (SQLException e) {
             System.err.println("[FeedbackDAO] Error inserting feedback: " + e.getMessage());
@@ -162,6 +157,95 @@ public class FeedbackDAO {
             closeResources(rs, pstmt, conn);
         }
         
+        return summary;
+    }
+    
+    // NEW METHOD: Get average rating for instructor
+    public double getAverageRatingForInstructor(int instructorId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(GET_AVERAGE_RATING);
+            pstmt.setInt(1, instructorId);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                double avgRating = rs.getDouble("avgRating");
+                if (!rs.wasNull()) {
+                    return Math.round(avgRating * 10.0) / 10.0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[FeedbackDAO] Error getting average rating: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, pstmt, conn);
+        }
+        return 0.0;
+    }
+    
+    // NEW METHOD: Get feedback count for instructor
+    public int getFeedbackCountForInstructor(int instructorId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(GET_FEEDBACK_COUNT);
+            pstmt.setInt(1, instructorId);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                return rs.getInt("feedbackCount");
+            }
+        } catch (SQLException e) {
+            System.err.println("[FeedbackDAO] Error getting feedback count: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, pstmt, conn);
+        }
+        return 0;
+    }
+    
+    // NEW METHOD: Get detailed feedback summary
+    public Map<String, Object> getDetailedFeedbackSummary(int instructorId) {
+        Map<String, Object> summary = new HashMap<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            pstmt = conn.prepareStatement(GET_AVERAGE_RATINGS_BY_INSTRUCTOR);
+            pstmt.setInt(1, instructorId);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                summary.put("avgTeaching", rs.getDouble("avgTeaching"));
+                summary.put("avgCommunication", rs.getDouble("avgCommunication"));
+                summary.put("avgSupport", rs.getDouble("avgSupport"));
+                summary.put("avgPunctuality", rs.getDouble("avgPunctuality"));
+                summary.put("avgOverall", rs.getDouble("avgOverall"));
+                summary.put("totalFeedbacks", rs.getInt("totalFeedbacks"));
+                
+                // Calculate overall average
+                double overallAvg = (rs.getDouble("avgTeaching") + 
+                                   rs.getDouble("avgCommunication") + 
+                                   rs.getDouble("avgSupport") + 
+                                   rs.getDouble("avgPunctuality") + 
+                                   rs.getDouble("avgOverall")) / 5.0;
+                summary.put("overallAverage", Math.round(overallAvg * 10.0) / 10.0);
+            }
+        } catch (SQLException e) {
+            System.err.println("[FeedbackDAO] Error getting detailed feedback summary: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, pstmt, conn);
+        }
         return summary;
     }
     
