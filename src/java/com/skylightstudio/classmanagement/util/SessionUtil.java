@@ -123,26 +123,47 @@ public class SessionUtil {
             }
         }
     }
-    
+
     // ========== NEW METHODS FOR SCHEDULE ==========
-    
     public static Integer getCurrentInstructorId(HttpSession session) {
-        if (!isInstructor(session)) return null;
+        if (!isInstructor(session)) {
+            return null;
+        }
         return getUserId(session);
     }
-    
+
     public static String getCurrentInstructorName(HttpSession session) {
-        if (!isInstructor(session)) return null;
+        if (!isInstructor(session)) {
+            return null;
+        }
         return getUserName(session);
     }
-    
+
     public static String getCurrentInstructorInitials(HttpSession session) {
         String name = getCurrentInstructorName(session);
-        if (name == null || name.trim().isEmpty()) return "??";
+        if (name == null || name.trim().isEmpty()) {
+            return "??";
+        }
         String[] parts = name.split(" ");
         if (parts.length >= 2) {
             return (parts[0].charAt(0) + "" + parts[parts.length - 1].charAt(0)).toUpperCase();
         }
         return name.substring(0, Math.min(2, name.length())).toUpperCase();
+    }
+
+    public static Integer getInstructorId(HttpSession session) {
+        if (session != null) {
+            Object instructorIdObj = session.getAttribute("instructorId");
+            if (instructorIdObj instanceof Integer) {
+                return (Integer) instructorIdObj;
+            } else if (instructorIdObj instanceof String) {
+                try {
+                    return Integer.parseInt((String) instructorIdObj);
+                } catch (NumberFormatException e) {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 }

@@ -1,4 +1,4 @@
-package com.skylightstudio.classmanagement.controller;
+/*package com.skylightstudio.classmanagement.controller;
 
 import com.skylightstudio.classmanagement.dao.*;
 import com.skylightstudio.classmanagement.model.*;
@@ -566,4 +566,4 @@ public class DashboardInstructorServlet extends HttpServlet {
     public String getServletInfo() {
         return "Instructor Dashboard Servlet (HTML and JSON support)";
     }
-}
+}*/

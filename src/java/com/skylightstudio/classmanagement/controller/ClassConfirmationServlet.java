@@ -12,7 +12,6 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
-
 @WebServlet(name = "ClassConfirmationServlet", urlPatterns = {"/ClassConfirmationServlet"})
 public class ClassConfirmationServlet extends HttpServlet {
 
