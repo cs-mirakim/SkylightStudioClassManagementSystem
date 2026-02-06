@@ -1,22 +1,91 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%@ page import="com.skylightstudio.classmanagement.dao.ClassDAO" %>
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="com.skylightstudio.classmanagement.model.Class" %>
+<%@ page import="java.sql.Timestamp" %>
+<%@ page import="java.text.SimpleDateFormat" %>
 <%
     // Check if user is instructor
     if (!SessionUtil.checkInstructorAccess(session)) {
         // Always redirect to login with appropriate message
         if (!SessionUtil.isLoggedIn(session)) {
-            response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
+            response.sendRedirect(request.getContextPath() + "/general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
         } else {
             // If logged in but not instructor
-            response.sendRedirect("../general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
+            response.sendRedirect(request.getContextPath() + "/general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
         }
         return;
     }
+
+    // Get instructor ID from session
+    Integer instructorId = SessionUtil.getCurrentInstructorId(session);
+
+    // Initialize variables
+    List<Map<String, Object>> notifications = null;
+    int totalCount = 0;
+    int newClassCount = 0;
+    int cancelledCount = 0;
+    int waitlistCount = 0;
+    int reminderCount = 0;
+    int tomorrowCount = 0;
+    String error = null;
+    String instructorName = SessionUtil.getCurrentInstructorName(session);
+
+    // Check if data is already provided by servlet
+    Map<String, Object> notificationData = (Map<String, Object>) request.getAttribute("notificationData");
+
+    if (notificationData != null) {
+        // Data provided by servlet
+        notifications = (List<Map<String, Object>>) notificationData.get("allNotifications");
+        totalCount = (Integer) notificationData.get("totalCount");
+        newClassCount = (Integer) notificationData.getOrDefault("newClassCount", 0);
+        cancelledCount = (Integer) notificationData.getOrDefault("cancelledCount", 0);
+        waitlistCount = (Integer) notificationData.getOrDefault("waitlistCount", 0);
+        reminderCount = (Integer) notificationData.getOrDefault("reminderCount", 0);
+        tomorrowCount = (Integer) notificationData.getOrDefault("tomorrowCount", 0);
+        error = (String) request.getAttribute("error");
+    } else if (instructorId != null) {
+        // No data from servlet, fetch directly in JSP
+        try {
+            ClassDAO classDAO = new ClassDAO();
+            notifications = classDAO.getNotificationsForInstructor(instructorId);
+            totalCount = notifications.size();
+
+            // Count by type
+            for (Map<String, Object> notif : notifications) {
+                String type = (String) notif.get("type");
+                if ("new_class".equals(type)) {
+                    newClassCount++;
+                } else if ("cancelled".equals(type)) {
+                    cancelledCount++;
+                } else if ("waitlist".equals(type)) {
+                    waitlistCount++;
+                } else if ("reminder".equals(type)) {
+                    reminderCount++;
+                } else if ("tomorrow".equals(type)) {
+                    tomorrowCount++;
+                }
+            }
+        } catch (Exception e) {
+            error = "Error loading notifications: " + e.getMessage();
+            e.printStackTrace();
+        }
+    }
+
+    // For formatting dates
+    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d");
+    SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a");
+    SimpleDateFormat fullDateFormat = new SimpleDateFormat("MMM d, yyyy");
+
+    // Helper function for relative time
+    java.util.Date now = new java.util.Date();
 %>
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Message Page</title>
+        <title>Message Page - Instructor</title>
 
         <!-- Font Inter + Lora -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,6 +137,16 @@
                 }
             }
         </script>
+
+        <style>
+            .notification-item {
+                transition: all 0.3s ease;
+            }
+            .notification-item:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            }
+        </style>
     </head>
 
     <body class="bg-cloud font-sans text-espresso flex flex-col min-h-screen">
@@ -81,8 +160,34 @@
                 <div class="mb-8 pb-4 border-b border-espresso/10">
                     <h2 class="text-xl font-semibold mb-1 text-espresso">
                         Message for you
+                        <% if (instructorName != null) {%>
+                        <span class="text-espresso/60">- <%= instructorName%></span>
+                        <% } %>
                     </h2>
+                    <p class="text-sm text-espresso/60">
+                        <% if (totalCount > 0) {%>
+                        You have <%= totalCount%> notifications
+                        <% } else { %>
+                        No new notifications
+                        <% } %>
+                        <% if (error != null) {%>
+                        <span class="text-dangerText"> (Error: <%= error%>)</span>
+                        <% } %>
+                    </p>
                 </div>
+
+                <!-- Display error if any -->
+                <% if (error != null && !error.isEmpty()) {%>
+                <div class="mb-6 p-4 bg-dangerBg/20 border border-dangerText/30 rounded-lg">
+                    <div class="flex items-start">
+                        <i class="fas fa-exclamation-circle text-dangerText mr-3 mt-0.5"></i>
+                        <div class="flex-1">
+                            <p class="text-dangerText font-medium mb-1">Error loading notifications</p>
+                            <p class="text-dangerText/80 text-sm"><%= error%></p>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
 
                 <!-- Notifications Card -->
                 <div class="bg-whitePure rounded-xl p-6 border border-blush shadow-sm mb-8">
@@ -99,174 +204,180 @@
                             </div>
                         </div>
                         <div class="relative">
-                            <span class="absolute -top-2 -right-2 bg-dangerText text-whitePure text-xs w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                            <% if (totalCount > 0) {%>
+                            <span class="absolute -top-2 -right-2 bg-dangerText text-whitePure text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                                <%= totalCount%>
+                            </span>
+                            <% } %>
                         </div>
                     </div>
 
-                    <!-- Removed filter tabs -->
-
                     <div class="notification-scroll space-y-3 max-h-80 overflow-y-auto pr-2">
-                        <!-- Notification 1: New Class Created -->
-                        <div class="p-4 rounded-lg bg-infoBg/5 border border-infoBg/20 status-unread notification-item">
+                        <%
+                            if (notifications != null && !notifications.isEmpty()) {
+                                for (Map<String, Object> notification : notifications) {
+                                    String type = (String) notification.get("type");
+                                    Class cls = (Class) notification.get("class");
+                                    String message = (String) notification.get("message");
+                                    Timestamp timestamp = (Timestamp) notification.get("timestamp");
+
+                                    // Determine notification styling based on type
+                                    String bgClass = "";
+                                    String borderClass = "";
+                                    String iconColor = "";
+                                    String iconClass = "";
+                                    String badgeText = "";
+                                    String badgeColor = "";
+                                    String title = "";
+
+                                    // Use if-else instead of switch for Java 7 compatibility
+                                    if ("new_class".equals(type)) {
+                                        bgClass = "bg-infoBg/5";
+                                        borderClass = "border-infoBg/20";
+                                        iconColor = "text-teal";
+                                        iconClass = "fas fa-plus";
+                                        badgeText = "Needs confirmation";
+                                        badgeColor = "bg-teal/10 text-teal";
+                                        title = "New Class Available";
+                                    } else if ("tomorrow".equals(type)) {
+                                        bgClass = "bg-successBg/5";
+                                        borderClass = "border-successBg/20";
+                                        iconColor = "text-successTextDark";
+                                        iconClass = "fas fa-calendar-check";
+                                        badgeText = "Tomorrow";
+                                        badgeColor = "bg-successTextDark/10 text-successTextDark";
+                                        title = "Class Tomorrow";
+                                    } else if ("reminder".equals(type)) {
+                                        bgClass = "bg-blush/10";
+                                        borderClass = "border-blush/20";
+                                        iconColor = "text-dusty";
+                                        iconClass = "fas fa-bell";
+                                        badgeText = "Reminder";
+                                        badgeColor = "bg-dusty/10 text-dusty";
+                                        title = "Class Reminder";
+                                    } else if ("cancelled".equals(type)) {
+                                        bgClass = "bg-dangerBg/5";
+                                        borderClass = "border-dangerBg/20";
+                                        iconColor = "text-dangerText";
+                                        iconClass = "fas fa-times-circle";
+                                        badgeText = "Cancelled";
+                                        badgeColor = "bg-dangerText/10 text-dangerText";
+                                        title = "Class Cancelled";
+                                    } else if ("waitlist".equals(type)) {
+                                        bgClass = "bg-warningBg/5";
+                                        borderClass = "border-warningBg/20";
+                                        iconColor = "text-warningText";
+                                        iconClass = "fas fa-user-clock";
+                                        badgeText = "Waitlist";
+                                        badgeColor = "bg-warningText/10 text-warningText";
+                                        title = "Waitlist Update";
+                                    }
+
+                                    // Calculate relative time
+                                    String timeAgo = "";
+                                    if (timestamp != null) {
+                                        long diffInMillis = now.getTime() - timestamp.getTime();
+                                        long diffInHours = diffInMillis / (60 * 60 * 1000);
+                                        long diffInDays = diffInMillis / (24 * 60 * 60 * 1000);
+
+                                        if (diffInHours < 1) {
+                                            long diffInMinutes = diffInMillis / (60 * 1000);
+                                            if (diffInMinutes < 1) {
+                                                timeAgo = "Just now";
+                                            } else {
+                                                timeAgo = diffInMinutes + " minutes ago";
+                                            }
+                                        } else if (diffInHours < 24) {
+                                            timeAgo = diffInHours + " hours ago";
+                                        } else if (diffInDays < 7) {
+                                            timeAgo = diffInDays + " days ago";
+                                        } else {
+                                            timeAgo = timeFormat.format(timestamp);
+                                        }
+                                    }
+                        %>
+
+                        <!-- Dynamic Notification -->
+                        <div class="p-4 rounded-lg <%= bgClass%> border <%= borderClass%> notification-item">
                             <div class="flex items-start">
                                 <div class="relative mr-3 flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-lg bg-teal/10 flex items-center justify-center">
-                                        <i class="fas fa-plus text-teal"></i>
+                                    <div class="w-10 h-10 rounded-lg <%= bgClass.replace("bg-", "bg-").replace("/5", "/10")%> flex items-center justify-center">
+                                        <i class="<%= iconClass%> <%= iconColor%>"></i>
                                     </div>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-start">
                                         <div>
-                                            <h4 class="text-sm font-semibold text-espresso mb-1">New Class Available</h4>
-                                            <p class="text-xs text-espresso/70 mb-2">"Weekend Reformer" class has been created and is ready for confirmation</p>
+                                            <h4 class="text-sm font-semibold text-espresso mb-1">
+                                                <%= title%>
+                                            </h4>
+                                            <p class="text-xs text-espresso/70 mb-2"><%= message%></p>
                                         </div>
-                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">2 hours ago</span>
+                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">
+                                            <%= timeAgo%>
+                                        </span>
                                     </div>
+                                    <% if (cls != null) {%>
                                     <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-teal/10 text-teal">
-                                            <i class="fas fa-clock text-xs mr-1"></i>Needs confirmation
+                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full <%= badgeColor%>">
+                                            <i class="<%= iconClass%> text-xs mr-1"></i><%= badgeText%>
                                         </span>
                                         <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-calendar mr-1"></i>Sat & Sun • 9:00 AM
+                                            <i class="fas fa-calendar mr-1"></i><%= fullDateFormat.format(cls.getClassDate())%>
                                         </span>
+                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
+                                            <i class="fas fa-clock mr-1"></i><%= timeFormat.format(cls.getClassStartTime())%> - <%= timeFormat.format(cls.getClassEndTime())%>
+                                        </span>
+                                        <% if (cls.getLocation() != null && !cls.getLocation().isEmpty()) {%>
+                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
+                                            <i class="fas fa-map-marker-alt mr-1"></i><%= cls.getLocation()%>
+                                        </span>
+                                        <% } %>
                                     </div>
-                                    <!-- Removed action buttons -->
+                                    <% } %>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Notification 2: Class Reminder -->
-                        <div class="p-4 rounded-lg bg-blush/10 border border-blush/20 notification-item">
-                            <div class="flex items-start">
-                                <div class="relative mr-3 flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-lg bg-dusty/10 flex items-center justify-center">
-                                        <i class="fas fa-bell text-dusty"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-espresso mb-1">Class Reminder</h4>
-                                            <p class="text-xs text-espresso/70 mb-2">Your "Advanced Pilates" class is coming up in 3 days</p>
-                                        </div>
-                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">1 day ago</span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-dusty/10 text-dusty">
-                                            <i class="fas fa-calendar-day mr-1"></i>Friday, Nov 15
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-clock mr-1"></i>10:00 AM - 11:30 AM
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-map-marker-alt mr-1"></i>Studio B
-                                        </span>
-                                    </div>
-                                </div>
+                        <% }
+                        } else { %>
+
+                        <!-- No Notifications -->
+                        <div class="p-8 text-center">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-blush/20 flex items-center justify-center">
+                                <i class="fas fa-bell-slash text-dusty text-2xl"></i>
                             </div>
+                            <h3 class="text-lg font-medium text-espresso mb-2">No Notifications</h3>
+                            <p class="text-espresso/60 mb-4">You're all caught up! Check back later for updates.</p>
+                            <% if (error != null && !error.isEmpty()) {%>
+                            <div class="mt-4 p-3 bg-dangerBg/20 rounded-lg">
+                                <p class="text-dangerText text-sm">Error: <%= error%></p>
+                            </div>
+                            <% }%>
+                            <!-- Keep this link to servlet for consistency -->
+                            <a href="<%= request.getContextPath()%>/instructor/inboxMessages_instructor.jsp" 
+                               class="inline-flex items-center text-sm text-dusty hover:text-dustyHover mt-4">
+                                <i class="fas fa-redo mr-2"></i> Refresh
+                            </a>
                         </div>
 
-                        <!-- Notification 3: Admin Cancellation -->
-                        <div class="p-4 rounded-lg bg-dangerBg/5 border border-dangerBg/20 status-unread notification-item">
-                            <div class="flex items-start">
-                                <div class="relative mr-3 flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-lg bg-dangerText/10 flex items-center justify-center">
-                                        <i class="fas fa-times-circle text-dangerText"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-espresso mb-1">Class Cancelled</h4>
-                                            <p class="text-xs text-espresso/70 mb-2">"Morning Flow" has been cancelled due to insufficient enrollment</p>
-                                        </div>
-                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">1 day ago</span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-dangerText/10 text-dangerText">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>Cancelled
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-calendar-times mr-1"></i>Was scheduled for Nov 15
-                                        </span>
-                                    </div>
-                                    <!-- Removed action buttons -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notification 4: Pending Update -->
-                        <div class="p-4 rounded-lg bg-warningBg/5 border border-warningBg/20 status-unread notification-item">
-                            <div class="flex items-start">
-                                <div class="relative mr-3 flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-lg bg-warningText/10 flex items-center justify-center">
-                                        <i class="fas fa-user-clock text-warningText"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-espresso mb-1">Waitlist Update</h4>
-                                            <p class="text-xs text-espresso/70 mb-2">You've moved to position #1 for "Evening Reformer"</p>
-                                        </div>
-                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">2 days ago</span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-warningText/10 text-warningText">
-                                            <i class="fas fa-chart-line mr-1"></i>Position #1
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-fire mr-1"></i>High chance of opening
-                                        </span>
-                                    </div>
-                                    <!-- Removed action button -->
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Notification 5: Tomorrow's Class -->
-                        <div class="p-4 rounded-lg bg-successBg/5 border border-successBg/20 notification-item">
-                            <div class="flex items-start">
-                                <div class="relative mr-3 flex-shrink-0">
-                                    <div class="w-10 h-10 rounded-lg bg-successTextDark/10 flex items-center justify-center">
-                                        <i class="fas fa-calendar-check text-successTextDark"></i>
-                                    </div>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h4 class="text-sm font-semibold text-espresso mb-1">Class Tomorrow</h4>
-                                            <p class="text-xs text-espresso/70 mb-2">"Mat Pilates Advanced" is scheduled for tomorrow</p>
-                                        </div>
-                                        <span class="text-xs text-espresso/40 whitespace-nowrap ml-2">3 days ago</span>
-                                    </div>
-                                    <div class="flex flex-wrap items-center gap-2 mt-2">
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-successTextDark/10 text-successTextDark">
-                                            <i class="fas fa-users mr-1"></i>12 students enrolled
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-clock mr-1"></i>10:00 AM - 11:00 AM
-                                        </span>
-                                        <span class="inline-flex items-center text-xs px-2 py-1 rounded-full bg-blush/20 text-espresso/80">
-                                            <i class="fas fa-map-marker-alt mr-1"></i>Studio A
-                                        </span>
-                                    </div>
-                                    <!-- Removed action buttons -->
-                                </div>
-                            </div>
-                        </div>
+                        <% }%>
                     </div>
 
                     <!-- View all link -->
                     <div class="mt-6 pt-4 border-t border-blush">
-                        <a href="#" 
+                        <a href="<%= request.getContextPath()%>/instructor/inboxMessages_instructor.jsp" 
                            class="block text-center text-sm text-espresso/70 hover:text-espresso py-2 hover:bg-blush/10 rounded-lg transition-colors">
-                            <i class="fas fa-list mr-2"></i>View all notifications
+                            <i class="fas fa-redo mr-2"></i>Refresh notifications
                         </a>
                     </div>
                 </div>
 
                 <div class="mt-auto pt-10 text-center text-xs text-espresso/30 italic">
+                    Last updated: <%= new java.util.Date()%>
+                    <% if (instructorId != null) {%>
+                    <br>Instructor ID: <%= instructorId%>
+                    <% }%>
                 </div>
             </div>
         </main>
@@ -282,6 +393,12 @@
             // Highlight current page in sidebar
             document.addEventListener('DOMContentLoaded', function () {
                 highlightCurrentPage();
+
+                // Auto-refresh notifications every 5 minutes
+                setInterval(function () {
+                    console.log('Auto-refreshing notifications...');
+                    window.location.reload();
+                }, 300000); // 5 minutes
             });
 
             function highlightCurrentPage() {
@@ -291,7 +408,7 @@
 
                 sidebarLinks.forEach(link => {
                     const href = link.getAttribute('href');
-                    if (href && href.includes(currentPage)) {
+                    if (href && (href.includes(currentPage) || href.includes('inboxMessages_instructor.jsp'))) {
                         link.classList.add('bg-blush/30', 'text-dusty', 'font-medium');
                         link.classList.remove('hover:bg-blush/20', 'text-espresso');
                     }

@@ -609,4 +609,183 @@ public class ClassDAO {
 
         return stats;
     }
+
+    /**
+     * Get notifications for a specific instructor
+     */
+    public List<Map<String, Object>> getNotificationsForInstructor(int instructorId) throws SQLException {
+        List<Map<String, Object>> notifications = new ArrayList<>();
+
+        // Calculate dates in Java for Apache Derby compatibility
+        java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+        java.sql.Date tomorrow = new java.sql.Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000L));
+        java.sql.Date dayAfterTomorrow = new java.sql.Date(System.currentTimeMillis() + (2 * 24 * 60 * 60 * 1000L));
+        java.sql.Date thirtyDaysAgo = new java.sql.Date(System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000L));
+
+        // 1. New Class Available - Active classes with no confirmed instructor
+        String newClassSql = "SELECT c.* FROM class c "
+                + "WHERE c.classStatus = 'active' "
+                + "AND c.classDate >= ? "
+                + "AND NOT EXISTS (SELECT 1 FROM class_confirmation cc "
+                + "                WHERE cc.classID = c.classID AND cc.action = 'confirmed') "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 2. Class Tomorrow - Classes tomorrow where instructor is confirmed
+        String tomorrowSql = "SELECT c.* FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE c.classStatus = 'active' "
+                + "AND cc.instructorID = ? "
+                + "AND cc.action = 'confirmed' "
+                + "AND c.classDate = ? "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 3. Class Reminder - Classes day after tomorrow where instructor is confirmed
+        String reminderSql = "SELECT c.* FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE c.classStatus = 'active' "
+                + "AND cc.instructorID = ? "
+                + "AND cc.action = 'confirmed' "
+                + "AND c.classDate = ? "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 4. Class Cancelled - Classes where instructor was involved and now cancelled
+        String cancelledSql = "SELECT c.*, cc.cancelledAt, cc.cancellationReason "
+                + "FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? "
+                + "AND cc.action = 'cancelled' "
+                + "AND c.classDate >= ? "
+                + "ORDER BY cc.cancelledAt DESC";
+
+        // 5. Waitlist Update - Instructor is pending (relief position)
+        String waitlistSql = "SELECT c.*, cc.actionAt as waitlistTime "
+                + "FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? "
+                + "AND cc.action = 'pending' "
+                + "AND c.classDate >= ? "
+                + "ORDER BY cc.actionAt DESC";
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            System.out.println("[ClassDAO] Getting notifications for instructor ID: " + instructorId);
+            System.out.println("[ClassDAO] Today: " + today);
+            System.out.println("[ClassDAO] Tomorrow: " + tomorrow);
+            System.out.println("[ClassDAO] Day after tomorrow: " + dayAfterTomorrow);
+            System.out.println("[ClassDAO] 30 days ago: " + thirtyDaysAgo);
+
+            // New Class Available
+            try (PreparedStatement stmt = conn.prepareStatement(newClassSql)) {
+                stmt.setDate(1, today);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "new_class");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "New class available: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " new classes available");
+            }
+
+            // Class Tomorrow
+            try (PreparedStatement stmt = conn.prepareStatement(tomorrowSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, tomorrow);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "tomorrow");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "You have a class tomorrow: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " classes tomorrow");
+            }
+
+            // Class Reminder
+            try (PreparedStatement stmt = conn.prepareStatement(reminderSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, dayAfterTomorrow);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "reminder");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "Class reminder: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " class reminders");
+            }
+
+            // Class Cancelled
+            try (PreparedStatement stmt = conn.prepareStatement(cancelledSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, thirtyDaysAgo);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "cancelled");
+                    Class cls = mapResultSetToClass(rs);
+                    notif.put("class", cls);
+                    notif.put("timestamp", rs.getTimestamp("cancelledAt"));
+                    notif.put("message", "Class cancelled: " + cls.getClassName());
+                    notif.put("reason", rs.getString("cancellationReason"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " cancelled classes");
+            }
+
+            // Waitlist Update
+            try (PreparedStatement stmt = conn.prepareStatement(waitlistSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, today);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "waitlist");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", rs.getTimestamp("waitlistTime"));
+                    notif.put("message", "You're on waitlist for: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " waitlist updates");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ClassDAO ERROR] SQL Exception: " + e.getMessage());
+            System.err.println("[ClassDAO ERROR] SQL State: " + e.getSQLState());
+            e.printStackTrace();
+            throw e;
+        }
+
+        System.out.println("[ClassDAO] Total notifications found: " + notifications.size());
+
+        // Sort all notifications by timestamp (newest first)
+        if (!notifications.isEmpty()) {
+            notifications.sort(new java.util.Comparator<Map<String, Object>>() {
+                @Override
+                public int compare(Map<String, Object> a, Map<String, Object> b) {
+                    Timestamp ts1 = (Timestamp) b.get("timestamp");
+                    Timestamp ts2 = (Timestamp) a.get("timestamp");
+                    return ts1.compareTo(ts2);
+                }
+            });
+        }
+
+        return notifications;
+    }
 }
