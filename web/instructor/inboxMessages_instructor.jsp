@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
+<%@ page import="com.skylightstudio.classmanagement.dao.ClassDAO" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="com.skylightstudio.classmanagement.model.Class" %>
@@ -18,24 +19,60 @@
         return;
     }
     
-    // Get data from request attributes
-    Map<String, Object> notificationData = (Map<String, Object>) request.getAttribute("notificationData");
+    // Get instructor ID from session
+    Integer instructorId = SessionUtil.getCurrentInstructorId(session);
+    
+    // Initialize variables
     List<Map<String, Object>> notifications = null;
     int totalCount = 0;
     int newClassCount = 0;
     int cancelledCount = 0;
     int waitlistCount = 0;
+    int reminderCount = 0;
+    int tomorrowCount = 0;
+    String error = null;
+    String instructorName = SessionUtil.getCurrentInstructorName(session);
+    
+    // Check if data is already provided by servlet
+    Map<String, Object> notificationData = (Map<String, Object>) request.getAttribute("notificationData");
     
     if (notificationData != null) {
+        // Data provided by servlet
         notifications = (List<Map<String, Object>>) notificationData.get("allNotifications");
         totalCount = (Integer) notificationData.get("totalCount");
-        newClassCount = (Integer) notificationData.get("newClassCount");
-        cancelledCount = (Integer) notificationData.get("cancelledCount");
-        waitlistCount = (Integer) notificationData.get("waitlistCount");
+        newClassCount = (Integer) notificationData.getOrDefault("newClassCount", 0);
+        cancelledCount = (Integer) notificationData.getOrDefault("cancelledCount", 0);
+        waitlistCount = (Integer) notificationData.getOrDefault("waitlistCount", 0);
+        reminderCount = (Integer) notificationData.getOrDefault("reminderCount", 0);
+        tomorrowCount = (Integer) notificationData.getOrDefault("tomorrowCount", 0);
+        error = (String) request.getAttribute("error");
+    } else if (instructorId != null) {
+        // No data from servlet, fetch directly in JSP
+        try {
+            ClassDAO classDAO = new ClassDAO();
+            notifications = classDAO.getNotificationsForInstructor(instructorId);
+            totalCount = notifications.size();
+            
+            // Count by type
+            for (Map<String, Object> notif : notifications) {
+                String type = (String) notif.get("type");
+                if ("new_class".equals(type)) {
+                    newClassCount++;
+                } else if ("cancelled".equals(type)) {
+                    cancelledCount++;
+                } else if ("waitlist".equals(type)) {
+                    waitlistCount++;
+                } else if ("reminder".equals(type)) {
+                    reminderCount++;
+                } else if ("tomorrow".equals(type)) {
+                    tomorrowCount++;
+                }
+            }
+        } catch (Exception e) {
+            error = "Error loading notifications: " + e.getMessage();
+            e.printStackTrace();
+        }
     }
-    
-    // Check for error
-    String error = (String) request.getAttribute("error");
     
     // For formatting dates
     SimpleDateFormat dateFormat = new SimpleDateFormat("MMM d");
@@ -123,16 +160,34 @@
                 <div class="mb-8 pb-4 border-b border-espresso/10">
                     <h2 class="text-xl font-semibold mb-1 text-espresso">
                         Message for you
+                        <% if (instructorName != null) { %>
+                            <span class="text-espresso/60">- <%= instructorName %></span>
+                        <% } %>
                     </h2>
-                    <% if (notificationData != null) { %>
-                        <p class="text-sm text-espresso/60">
+                    <p class="text-sm text-espresso/60">
+                        <% if (totalCount > 0) { %>
                             You have <%= totalCount %> notifications
-                            <% if (error != null) { %>
-                                <span class="text-dangerText">(Error: <%= error %>)</span>
-                            <% } %>
-                        </p>
-                    <% } %>
+                        <% } else { %>
+                            No new notifications
+                        <% } %>
+                        <% if (error != null) { %>
+                            <span class="text-dangerText"> (Error: <%= error %>)</span>
+                        <% } %>
+                    </p>
                 </div>
+
+                <!-- Display error if any -->
+                <% if (error != null && !error.isEmpty()) { %>
+                    <div class="mb-6 p-4 bg-dangerBg/20 border border-dangerText/30 rounded-lg">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-circle text-dangerText mr-3 mt-0.5"></i>
+                            <div class="flex-1">
+                                <p class="text-dangerText font-medium mb-1">Error loading notifications</p>
+                                <p class="text-dangerText/80 text-sm"><%= error %></p>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
 
                 <!-- Notifications Card -->
                 <div class="bg-whitePure rounded-xl p-6 border border-blush shadow-sm mb-8">
@@ -298,6 +353,7 @@
                                     <p class="text-dangerText text-sm">Error: <%= error %></p>
                                 </div>
                             <% } %>
+                            <!-- Keep this link to servlet for consistency -->
                             <a href="<%= request.getContextPath() %>/instructor/inboxMessages_instructor.jsp" 
                                class="inline-flex items-center text-sm text-dusty hover:text-dustyHover mt-4">
                                 <i class="fas fa-redo mr-2"></i> Refresh
@@ -318,6 +374,9 @@
 
                 <div class="mt-auto pt-10 text-center text-xs text-espresso/30 italic">
                     Last updated: <%= new java.util.Date() %>
+                    <% if (instructorId != null) { %>
+                        <br>Instructor ID: <%= instructorId %>
+                    <% } %>
                 </div>
             </div>
         </main>

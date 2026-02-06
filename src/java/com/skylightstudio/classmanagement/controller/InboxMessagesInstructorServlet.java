@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
-@WebServlet("/instructor/inboxMessages_instructor.jsp")
+@WebServlet("/instructor/inboxMessages_instructor")
 public class InboxMessagesInstructorServlet extends HttpServlet {
 
     private ClassDAO classDAO;
