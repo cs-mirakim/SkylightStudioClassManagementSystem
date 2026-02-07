@@ -117,7 +117,15 @@ public class MonitorInstructorServlet extends HttpServlet {
             out.print("<name>" + escapeXml(instructor.get("name").toString()) + "</name>");
             out.print("<email>" + escapeXml(instructor.get("email").toString()) + "</email>");
             out.print("<experience>" + getExperienceString(instructor.get("yearOfExperience")) + "</experience>");
-            out.print("<dateJoined>" + formatDate(instructor.get("dateJoined")) + "</dateJoined>");
+
+            // ✅ FIX: Check if dateJoined exists and is not null
+            Object dateJoined = instructor.get("dateJoined");
+            if (dateJoined != null) {
+                out.print("<dateJoined>" + formatDate(dateJoined) + "</dateJoined>");
+            } else {
+                out.print("<dateJoined>Not available</dateJoined>");
+            }
+
             out.print("<status>" + escapeXml(instructor.get("instructorStatus").toString()) + "</status>");
             out.print("<registrationStatus>" + escapeXml(instructor.get("registrationStatus").toString()) + "</registrationStatus>");
             out.print("</instructor>");

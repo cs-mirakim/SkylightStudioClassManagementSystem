@@ -168,9 +168,11 @@ public class RegistrationDAO {
     public List<Map<String, Object>> getAllInstructorRegistrations() throws SQLException {
         System.out.println("[DEBUG] RegistrationDAO.getAllInstructorRegistrations() called");
 
+        // ✅ ADD: i.dateJoined to the SELECT statement
         String sql = "SELECT r.registerID, r.status as registrationStatus, r.registerDate, r.adminMessage, "
                 + "i.instructorID, i.username, i.name, i.email, i.phone, i.nric, i.profileImageFilePath, "
                 + "i.BOD, i.certificationFilePath, i.yearOfExperience, i.address, i.status as instructorStatus, "
+                + "i.dateJoined, " // ✅ THIS WAS MISSING!
                 + "i.reviewedBy, i.reviewedAt "
                 + "FROM registration r "
                 + "INNER JOIN instructor i ON r.registerID = i.registerID "
@@ -212,6 +214,10 @@ public class RegistrationDAO {
                 registration.put("yearOfExperience", rs.getInt("yearOfExperience"));
                 registration.put("address", rs.getString("address"));
                 registration.put("instructorStatus", rs.getString("instructorStatus"));
+
+                // ✅ ADD: dateJoined to the map
+                registration.put("dateJoined", rs.getTimestamp("dateJoined"));
+
                 registration.put("reviewedBy", rs.getInt("reviewedBy"));
                 registration.put("reviewedAt", rs.getTimestamp("reviewedAt"));
                 registration.put("status", rs.getString("registrationStatus"));
