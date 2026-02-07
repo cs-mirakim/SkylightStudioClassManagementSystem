@@ -466,7 +466,7 @@
                             </div>
                             <div class="flex items-center space-x-4">
                                 <!-- Time Period Selector -->
-                                <select id="timePeriod" onchange="updateCharts()" class="px-3 py-1 border border-blush rounded-lg bg-whitePure text-sm focus:outline-none focus:ring-2 focus:ring-teal">
+                                <select id="timePeriod" onchange="updateChartsWithPeriod()" class="px-3 py-1 border border-blush rounded-lg bg-whitePure text-sm focus:outline-none focus:ring-2 focus:ring-teal">
                                     <option value="3months">Last 3 Months</option>
                                     <option value="6months">Last 6 Months</option>
                                     <option value="1year">Last 1 Year</option>
@@ -543,38 +543,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="ratingBreakdownBody">
-                                                <tr class="border-b border-blush/30">
-                                                    <td class="py-3 text-sm text-espresso">Teaching Skill</td>
-                                                    <td class="py-3">
-                                                        <span class="px-2 py-1 text-xs rounded-full rating-excellent">0.0</span>
-                                                    </td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                </tr>
-                                                <tr class="border-b border-blush/30">
-                                                    <td class="py-3 text-sm text-espresso">Communication</td>
-                                                    <td class="py-3">
-                                                        <span class="px-2 py-1 text-xs rounded-full rating-excellent">0.0</span>
-                                                    </td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                </tr>
-                                                <tr class="border-b border-blush/30">
-                                                    <td class="py-3 text-sm text-espresso">Support & Interaction</td>
-                                                    <td class="py-3">
-                                                        <span class="px-2 py-1 text-xs rounded-full rating-good">0.0</span>
-                                                    </td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="py-3 text-sm text-espresso">Punctuality</td>
-                                                    <td class="py-3">
-                                                        <span class="px-2 py-1 text-xs rounded-full rating-good">0.0</span>
-                                                    </td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                    <td class="py-3 text-sm text-espresso">-</td>
-                                                </tr>
+                                                <!-- Data will be populated by JavaScript -->
                                             </tbody>
                                         </table>
                                     </div>
@@ -699,14 +668,15 @@
         <script src="../util/sidebar.js"></script>
 
         <script>
-                                // Global variables
+                                // Global variables - ES5 compatible
                                 var currentInstructorId = null;
                                 var chartInstances = {};
                                 var currentPage = 1;
                                 var itemsPerPage = 10;
                                 var filteredInstructors = [];
                                 var allInstructors = [];
-                                var isViewingPDF = false;
+                                var currentCertificationPath = '';
+                                var currentPerformanceData = null;
 
                                 // Initialize the page
                                 document.addEventListener('DOMContentLoaded', function () {
@@ -747,26 +717,10 @@
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // ========== PERUBAHAN PENTING: TAG NAME BERUBAH ==========
-                                                // DARIPADA:
-                                                // var active = xmlDoc.getElementsByTagName('active')[0].textContent;
-                                                // var inactive = xmlDoc.getElementsByTagName('inactive')[0].textContent;
-                                                // var newThisMonth = xmlDoc.getElementsByTagName('newThisMonth')[0].textContent;
-                                                // var avgRating = xmlDoc.getElementsByTagName('avgRating')[0].textContent;
-
-                                                // KEPADA: (gunakan getXmlValue() helper function)
                                                 var active = getXmlValue(xmlDoc, 'active');
                                                 var inactive = getXmlValue(xmlDoc, 'inactive');
                                                 var newThisMonth = getXmlValue(xmlDoc, 'newThisMonth');
-
-                                                // ========== PERUBAHAN: AMBIL avgOverallRating BUKAN avgRating ==========
-                                                // Backend dah hantar <avgOverallRating> bukan <avgRating>
                                                 var avgOverallRating = getXmlValue(xmlDoc, 'avgOverallRating');
-
-                                                // Jika tag lama masih wujud (fallback)
-                                                if (avgOverallRating === 'Not available') {
-                                                    avgOverallRating = getXmlValue(xmlDoc, 'avgRating');
-                                                }
 
                                                 document.getElementById('statActiveInstructors').textContent = active;
                                                 document.getElementById('statInactiveInstructors').textContent = inactive;
@@ -1076,7 +1030,7 @@
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // ========== UPDATE BASIC INFORMATION ==========
+                                                // Update basic information
                                                 document.getElementById('detailName').textContent = getXmlValue(xmlDoc, 'name');
                                                 document.getElementById('detailEmail').textContent = getXmlValue(xmlDoc, 'email');
                                                 document.getElementById('detailPhone').textContent = getXmlValue(xmlDoc, 'phone');
@@ -1087,7 +1041,7 @@
                                                 document.getElementById('detailDateJoined').textContent = getXmlValue(xmlDoc, 'dateJoined');
                                                 document.getElementById('detailAddress').textContent = getXmlValue(xmlDoc, 'address');
 
-                                                // ========== UPDATE PROFILE IMAGE ==========
+                                                // Update profile image
                                                 var profileImage = getXmlValue(xmlDoc, 'profileImage');
                                                 if (profileImage && profileImage !== 'Not available') {
                                                     document.getElementById('detailProfileImg').src = profileImage;
@@ -1095,7 +1049,7 @@
                                                     document.getElementById('detailProfileImg').src = '../profile_pictures/instructor/dummy.png';
                                                 }
 
-                                                // ========== UPDATE CERTIFICATION ==========
+                                                // Update certification
                                                 var certification = getXmlValue(xmlDoc, 'certification');
                                                 var certificationFileName = getXmlValue(xmlDoc, 'certificationFileName');
 
@@ -1105,43 +1059,35 @@
                                                     document.getElementById('certFileName').textContent = 'No certification uploaded';
                                                 }
 
-                                                // Store certification path for later use
+                                                // Store certification path
                                                 currentCertificationPath = certification;
 
-                                                // ========== PERUBAHAN 1: GET ALL 5 RATINGS DAN KIRA AVERAGE ==========
-                                                // Dapatkan semua 5 rating dari XML
+                                                // Get all 5 ratings and calculate average
                                                 var avgTeaching = parseFloat(getXmlValue(xmlDoc, 'avgTeaching')) || 0;
                                                 var avgCommunication = parseFloat(getXmlValue(xmlDoc, 'avgCommunication')) || 0;
                                                 var avgSupport = parseFloat(getXmlValue(xmlDoc, 'avgSupport')) || 0;
                                                 var avgPunctuality = parseFloat(getXmlValue(xmlDoc, 'avgPunctuality')) || 0;
                                                 var avgOverallRating = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
 
-                                                // ========== PERUBAHAN 2: KIRA AVERAGE DARI 5 RATING ==========
-                                                // Kira total semua rating
+                                                // Calculate average from 5 ratings
                                                 var totalAllRatings = avgTeaching + avgCommunication + avgSupport + avgPunctuality + avgOverallRating;
-                                                // Kira average (bahagi dengan 5)
                                                 var averageAllRatings = totalAllRatings / 5;
 
-                                                // Jika semua rating 0 (instructor tiada feedback), set kepada 0
                                                 if (isNaN(averageAllRatings) || averageAllRatings === Infinity) {
                                                     averageAllRatings = 0;
                                                 }
 
-                                                // ========== PERUBAHAN 3: GUNA CONFIRMED CLASSES BUKAN ALL CLASSES ==========
-                                                // Dapatkan total CONFIRMED classes (bukan semua classes)
+                                                // Update performance summary
                                                 var totalClasses = getXmlValue(xmlDoc, 'totalClasses');
                                                 var cancelledClasses = getXmlValue(xmlDoc, 'cancelledClasses');
-                                                var completedClasses = getXmlValue(xmlDoc, 'completedClasses');
                                                 var feedbackCount = getXmlValue(xmlDoc, 'feedbackCount');
 
-                                                // Update performance summary dengan data yang betul
                                                 document.getElementById('statTotalClasses').textContent = totalClasses;
                                                 document.getElementById('statCancelled').textContent = cancelledClasses;
-                                                // ========== PERUBAHAN 4: PAPAR AVERAGE DARI 5 RATING ==========
                                                 document.getElementById('statAvgRating').textContent = averageAllRatings.toFixed(1);
                                                 document.getElementById('statFeedbacks').textContent = feedbackCount;
 
-                                                // ========== UPDATE STATUS BADGES ==========
+                                                // Update status badges
                                                 var regStatus = getXmlValue(xmlDoc, 'regStatus');
                                                 var regStatusEl = document.getElementById('detailRegStatus');
                                                 if (regStatus === 'approved') {
@@ -1160,13 +1106,6 @@
                                                     statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-dangerBg text-dangerText">Inactive</span>';
                                                 }
 
-                                                // ========== TAMBAHAN: CHECK UNTUK NO DATA ==========
-                                                // Jika instructor tiada classes atau feedback, show warning message
-                                                if (totalClasses === '0' && feedbackCount === '0') {
-                                                    console.log('Instructor has no classes or feedback data');
-                                                    // Boleh tambah visual indicator jika perlu
-                                                }
-
                                                 // Show modal
                                                 document.getElementById('detailsModal').classList.remove('hidden');
                                             })
@@ -1176,37 +1115,12 @@
                                             });
                                 }
 
-                                // Tambahkan variable global untuk menyimpan path certification
-                                var currentCertificationPath = '';
-
-                                // Perbaiki fungsi viewCertification
-                                function viewCertification() {
-                                    if (!currentInstructorId)
-                                        return;
-
-                                    // Gunakan certification path dari data yang sudah di-fetch
-                                    var certPath = currentCertificationPath;
-                                    if (!certPath || certPath === 'Not available' || certPath.includes('dummy.pdf')) {
-                                        // Jika tidak ada certification, tampilkan pesan
-                                        certPath = '../certifications/instructor/dummy.pdf';
-                                        document.getElementById('certModalTitle').textContent = 'No Certification Available';
-                                    } else {
-                                        document.getElementById('certModalTitle').textContent = 'Certification Document';
-                                    }
-
-                                    document.getElementById('certFrame').src = certPath;
-                                    document.getElementById('certModal').classList.remove('hidden');
-                                }
-
-                                // Tambahkan juga ke dalam fungsi closeCert untuk mereset currentCertificationPath
-                                function closeCert() {
-                                    document.getElementById('certModal').classList.add('hidden');
-                                    document.getElementById('certFrame').src = '';
-                                    currentCertificationPath = '';
-                                }
                                 function getXmlValue(xmlDoc, tagName) {
                                     var elements = xmlDoc.getElementsByTagName(tagName);
-                                    return elements.length > 0 ? elements[0].textContent : 'Not available';
+                                    if (elements.length > 0) {
+                                        return elements[0].textContent;
+                                    }
+                                    return 'Not available';
                                 }
 
                                 function closeDetails() {
@@ -1214,16 +1128,11 @@
                                     currentInstructorId = null;
                                 }
 
-                                // PERUBAHAN: Load semua rating untuk performance modal
+                                // NEW: Load performance data with period filter
                                 function showPerformance() {
                                     if (!currentInstructorId)
                                         return;
 
-                                    // ========== PERUBAHAN: GUNA ACTION BARU ==========
-                                    // DARIPADA:
-                                    // fetch('monitor-instructor?action=performance&id=' + currentInstructorId + '&period=all')
-
-                                    // KEPADA:
                                     var period = document.getElementById('timePeriod') ?
                                             document.getElementById('timePeriod').value : 'all';
 
@@ -1234,8 +1143,6 @@
                                                 return response.text();
                                             })
                                             .then(function (xmlText) {
-                                                console.log('Performance XML:', xmlText); // Debug
-
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
@@ -1245,7 +1152,6 @@
                                                     throw new Error('Invalid XML response from server');
                                                 }
 
-                                                // ========== PERUBAHAN: DAPATKAN DATA DENGAN CHECK NULL ==========
                                                 var instructorName = getXmlValue(xmlDoc, 'instructorName');
                                                 if (!instructorName || instructorName === 'Not available') {
                                                     throw new Error('Instructor data not found');
@@ -1253,29 +1159,21 @@
 
                                                 document.getElementById('performanceInstructorName').textContent = instructorName;
 
-                                                // DAPATKAN SEMUA 5 RATING
-                                                var teaching = parseFloat(getXmlValue(xmlDoc, 'teaching')) || 0;
-                                                var communication = parseFloat(getXmlValue(xmlDoc, 'communication')) || 0;
-                                                var support = parseFloat(getXmlValue(xmlDoc, 'support')) || 0;
-                                                var punctuality = parseFloat(getXmlValue(xmlDoc, 'punctuality')) || 0;
-                                                var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
-
-                                                // KIRA AVERAGE DARI 5 RATING
-                                                var totalRating = teaching + communication + support + punctuality + overall;
-                                                var avgOverallRating = totalRating / 5;
+                                                // Store performance data for charts
+                                                currentPerformanceData = xmlDoc;
 
                                                 // Update performance metrics
-                                                document.getElementById('perfOverallRating').textContent = avgOverallRating.toFixed(1);
+                                                document.getElementById('perfOverallRating').textContent = getXmlValue(xmlDoc, 'overallRating');
                                                 document.getElementById('perfTotalClasses').textContent = getXmlValue(xmlDoc, 'totalClasses');
                                                 document.getElementById('perfCancelled').textContent = getXmlValue(xmlDoc, 'cancelled');
                                                 document.getElementById('perfCompletion').textContent = getXmlValue(xmlDoc, 'completion');
 
-                                                // Show modal
+                                                // Show modal first
                                                 document.getElementById('performanceModal').classList.remove('hidden');
 
-                                                // Update charts dengan semua data
+                                                // Update charts with current period
                                                 setTimeout(function () {
-                                                    updateCharts(xmlDoc);
+                                                    updateChartsWithPeriod();
                                                 }, 100);
                                             })
                                             .catch(function (error) {
@@ -1284,69 +1182,42 @@
                                             });
                                 }
 
-                                function closePerformance() {
-                                    document.getElementById('performanceModal').classList.add('hidden');
+                                // NEW: Update charts based on period
+                                function updateChartsWithPeriod() {
+                                    if (!currentPerformanceData)
+                                        return;
+                                    updateCharts(currentPerformanceData);
                                 }
 
-                                // Perbaiki fungsi viewCertification
+                                function closePerformance() {
+                                    document.getElementById('performanceModal').classList.add('hidden');
+                                    currentPerformanceData = null;
+                                }
+
+                                // View certification
                                 function viewCertification() {
                                     if (!currentInstructorId) {
                                         alert('No instructor selected');
                                         return;
                                     }
 
-                                    console.log('Current certification path:', currentCertificationPath); // Debug log
-
-                                    // Gunakan certification path dari data yang sudah di-fetch
                                     var certPath = currentCertificationPath;
 
-                                    // Check if certification path is valid
                                     if (!certPath || certPath === 'Not available' || certPath === '' || certPath.includes('dummy.pdf')) {
-                                        // Jika tidak ada certification, tampilkan pesan
                                         certPath = '../certifications/instructor/dummy.pdf';
                                         document.getElementById('certModalTitle').textContent = 'No Certification Available';
-                                        console.log('Using dummy PDF because no certification found');
                                     } else {
                                         document.getElementById('certModalTitle').textContent = 'Certification Document';
-                                        console.log('Using certification from path:', certPath);
                                     }
 
-                                    // Test if file exists before loading
-                                    testFileExists(certPath, function (exists) {
-                                        if (!exists && !certPath.includes('dummy.pdf')) {
-                                            console.warn('Certification file not found:', certPath);
-                                            certPath = '../certifications/instructor/dummy.pdf';
-                                            document.getElementById('certModalTitle').textContent = 'Certification Not Found';
-                                        }
-
-                                        // Set iframe source
-                                        var iframe = document.getElementById('certFrame');
-                                        iframe.src = certPath;
-                                        console.log('Setting iframe src to:', certPath);
-
-                                        // Show modal
-                                        document.getElementById('certModal').classList.remove('hidden');
-                                    });
-                                }
-
-                                // Helper function to test if file exists
-                                function testFileExists(url, callback) {
-                                    var xhr = new XMLHttpRequest();
-                                    xhr.open('HEAD', url, true);
-                                    xhr.onreadystatechange = function () {
-                                        if (xhr.readyState === 4) {
-                                            callback(xhr.status === 200);
-                                        }
-                                    };
-                                    xhr.onerror = function () {
-                                        callback(false);
-                                    };
-                                    xhr.send();
+                                    document.getElementById('certFrame').src = certPath;
+                                    document.getElementById('certModal').classList.remove('hidden');
                                 }
 
                                 function closeCert() {
                                     document.getElementById('certModal').classList.add('hidden');
                                     document.getElementById('certFrame').src = '';
+                                    currentCertificationPath = '';
                                 }
 
                                 // PDF Preview functions
@@ -1356,20 +1227,16 @@
                                         return;
                                     }
 
-                                    // Create blob URL
                                     var blobURL = URL.createObjectURL(pdfBlob);
 
-                                    // Update modal content
                                     document.getElementById('pdfPreviewTitle').textContent = 'Preview: ' + instructorName + ' Performance Report';
                                     document.getElementById('pdfPreviewFrame').src = blobURL;
 
-                                    // Update generation time
                                     var currentTime = new Date();
                                     var timeString = currentTime.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
                                     var dateString = currentTime.toLocaleDateString();
                                     document.getElementById('pdfGenerationTime').textContent = dateString + ' ' + timeString;
 
-                                    // Set up download button
                                     var downloadBtn = document.getElementById('pdfDownloadBtn');
                                     var currentDate = new Date();
                                     var fileName = 'Instructor_Performance_Report_' +
@@ -1387,14 +1254,12 @@
                                         document.body.removeChild(link);
                                     };
 
-                                    // Show modal
                                     document.getElementById('pdfPreviewModal').classList.remove('hidden');
                                 }
 
                                 function closePDFPreview() {
                                     document.getElementById('pdfPreviewModal').classList.add('hidden');
 
-                                    // Clean up blob URL
                                     var iframe = document.getElementById('pdfPreviewFrame');
                                     if (iframe.src && iframe.src.startsWith('blob:')) {
                                         URL.revokeObjectURL(iframe.src);
@@ -1406,7 +1271,6 @@
                                 function toggleActivateInstructor(instructorId) {
                                     currentInstructorId = instructorId;
 
-                                    // Find the instructor in our array
                                     var instructor = null;
                                     for (var i = 0; i < allInstructors.length; i++) {
                                         if (allInstructors[i].id == instructorId) {
@@ -1420,26 +1284,18 @@
                                         return;
                                     }
 
-                                    // Update modal elements based on current status
-                                    var modalIcon = document.getElementById('modalIcon');
-                                    var modalTitle = document.getElementById('modalTitle');
-                                    var modalText = document.getElementById('modalText');
-                                    var confirmButton = document.getElementById('confirmButton');
-
                                     if (instructor.status === 'active') {
-                                        // Deactivate mode
-                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">' +
-                                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
-                                                '</svg>';
-                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-dangerBg';
-
-                                        modalTitle.textContent = 'Deactivate Instructor?';
-                                        modalText.textContent = 'Are you sure you want to deactivate ' + instructor.name + '? They will no longer be able to access the system or be assigned to new classes.';
-
-                                        confirmButton.textContent = 'Yes, Deactivate';
-                                        confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
+                                        // Check if instructor has assigned classes
+                                        checkInstructorClasses(instructorId, function (hasClasses) {
+                                            showDeactivateConfirmation(instructorId, instructor.name, hasClasses);
+                                        });
                                     } else {
                                         // Activate mode
+                                        var modalIcon = document.getElementById('modalIcon');
+                                        var modalTitle = document.getElementById('modalTitle');
+                                        var modalText = document.getElementById('modalText');
+                                        var confirmButton = document.getElementById('confirmButton');
+
                                         modalIcon.innerHTML = '<svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">' +
                                                 '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>' +
                                                 '</svg>';
@@ -1450,9 +1306,9 @@
 
                                         confirmButton.textContent = 'Yes, Activate';
                                         confirmButton.className = 'px-4 py-2 bg-teal text-whitePure rounded-lg hover:bg-tealHover transition-colors';
-                                    }
 
-                                    document.getElementById('activateDeactivateModal').classList.remove('hidden');
+                                        document.getElementById('activateDeactivateModal').classList.remove('hidden');
+                                    }
                                 }
 
                                 function closeActivateDeactivate() {
@@ -1480,19 +1336,6 @@
 
                                     var newStatus = instructor.status === 'active' ? 'inactive' : 'active';
 
-                                    // Buat FormData untuk mengirim data
-                                    var formData = new FormData();
-                                    formData.append('action', 'toggleStatus');
-                                    formData.append('id', currentInstructorId);
-                                    formData.append('newStatus', newStatus);
-
-                                    console.log('Sending POST data:', {
-                                        action: 'toggleStatus',
-                                        id: currentInstructorId,
-                                        newStatus: newStatus
-                                    });
-
-                                    // Gunakan FormData dengan header yang tepat
                                     fetch('monitor-instructor', {
                                         method: 'POST',
                                         body: new URLSearchParams({
@@ -1505,84 +1348,28 @@
                                         }
                                     })
                                             .then(function (response) {
-                                                console.log('Response status:', response.status);
-                                                console.log('Response headers:', response.headers);
-
-                                                // First check if response is OK
                                                 if (!response.ok) {
                                                     return response.text().then(function (text) {
-                                                        console.error('Server returned error:', text);
                                                         throw new Error('Server error: ' + response.status);
                                                     });
                                                 }
-
-                                                // Get response as text first
                                                 return response.text();
                                             })
                                             .then(function (responseText) {
-                                                console.log('Raw response text:', responseText);
-
-                                                // Check if response is empty
-                                                if (!responseText || responseText.trim() === '') {
-                                                    throw new Error('Empty response from server');
-                                                }
-
-                                                // Try to parse as XML
                                                 var parser = new DOMParser();
-                                                var xmlDoc;
+                                                var xmlDoc = parser.parseFromString(responseText, 'text/xml');
 
-                                                try {
-                                                    xmlDoc = parser.parseFromString(responseText, 'text/xml');
-
-                                                    // Check for XML parsing errors
-                                                    var parserError = xmlDoc.querySelector('parsererror');
-                                                    if (parserError) {
-                                                        console.error('XML Parse Error:', parserError.textContent);
-
-                                                        // Try to extract message from response text if not valid XML
-                                                        var resultMatch = responseText.match(/<result>(.*?)<\/result>/);
-                                                        var messageMatch = responseText.match(/<message>(.*?)<\/message>/);
-
-                                                        if (resultMatch && messageMatch) {
-                                                            return {
-                                                                result: resultMatch[1],
-                                                                message: messageMatch[1]
-                                                            };
-                                                        } else {
-                                                            throw new Error('Invalid XML response from server');
-                                                        }
-                                                    }
-                                                } catch (xmlError) {
-                                                    console.error('XML parsing error:', xmlError);
-                                                    throw new Error('Could not parse server response as XML');
-                                                }
-
-                                                // Extract values from XML
                                                 var result = getXmlValue(xmlDoc, 'result');
                                                 var message = getXmlValue(xmlDoc, 'message');
 
-                                                return {result: result, message: message};
-                                            })
-                                            .then(function (data) {
-                                                console.log('Processed response:', data);
-
-                                                if (data.result === 'success') {
-                                                    // Update local data
+                                                if (result === 'success') {
                                                     instructor.status = newStatus;
-
-                                                    // Update UI immediately
                                                     updateInstructorRow(instructor);
-
-                                                    // Reload stats
                                                     loadStats();
-
-                                                    // Show success message
-                                                    alert(data.message || 'Status updated successfully');
-
-                                                    // Close modal
+                                                    alert(message || 'Status updated successfully');
                                                     closeActivateDeactivate();
                                                 } else {
-                                                    alert('Error: ' + (data.message || 'Failed to update status'));
+                                                    alert('Error: ' + (message || 'Failed to update status'));
                                                     closeActivateDeactivate();
                                                 }
                                             })
@@ -1593,7 +1380,6 @@
                                             });
                                 }
 
-                                // Fungsi baru untuk update row yang sudah ada
                                 function updateInstructorRow(instructor) {
                                     var tableBody = document.getElementById('instructorTableBody');
                                     var rows = tableBody.getElementsByTagName('tr');
@@ -1602,13 +1388,11 @@
                                         var row = rows[i];
                                         var cells = row.getElementsByTagName('td');
 
-                                        // Check if this row contains the instructor
                                         if (cells.length > 0) {
                                             var nameCell = cells[0];
-                                            var instructorName = nameCell.querySelector('.text-sm.font-medium')?.textContent;
+                                            var instructorName = nameCell.querySelector('.text-sm.font-medium') ? nameCell.querySelector('.text-sm.font-medium').textContent : '';
 
                                             if (instructorName === instructor.name) {
-                                                // Update status cell
                                                 var statusCell = cells[3];
                                                 if (instructor.status === 'active') {
                                                     statusCell.innerHTML = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-successBg text-successTextDark">Active</span>';
@@ -1616,7 +1400,6 @@
                                                     statusCell.innerHTML = '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-dangerBg text-dangerText">Inactive</span>';
                                                 }
 
-                                                // Update action button
                                                 var actionCell = cells[4];
                                                 var actionButtonText = instructor.status === 'active' ? 'Deactivate' : 'Activate';
                                                 var actionButtonClass = instructor.status === 'active' ? 'text-dusty hover:text-dustyHover' : 'text-teal hover:text-tealHover';
@@ -1633,38 +1416,78 @@
                                         }
                                     }
 
-                                    // Juga update data di array allInstructors
-                                    for (var i = 0; i < allInstructors.length; i++) {
-                                        if (allInstructors[i].id == instructor.id) {
-                                            allInstructors[i].status = instructor.status;
+                                    for (var j = 0; j < allInstructors.length; j++) {
+                                        if (allInstructors[j].id == instructor.id) {
+                                            allInstructors[j].status = instructor.status;
                                             break;
                                         }
                                     }
                                 }
 
-                                // Fungsi helper yang lebih baik untuk extract value dari XML
-                                function getXmlValue(xmlDoc, tagName) {
-                                    try {
-                                        var elements = xmlDoc.getElementsByTagName(tagName);
-                                        if (elements && elements.length > 0) {
-                                            return elements[0].textContent || 'Not available';
-                                        }
+                                // Check if instructor has classes
+                                function checkInstructorClasses(instructorId, callback) {
+                                    fetch('monitor-instructor?action=checkClasses&id=' + instructorId)
+                                            .then(function (response) {
+                                                if (!response.ok)
+                                                    throw new Error('Network response was not ok');
+                                                return response.text();
+                                            })
+                                            .then(function (xmlText) {
+                                                var parser = new DOMParser();
+                                                var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                        // Try alternative: querySelector
-                                        var element = xmlDoc.querySelector(tagName);
-                                        if (element) {
-                                            return element.textContent || 'Not available';
-                                        }
+                                                var hasClasses = xmlDoc.getElementsByTagName('hasClasses')[0].textContent === 'true';
+                                                callback(hasClasses);
+                                            })
+                                            .catch(function (error) {
+                                                console.error('Error checking classes:', error);
+                                                callback(false);
+                                            });
+                                }
 
-                                        return 'Not available';
-                                    } catch (error) {
-                                        console.error('Error getting XML value for', tagName, ':', error);
-                                        return 'Not available';
+                                function showDeactivateConfirmation(instructorId, instructorName, hasClasses) {
+                                    currentInstructorId = instructorId;
+
+                                    var modalIcon = document.getElementById('modalIcon');
+                                    var modalTitle = document.getElementById('modalTitle');
+                                    var modalText = document.getElementById('modalText');
+                                    var confirmButton = document.getElementById('confirmButton');
+
+                                    if (hasClasses) {
+                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-warningText" fill="currentColor" viewBox="0 0 20 20">' +
+                                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
+                                                '</svg>';
+                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-warningBg';
+
+                                        modalTitle.textContent = 'Deactivate Instructor with Assigned Classes?';
+                                        modalText.innerHTML = '<p class="mb-2">Instructor <strong>' + instructorName + '</strong> has assigned classes.</p>' +
+                                                '<p class="text-sm">The system will automatically:</p>' +
+                                                '<ul class="text-sm list-disc pl-4 mt-1 mb-3">' +
+                                                '<li>Withdraw instructor from all assigned classes</li>' +
+                                                '<li>Promote relief instructors (if available)</li>' +
+                                                '<li>Cancel classes without relief within 24 hours</li>' +
+                                                '</ul>' +
+                                                '<p class="text-xs text-espresso/50">This action cannot be undone.</p>';
+
+                                        confirmButton.textContent = 'Yes, Deactivate & Process Classes';
+                                        confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
+                                    } else {
+                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">' +
+                                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
+                                                '</svg>';
+                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-dangerBg';
+
+                                        modalTitle.textContent = 'Deactivate Instructor?';
+                                        modalText.textContent = 'Are you sure you want to deactivate ' + instructorName + '? They will no longer be able to access the system or be assigned to new classes.';
+
+                                        confirmButton.textContent = 'Yes, Deactivate';
+                                        confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
                                     }
+
+                                    document.getElementById('activateDeactivateModal').classList.remove('hidden');
                                 }
 
                                 // Chart functions
-                                // PERUBAHAN: Update chart data dengan 5 rating
                                 function updateCharts(xmlDoc) {
                                     if (!xmlDoc)
                                         return;
@@ -1676,19 +1499,18 @@
                                         }
                                     }
 
-                                    // Get data dari XML - SEMUA 5 RATING
+                                    // Get ratings data
                                     var teaching = parseFloat(getXmlValue(xmlDoc, 'teaching')) || 0;
                                     var communication = parseFloat(getXmlValue(xmlDoc, 'communication')) || 0;
                                     var support = parseFloat(getXmlValue(xmlDoc, 'support')) || 0;
                                     var punctuality = parseFloat(getXmlValue(xmlDoc, 'punctuality')) || 0;
                                     var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
 
-                                    // ========== CHART 1: CATEGORY RATINGS (SEMUA 5) ==========
+                                    // CHART 1: CATEGORY RATINGS
                                     var categoryCtx = document.getElementById('categoryChart').getContext('2d');
                                     chartInstances.categoryChart = new Chart(categoryCtx, {
                                         type: 'bar',
                                         data: {
-                                            // TAMBAH OVERALL DALAM CHART
                                             labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality', 'Overall'],
                                             datasets: [{
                                                     label: 'Average Rating',
@@ -1725,36 +1547,29 @@
                                         }
                                     });
 
-                                    // ========== CHART 2: MONTHLY TREND (MENGIKUT FILTER) ==========
+                                    // CHART 2: MONTHLY TREND
                                     var trendCtx = document.getElementById('trendChart').getContext('2d');
 
-                                    // Dapatkan monthly data dari XML
-                                    var monthlyTrend = [];
+                                    // Get monthly data from XML
                                     var monthlyElements = xmlDoc.getElementsByTagName('month');
+                                    var monthLabels = [];
+                                    var ratingData = [];
+                                    var totalClassesData = [];
+
                                     for (var i = 0; i < monthlyElements.length; i++) {
                                         var monthElement = monthlyElements[i];
                                         var monthName = monthElement.getElementsByTagName('name')[0].textContent;
                                         var monthRating = parseFloat(monthElement.getElementsByTagName('rating')[0].textContent) || 0;
-                                        monthlyTrend.push({
-                                            month: monthName,
-                                            rating: monthRating
-                                        });
+
+                                        monthLabels.push(monthName);
+                                        ratingData.push(monthRating);
                                     }
 
-                                    // Jika tiada data, papar placeholder message
-                                    if (monthlyTrend.length === 0) {
+                                    // If no data, show placeholder
+                                    if (monthlyElements.length === 0) {
                                         var chartContainer = document.getElementById('trendChart').parentElement;
                                         chartContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
                                     } else {
-                                        // Prepare data untuk chart
-                                        var monthLabels = [];
-                                        var ratingData = [];
-
-                                        for (var j = 0; j < monthlyTrend.length; j++) {
-                                            monthLabels.push(monthlyTrend[j].month);
-                                            ratingData.push(monthlyTrend[j].rating);
-                                        }
-
                                         chartInstances.trendChart = new Chart(trendCtx, {
                                             type: 'line',
                                             data: {
@@ -1796,15 +1611,13 @@
                                         });
                                     }
 
-                                    // ========== CHART 3: CLASS DISTRIBUTION (ACTUAL DATA) ==========
+                                    // CHART 3: CLASS DISTRIBUTION
                                     var distributionCtx = document.getElementById('distributionChart').getContext('2d');
 
-                                    // Dapatkan actual data dari XML
                                     var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                     var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelled')) || 0;
                                     var completedClasses = totalClasses - cancelledClasses;
 
-                                    // Jika tiada data
                                     if (totalClasses === 0) {
                                         var distContainer = document.getElementById('distributionChart').parentElement;
                                         distContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No classes found</p></div>';
@@ -1850,16 +1663,14 @@
                                         });
                                     }
 
-                                    // ========== UPDATE RATING BREAKDOWN TABLE ==========
+                                    // Update rating breakdown table
                                     updateRatingBreakdownTable(xmlDoc);
                                 }
 
-// FUNCTION BARU: Update rating breakdown table
                                 function updateRatingBreakdownTable(xmlDoc) {
                                     var tableBody = document.getElementById('ratingBreakdownBody');
-                                    tableBody.innerHTML = ''; // Clear existing
+                                    tableBody.innerHTML = '';
 
-                                    // Dapatkan semua rating data
                                     var categories = [
                                         {name: 'Teaching Skill', avg: getXmlValue(xmlDoc, 'teaching'),
                                             high: getXmlValue(xmlDoc, 'teachingHighest'), low: getXmlValue(xmlDoc, 'teachingLowest')},
@@ -1878,7 +1689,6 @@
                                         var row = document.createElement('tr');
                                         row.className = 'border-b border-blush/30';
 
-                                        // Determine rating class
                                         var avgRating = parseFloat(cat.avg) || 0;
                                         var ratingClass = 'rating-excellent';
                                         if (avgRating < 3.0)
@@ -1901,7 +1711,6 @@
                                     if (!currentInstructorId)
                                         return;
 
-                                    // Get current instructor details
                                     var instructor = null;
                                     for (var i = 0; i < allInstructors.length; i++) {
                                         if (allInstructors[i].id == currentInstructorId) {
@@ -1926,13 +1735,14 @@
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // Extract data for PDF
+                                                // Extract data for PDF - FIXED: Use averageAllRatings instead of avgRating
                                                 var name = getXmlValue(xmlDoc, 'name');
                                                 var email = getXmlValue(xmlDoc, 'email');
                                                 var experience = getXmlValue(xmlDoc, 'experience');
                                                 var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                                 var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelledClasses')) || 0;
-                                                var avgRating = getXmlValue(xmlDoc, 'avgRating') || '0.0';
+                                                // FIX: Use averageAllRatings instead of avgRating
+                                                var avgRating = getXmlValue(xmlDoc, 'averageAllRatings') || '0.0';
                                                 var feedbackCount = parseInt(getXmlValue(xmlDoc, 'feedbackCount')) || 0;
                                                 var completedClasses = totalClasses - cancelledClasses;
                                                 var completionRate = totalClasses > 0 ? Math.round((completedClasses / totalClasses) * 100) : 0;
@@ -1953,7 +1763,6 @@
                                 function createPerformancePDF(name, email, experience, totalClasses, cancelledClasses,
                                         completedClasses, avgRating, feedbackCount, completionRate) {
                                     try {
-                                        // Check if jsPDF is available
                                         if (typeof window.jspdf === 'undefined') {
                                             alert('PDF library not loaded. Please check your internet connection.');
                                             return null;
@@ -2187,121 +1996,6 @@
                                         closePDFPreview();
                                     }
                                 });
-
-                                // Dalam script section, tambah function baru ini:
-                                function showDeactivateConfirmation(instructorId, instructorName, hasClasses) {
-                                    currentInstructorId = instructorId;
-
-                                    var modalIcon = document.getElementById('modalIcon');
-                                    var modalTitle = document.getElementById('modalTitle');
-                                    var modalText = document.getElementById('modalText');
-                                    var confirmButton = document.getElementById('confirmButton');
-
-                                    if (hasClasses) {
-                                        // Jika instructor ada classes
-                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-warningText" fill="currentColor" viewBox="0 0 20 20">' +
-                                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
-                                                '</svg>';
-                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-warningBg';
-
-                                        modalTitle.textContent = 'Deactivate Instructor with Assigned Classes?';
-                                        modalText.innerHTML = '<p class="mb-2">Instructor <strong>' + instructorName + '</strong> has assigned classes.</p>' +
-                                                '<p class="text-sm">The system will automatically:</p>' +
-                                                '<ul class="text-sm list-disc pl-4 mt-1 mb-3">' +
-                                                '<li>Withdraw instructor from all assigned classes</li>' +
-                                                '<li>Promote relief instructors (if available)</li>' +
-                                                '<li>Cancel classes without relief within 24 hours</li>' +
-                                                '</ul>' +
-                                                '<p class="text-xs text-espresso/50">This action cannot be undone.</p>';
-
-                                        confirmButton.textContent = 'Yes, Deactivate & Process Classes';
-                                        confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
-                                    } else {
-                                        // Jika instructor takde classes (original code)
-                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-dangerText" fill="currentColor" viewBox="0 0 20 20">' +
-                                                '<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>' +
-                                                '</svg>';
-                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-dangerBg';
-
-                                        modalTitle.textContent = 'Deactivate Instructor?';
-                                        modalText.textContent = 'Are you sure you want to deactivate ' + instructorName + '? They will no longer be able to access the system or be assigned to new classes.';
-
-                                        confirmButton.textContent = 'Yes, Deactivate';
-                                        confirmButton.className = 'px-4 py-2 bg-dusty text-whitePure rounded-lg hover:bg-dustyHover transition-colors';
-                                    }
-
-                                    document.getElementById('activateDeactivateModal').classList.remove('hidden');
-                                }
-
-                                // Update function toggleActivateInstructor:
-                                function toggleActivateInstructor(instructorId) {
-                                    currentInstructorId = instructorId;
-
-                                    var instructor = null;
-                                    for (var i = 0; i < allInstructors.length; i++) {
-                                        if (allInstructors[i].id == instructorId) {
-                                            instructor = allInstructors[i];
-                                            break;
-                                        }
-                                    }
-
-                                    if (!instructor) {
-                                        alert('Instructor not found');
-                                        return;
-                                    }
-
-                                    if (instructor.status === 'active') {
-                                        // Check if instructor has assigned classes
-                                        checkInstructorClasses(instructorId, function (hasClasses) {
-                                            showDeactivateConfirmation(instructorId, instructor.name, hasClasses);
-                                        });
-                                    } else {
-                                        // Activate mode (no change)
-                                        var modalIcon = document.getElementById('modalIcon');
-                                        var modalTitle = document.getElementById('modalTitle');
-                                        var modalText = document.getElementById('modalText');
-                                        var confirmButton = document.getElementById('confirmButton');
-
-                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">' +
-                                                '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>' +
-                                                '</svg>';
-                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-successBg';
-
-                                        modalTitle.textContent = 'Activate Instructor?';
-                                        modalText.textContent = 'Are you sure you want to activate ' + instructor.name + '? They will be able to access the system and be assigned to new classes.';
-
-                                        confirmButton.textContent = 'Yes, Activate';
-                                        confirmButton.className = 'px-4 py-2 bg-teal text-whitePure rounded-lg hover:bg-tealHover transition-colors';
-
-                                        document.getElementById('activateDeactivateModal').classList.remove('hidden');
-                                    }
-                                }
-
-                                // Function untuk check jika instructor ada classes
-                                function checkInstructorClasses(instructorId, callback) {
-                                    fetch('monitor-instructor?action=checkClasses&id=' + instructorId)
-                                            .then(function (response) {
-                                                if (!response.ok)
-                                                    throw new Error('Network response was not ok');
-                                                return response.text();
-                                            })
-                                            .then(function (xmlText) {
-                                                var parser = new DOMParser();
-                                                var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-
-                                                var hasClasses = xmlDoc.getElementsByTagName('hasClasses')[0].textContent === 'true';
-                                                var classCount = xmlDoc.getElementsByTagName('classCount')[0].textContent;
-
-                                                console.log('Instructor has classes:', hasClasses, 'Count:', classCount);
-                                                callback(hasClasses);
-                                            })
-                                            .catch(function (error) {
-                                                console.error('Error checking classes:', error);
-                                                // Assume no classes if error
-                                                callback(false);
-                                            });
-                                }
-
         </script>
     </body>
 </html>

@@ -336,4 +336,17 @@ public class ClassConfirmationDAO {
         }
     }
 
+    public int countCancelledClasses() throws SQLException {
+        String query = "SELECT COUNT(*) as total FROM classconfirmation WHERE confirmationStatus = 'cancelled'";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement ps = conn.prepareStatement(query);
+                ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
+    }
 }

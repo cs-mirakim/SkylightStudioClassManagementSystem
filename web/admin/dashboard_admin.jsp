@@ -9,7 +9,7 @@
         }
         return;
     }
-    
+
     // Get context path
     String contextPath = request.getContextPath();
 %>
@@ -59,9 +59,9 @@
                     }
                 }
             }
-            
+
             // Define context path for JavaScript
-            var contextPath = '<%= contextPath %>';
+            var contextPath = '<%= contextPath%>';
         </script>
     </head>
 
@@ -113,7 +113,7 @@
                                 <div class="w-12 h-12 rounded-lg bg-tealSoft/30 flex items-center justify-center mb-4 group-hover:bg-teal group-hover:text-whitePure transition-colors">
                                     👤
                                 </div>
-                                <h3 class="font-semibold text-lg text-espresso mb-2">Instructor Monitor</h3>
+                                <h3 class="font-semibold text-lg text-espresso mb-2">Monitor Instructor</h3>
                                 <p class="text-sm text-espresso/60">Track instructor performance and status</p>
                             </div>
                             <span id="activeInstructorsBadge" class="bg-teal text-whitePure text-xs font-semibold px-3 py-1 rounded-full">
@@ -133,7 +133,7 @@
                                 <div class="w-12 h-12 rounded-lg bg-warningBg/50 flex items-center justify-center mb-4 group-hover:bg-warningText group-hover:text-whitePure transition-colors">
                                     📋
                                 </div>
-                                <h3 class="font-semibold text-lg text-espresso mb-2">Registration Review</h3>
+                                <h3 class="font-semibold text-lg text-espresso mb-2">Review Registration</h3>
                                 <p class="text-sm text-espresso/60">Approve or reject new registrations</p>
                             </div>
                             <span id="pendingRegistrationsBadge" class="bg-warningText text-whitePure text-xs font-semibold px-3 py-1 rounded-full">
@@ -267,7 +267,7 @@
             // Chart instances
             var monthlyClassesChart = null;
             var classTypeChart = null;
-            
+
             // Initialize empty charts
             function initializeCharts() {
                 // Monthly Classes Chart (Bar Chart)
@@ -278,20 +278,20 @@
                         data: {
                             labels: [],
                             datasets: [{
-                                label: 'Number of Classes',
-                                data: [],
-                                backgroundColor: '#B36D6D',
-                                borderColor: '#965656',
-                                borderWidth: 1,
-                                borderRadius: 6,
-                                hoverBackgroundColor: '#965656'
-                            }]
+                                    label: 'Number of Classes',
+                                    data: [],
+                                    backgroundColor: '#B36D6D',
+                                    borderColor: '#965656',
+                                    borderWidth: 1,
+                                    borderRadius: 6,
+                                    hoverBackgroundColor: '#965656'
+                                }]
                         },
                         options: {
                             responsive: true,
                             maintainAspectRatio: false,
                             plugins: {
-                                legend: { display: false },
+                                legend: {display: false},
                                 tooltip: {
                                     backgroundColor: '#3D3434',
                                     titleColor: '#FDF8F8',
@@ -303,18 +303,18 @@
                             scales: {
                                 y: {
                                     beginAtZero: true,
-                                    grid: { color: '#EFE1E1' },
-                                    ticks: { color: '#3D3434' }
+                                    grid: {color: '#EFE1E1'},
+                                    ticks: {color: '#3D3434'}
                                 },
                                 x: {
-                                    grid: { display: false },
-                                    ticks: { color: '#3D3434' }
+                                    grid: {display: false},
+                                    ticks: {color: '#3D3434'}
                                 }
                             }
                         }
                     });
                 }
-                
+
                 // Class Type Chart (Pie Chart)
                 var classTypeCtx = document.getElementById('classTypeChart');
                 if (classTypeCtx) {
@@ -323,12 +323,12 @@
                         data: {
                             labels: [],
                             datasets: [{
-                                data: [],
-                                backgroundColor: ['#B36D6D', '#6D9B9B', '#F2D1D1', '#A3C1D6', '#D9C5B2'],
-                                borderColor: '#FDF8F8',
-                                borderWidth: 2,
-                                hoverOffset: 12
-                            }]
+                                    data: [],
+                                    backgroundColor: ['#B36D6D', '#6D9B9B', '#F2D1D1', '#A3C1D6', '#D9C5B2'],
+                                    borderColor: '#FDF8F8',
+                                    borderWidth: 2,
+                                    hoverOffset: 12
+                                }]
                         },
                         options: {
                             responsive: true,
@@ -339,7 +339,7 @@
                                     labels: {
                                         color: '#3D3434',
                                         padding: 20,
-                                        font: { size: 14 }
+                                        font: {size: 14}
                                     }
                                 },
                                 tooltip: {
@@ -347,7 +347,7 @@
                                     titleColor: '#FDF8F8',
                                     bodyColor: '#FDF8F8',
                                     callbacks: {
-                                        label: function(context) {
+                                        label: function (context) {
                                             var label = context.label || '';
                                             var value = context.raw || 0;
                                             var total = 0;
@@ -365,28 +365,28 @@
                     });
                 }
             }
-            
+
             // Load dashboard data via AJAX
             function loadDashboardData() {
                 console.log('Loading dashboard data...');
                 console.log('Context path: ' + contextPath);
-                
+
                 var servletUrl = contextPath + '/admin/DashboardAdminServlet';
                 console.log('Servlet URL: ' + servletUrl);
-                
+
                 var xhr = new XMLHttpRequest();
                 xhr.open('GET', servletUrl, true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                xhr.onreadystatechange = function() {
+                xhr.onreadystatechange = function () {
                     if (xhr.readyState === 4) {
                         console.log('Response status: ' + xhr.status);
                         console.log('Response text: ' + xhr.responseText);
-                        
+
                         if (xhr.status === 200) {
                             try {
                                 var responseText = xhr.responseText;
                                 console.log('Response received:', responseText);
-                                
+
                                 // Try to parse JSON
                                 var data;
                                 try {
@@ -396,14 +396,14 @@
                                     showError('Invalid JSON response from server');
                                     return;
                                 }
-                                
+
                                 // Check if there's an error
                                 if (data.error) {
                                     console.error('Server error:', data.error);
                                     showError('Error: ' + data.error);
                                     return;
                                 }
-                                
+
                                 updateDashboard(data);
                             } catch (e) {
                                 console.error('Error processing response:', e);
@@ -419,19 +419,19 @@
                         }
                     }
                 };
-                
-                xhr.onerror = function() {
+
+                xhr.onerror = function () {
                     console.error('Network error occurred');
                     showError('Network error. Please check your connection.');
                 };
-                
+
                 xhr.send();
             }
-            
+
             // Update dashboard with data
             function updateDashboard(data) {
                 console.log('Updating dashboard with data:', data);
-                
+
                 // Update statistics
                 if (data.totalActiveClasses !== undefined) {
                     document.getElementById('totalActiveClasses').textContent = data.totalActiveClasses;
@@ -450,50 +450,50 @@
                 if (data.pendingRegistrations !== undefined) {
                     document.getElementById('pendingRegistrationsBadge').textContent = data.pendingRegistrations + ' pending';
                 }
-                
+
                 // Update charts
                 if (monthlyClassesChart && data.monthlyClassesData) {
                     monthlyClassesChart.data.labels = data.monthlyClassesData.labels;
                     monthlyClassesChart.data.datasets[0].data = data.monthlyClassesData.data;
                     monthlyClassesChart.update();
                 }
-                
+
                 if (classTypeChart && data.classTypeData) {
                     classTypeChart.data.labels = data.classTypeData.labels;
                     classTypeChart.data.datasets[0].data = data.classTypeData.data;
-                    
+
                     // Update colors based on number of data points
                     var colors = ['#B36D6D', '#6D9B9B', '#F2D1D1', '#A3C1D6', '#D9C5B2'];
                     classTypeChart.data.datasets[0].backgroundColor = colors.slice(0, data.classTypeData.labels.length);
-                    
+
                     classTypeChart.update();
                 }
-                
+
                 // Update top instructors
                 if (data.topInstructors && Array.isArray(data.topInstructors)) {
                     var container = document.getElementById('topInstructorsContainer');
                     if (container) {
                         if (data.topInstructors.length > 0) {
                             container.innerHTML = '';
-                            data.topInstructors.forEach(function(instructor) {
+                            data.topInstructors.forEach(function (instructor) {
                                 var instructorHTML = createInstructorCard(instructor);
                                 container.innerHTML += instructorHTML;
                             });
                         } else {
                             // Tampilkan pesan jika tidak ada instructor dengan rating
                             container.innerHTML = '<div class="col-span-3 text-center py-8">' +
-                                                '<div class="w-16 h-16 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">' +
-                                                '<span class="text-dusty text-2xl">👤</span>' +
-                                                '</div>' +
-                                                '<p class="text-lg font-semibold text-espresso mb-1">No Rated Instructors Yet</p>' +
-                                                '<p class="text-sm text-espresso/60">Instructor ratings will appear here once students submit feedback</p>' +
-                                                '</div>';
+                                    '<div class="w-16 h-16 rounded-full bg-blush flex items-center justify-center mx-auto mb-4">' +
+                                    '<span class="text-dusty text-2xl">👤</span>' +
+                                    '</div>' +
+                                    '<p class="text-lg font-semibold text-espresso mb-1">No Rated Instructors Yet</p>' +
+                                    '<p class="text-sm text-espresso/60">Instructor ratings will appear here once students submit feedback</p>' +
+                                    '</div>';
                         }
                     }
                 }
 
             }
-            
+
             // Create instructor card HTML - PERBAIKAN
             function createInstructorCard(instructor) {
                 var hasRating = instructor.hasRating === true;
@@ -501,74 +501,75 @@
                 var ratingStars = getRatingStars(ratingValue);
 
                 return '<div class="flex items-center p-4 border border-blush rounded-lg hover:bg-cloud transition-colors">' +
-                       '<div class="w-14 h-14 rounded-full bg-blush flex items-center justify-center mr-4">' +
-                       '<span class="text-dusty font-bold text-lg">' + (instructor.initials || '??') + '</span>' +
-                       '</div>' +
-                       '<div class="flex-1">' +
-                       '<p class="font-bold text-lg text-espresso">' + (instructor.name || 'No Name') + '</p>' +
-                       '<p class="text-sm text-espresso/60 mb-2">' + (instructor.specialization || 'General Instructor') + '</p>' +
-                       '<div class="flex items-center">' +
-                       (hasRating ? 
-                           ratingStars + '<span class="ml-2 font-bold text-dusty">' + ratingValue.toFixed(1) + '</span>' :
-                           '<span class="text-sm text-espresso/50 italic">No ratings yet</span>'
-                       ) +
-                       '</div>' +
-                       '</div>' +
-                       '</div>';
+                        '<div class="w-14 h-14 rounded-full bg-blush flex items-center justify-center mr-4">' +
+                        '<span class="text-dusty font-bold text-lg">' + (instructor.initials || '??') + '</span>' +
+                        '</div>' +
+                        '<div class="flex-1">' +
+                        '<p class="font-bold text-lg text-espresso">' + (instructor.name || 'No Name') + '</p>' +
+                        '<p class="text-sm text-espresso/60 mb-2">' + (instructor.specialization || 'General Instructor') + '</p>' +
+                        '<div class="flex items-center">' +
+                        (hasRating ?
+                                ratingStars + '<span class="ml-2 font-bold text-dusty">' + ratingValue.toFixed(1) + '</span>' :
+                                '<span class="text-sm text-espresso/50 italic">No ratings yet</span>'
+                                ) +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
             }
-            
+
             // Generate rating stars HTML
             function getRatingStars(rating) {
-                if (!rating) rating = 0;
+                if (!rating)
+                    rating = 0;
                 var fullStars = Math.floor(rating);
                 var halfStar = rating % 1 >= 0.5;
                 var emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-                
+
                 var starsHTML = '';
-                
+
                 // Full stars
                 for (var i = 0; i < fullStars; i++) {
                     starsHTML += '<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">' +
-                                '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
-                                '</svg>';
+                            '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
+                            '</svg>';
                 }
-                
+
                 // Half star
                 if (halfStar) {
                     starsHTML += '<svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">' +
-                                '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
-                                '</svg>';
+                            '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
+                            '</svg>';
                 }
-                
+
                 // Empty stars
                 for (var i = 0; i < emptyStars; i++) {
                     starsHTML += '<svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">' +
-                                '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
-                                '</svg>';
+                            '<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>' +
+                            '</svg>';
                 }
-                
+
                 return '<div class="flex">' + starsHTML + '</div>';
             }
-            
+
             // Show error message
             function showError(message) {
                 console.error(message);
                 alert('Dashboard Error: ' + message);
             }
-            
+
             // Initialize on page load
-            window.onload = function() {
+            window.onload = function () {
                 console.log('Dashboard page loaded');
                 initializeCharts();
                 loadDashboardData();
-                
+
                 // Add hover effects for cards
                 var cards = document.querySelectorAll('a[href*=".jsp"]');
                 for (var i = 0; i < cards.length; i++) {
-                    cards[i].addEventListener('mouseenter', function() {
+                    cards[i].addEventListener('mouseenter', function () {
                         this.style.transform = 'translateY(-4px)';
                     });
-                    cards[i].addEventListener('mouseleave', function() {
+                    cards[i].addEventListener('mouseleave', function () {
                         this.style.transform = 'translateY(0)';
                     });
                 }
