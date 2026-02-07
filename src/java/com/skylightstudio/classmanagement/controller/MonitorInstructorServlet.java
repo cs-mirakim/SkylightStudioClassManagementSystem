@@ -48,8 +48,13 @@ public class MonitorInstructorServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
+
         String action = request.getParameter("action");
+
+        // ✅ ADD: Debug logging
+        System.out.println("=== DEBUG doGet ===");
+        System.out.println("Action: " + action);
+        System.out.println("Request URI: " + request.getRequestURI());
 
         try {
             if ("list".equals(action)) {
@@ -57,19 +62,45 @@ public class MonitorInstructorServlet extends HttpServlet {
             } else if ("details".equals(action)) {
                 getInstructorDetails(request, response);
             } else if ("stats".equals(action)) {
-                getStats(response);  // ✅ Ini dah betul
+                getStats(response);
             } else if ("performance".equals(action)) {
-                getPerformanceData(request, response);  // ⚠️ Action lama
-            } else if ("completePerformance".equals(action)) {  // ✅ ACTION BARU
-                getCompletePerformanceData(request, response);  // PASTIKAN METHOD INI WUJUD
+                getPerformanceData(request, response);
+            } else if ("completePerformance".equals(action)) {
+                System.out.println("✅ Calling getCompletePerformanceData()"); // ✅ ADD THIS
+                getCompletePerformanceData(request, response);
             } else if ("checkClasses".equals(action)) {
                 checkInstructorClasses(request, response);
             } else {
                 request.getRequestDispatcher("/admin/monitor_instructor.jsp").forward(request, response);
             }
         } catch (SQLException e) {
+            // ✅ IMPROVED: Detailed error logging
+            System.err.println("❌ SQL ERROR in doGet:");
+            System.err.println("Action: " + action);
+            System.err.println("Error Message: " + e.getMessage());
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
+
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error>");
+            out.print("<message>" + escapeXml(e.getMessage()) + "</message>");
+            out.print("</error>");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            // ✅ IMPROVED: Catch all other exceptions
+            System.err.println("❌ GENERAL ERROR in doGet:");
+            System.err.println("Action: " + action);
+            System.err.println("Error Message: " + e.getMessage());
+            e.printStackTrace();
+
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error>");
+            out.print("<message>" + escapeXml(e.getMessage()) + "</message>");
+            out.print("</error>");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -110,17 +141,12 @@ public class MonitorInstructorServlet extends HttpServlet {
         com.skylightstudio.classmanagement.model.Registration registration
                 = registrationDAO.getRegistrationById(instructor.getRegisterID());
 
-        // ========== PERUBAHAN 1: GUNA CONFIRMED CLASSES SAHAJA ==========
         // Get performance stats - CONFIRMED CLASSES SAHAJA
-        ClassConfirmationDAO classConfirmationDAO = new ClassConfirmationDAO();
-        // GUNA METHOD BARU: countConfirmedClassesForInstructor() bukan countClassesForInstructor()
         int totalConfirmedClasses = classConfirmationDAO.countConfirmedClassesForInstructor(instructorId);
         int cancelledClasses = classConfirmationDAO.countCancelledClassesForInstructor(instructorId);
         int completedClasses = totalConfirmedClasses - cancelledClasses;
 
-        // ========== PERUBAHAN 2: GET ALL 5 AVERAGE RATINGS ==========
         // Get ALL 5 average ratings
-        FeedbackDAO feedbackDAO = new FeedbackDAO();
         Map<String, Double> averageRatings = feedbackDAO.getAverageRatingsForInstructor(instructorId);
 
         // Dapatkan semua 5 rating
@@ -130,10 +156,8 @@ public class MonitorInstructorServlet extends HttpServlet {
         double avgPunctuality = averageRatings.getOrDefault("punctuality", 0.0);
         double avgOverallRating = averageRatings.getOrDefault("overall", 0.0);
 
-        // ========== PERUBAHAN 3: KIRA AVERAGE DARI 5 RATING ==========
-        // Kira total semua rating
+        // Kira average dari 5 rating
         double totalAllRatings = avgTeaching + avgCommunication + avgSupport + avgPunctuality + avgOverallRating;
-        // Kira average (bahagi dengan 5)
         double averageAllRatings = totalAllRatings / 5.0;
 
         // Handle NaN atau infinite values
@@ -179,27 +203,25 @@ public class MonitorInstructorServlet extends HttpServlet {
             out.print("<userType>" + escapeXml(registration.getUserType()) + "</userType>");
         }
 
-        // ========== PERUBAHAN 4: UPDATE CLASS STATS DENGAN CONFIRMED CLASSES ==========
+        // ========== PERFORMANCE STATS ==========
         out.print("<totalClasses>" + totalConfirmedClasses + "</totalClasses>");
         out.print("<cancelledClasses>" + cancelledClasses + "</cancelledClasses>");
         out.print("<completedClasses>" + completedClasses + "</completedClasses>");
 
-        // ========== PERUBAHAN 5: TAMBAH SEMUA 5 RATING DALAM XML ==========
-        // Output semua 5 rating untuk frontend kira average
+        // ========== ALL 5 RATINGS ==========
         out.print("<avgTeaching>" + String.format("%.1f", avgTeaching) + "</avgTeaching>");
         out.print("<avgCommunication>" + String.format("%.1f", avgCommunication) + "</avgCommunication>");
         out.print("<avgSupport>" + String.format("%.1f", avgSupport) + "</avgSupport>");
         out.print("<avgPunctuality>" + String.format("%.1f", avgPunctuality) + "</avgPunctuality>");
         out.print("<overallRating>" + String.format("%.1f", avgOverallRating) + "</overallRating>");
 
-        // ========== PERUBAHAN 6: TAMBAH AVERAGE SEMUA RATING (untuk reference) ==========
+        // ========== AVERAGE OF ALL 5 RATINGS (FOR PDF) ==========
         out.print("<averageAllRatings>" + String.format("%.1f", averageAllRatings) + "</averageAllRatings>");
         out.print("<feedbackCount>" + feedbackCount + "</feedbackCount>");
 
         // ========== PROFILE IMAGE PATH ==========
         String profileImage = instructor.getProfileImageFilePath();
         if (profileImage != null && !profileImage.isEmpty() && !profileImage.equals("null")) {
-            // Pastikan path relatif benar
             if (!profileImage.startsWith("../")) {
                 profileImage = "../" + profileImage;
             }
@@ -213,22 +235,16 @@ public class MonitorInstructorServlet extends HttpServlet {
         System.out.println("DEBUG - Original certification path: " + certification);
 
         if (certification != null && !certification.isEmpty() && !certification.equals("null")) {
-            // Normalize path
             certification = certification.trim();
-
-            // Jika path sudah relative, biarkan saja
             if (!certification.startsWith("../") && !certification.startsWith("/")) {
                 certification = "../" + certification;
             }
-
-            // Pastikan tidak ada double slashes
             certification = certification.replace("//", "/");
 
             System.out.println("DEBUG - Processed certification path: " + certification);
 
             out.print("<certification>" + escapeXml(certification) + "</certification>");
 
-            // Get file name for display
             String fileName = getFileNameFromPath(certification);
             out.print("<certificationFileName>" + escapeXml(fileName) + "</certificationFileName>");
         } else {
@@ -240,17 +256,14 @@ public class MonitorInstructorServlet extends HttpServlet {
         out.print("</details>");
     }
 
-    // Helper method untuk mendapatkan nama file dari path
     private String getFileNameFromPath(String path) {
         if (path == null || path.isEmpty()) {
             return "No file";
         }
-        // Ambil bagian terakhir dari path (nama file)
         String[] parts = path.split("/");
         return parts[parts.length - 1];
     }
 
-    // PERUBAHAN: Update calculation untuk average rating
     private void getStats(HttpServletResponse response) throws SQLException, IOException {
         List<Map<String, Object>> instructors = registrationDAO.getAllInstructorRegistrations();
 
@@ -314,7 +327,7 @@ public class MonitorInstructorServlet extends HttpServlet {
         out.print("<active>" + activeCount + "</active>");
         out.print("<inactive>" + inactiveCount + "</inactive>");
         out.print("<newThisMonth>" + newThisMonth + "</newThisMonth>");
-        out.print("<avgOverallRating>" + String.format("%.1f", avgRating) + "</avgOverallRating>"); // NAMA TAG BERUBAH
+        out.print("<avgOverallRating>" + String.format("%.1f", avgRating) + "</avgOverallRating>");
         out.print("</stats>");
     }
 
@@ -454,7 +467,6 @@ public class MonitorInstructorServlet extends HttpServlet {
         response.setContentType("text/xml;charset=UTF-8");
         PrintWriter out = response.getWriter();
 
-        // Debug log parameters
         String idParam = request.getParameter("id");
         String newStatusParam = request.getParameter("newStatus");
 
@@ -480,7 +492,6 @@ public class MonitorInstructorServlet extends HttpServlet {
         // Get current admin ID from session
         Integer adminId = (Integer) request.getSession().getAttribute("adminID");
         if (adminId == null) {
-            // If no session, use default admin ID 1 for testing
             adminId = 1;
         }
 
@@ -498,9 +509,8 @@ public class MonitorInstructorServlet extends HttpServlet {
         String currentStatus = instructor.getStatus();
         System.out.println("DEBUG - Current instructor status: " + currentStatus);
 
-        // ========== TAMBAHAN: Pemeriksaan untuk deactivate ==========
+        // ========== Pemeriksaan untuk deactivate ==========
         if ("inactive".equals(newStatus) && "active".equals(currentStatus)) {
-            // Cek jika instructor ada assigned classes
             List<Map<String, Object>> assignedClasses = getAssignedClassesForInstructor(instructorId);
 
             if (!assignedClasses.isEmpty()) {
@@ -582,7 +592,6 @@ public class MonitorInstructorServlet extends HttpServlet {
 
                         } else if ("pending".equals(action)) {
                             // Instructor adalah relief instructor (pending)
-                            // Just cancel the pending request
                             cancelInstructorFromClass(conn, classId, instructorId,
                                     "Instructor deactivated - relief request cancelled");
 
@@ -794,181 +803,86 @@ public class MonitorInstructorServlet extends HttpServlet {
         return 0; // Placeholder
     }
 
-    // Di MonitorInstructorServlet.java, tambahkan method baru:
-    private void handleJsonRequest(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException, SQLException {
-
-        // Read JSON from request
-        StringBuilder sb = new StringBuilder();
-        String line;
-        try (BufferedReader reader = request.getReader()) {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-        }
-
-        String json = sb.toString();
-        System.out.println("DEBUG - JSON received: " + json);
-
-        // Parse JSON (gunakan library seperti Jackson/Gson, atau manual untuk sederhana)
-        // Untuk contoh sederhana, kita parse manual
-        // ...
-    }
-
-    // Di dalam class MonitorInstructorServlet, tambahkan method ini:
-    private Map<String, Object> getCompletePerformanceData(int instructorId, String period) throws SQLException {
-        Map<String, Object> performanceData = new HashMap<>();
-
-        // Get instructor details
-        com.skylightstudio.classmanagement.model.Instructor instructor
-                = instructorDAO.getInstructorById(instructorId);
-
-        if (instructor == null) {
-            return performanceData;
-        }
-
-        // Get class statistics
-        int totalClasses = classConfirmationDAO.countClassesForInstructor(instructorId);
-        int cancelledClasses = classConfirmationDAO.countCancelledClassesForInstructor(instructorId);
-        int completedClasses = totalClasses - cancelledClasses;
-        double completionRate = totalClasses > 0 ? (completedClasses * 100.0 / totalClasses) : 0;
-
-        // Get feedback ratings
-        Map<String, Double> averageRatings = feedbackDAO.getAverageRatingsForInstructor(instructorId);
-        double overallRating = averageRatings.getOrDefault("overall", 0.0);
-        double teaching = averageRatings.getOrDefault("teaching", 0.0);
-        double communication = averageRatings.getOrDefault("communication", 0.0);
-        double support = averageRatings.getOrDefault("support", 0.0);
-        double punctuality = averageRatings.getOrDefault("punctuality", 0.0);
-
-        // Get highest and lowest ratings
-        Map<String, Double> ratingExtremes = getRatingExtremes(instructorId);
-
-        // Get monthly trend data (last 6 months)
-        List<Map<String, Object>> monthlyTrend = getMonthlyPerformanceTrend(instructorId, 6);
-
-        // Put all data into map
-        performanceData.put("instructorName", instructor.getName());
-        performanceData.put("overallRating", overallRating);
-        performanceData.put("totalClasses", totalClasses);
-        performanceData.put("cancelledClasses", cancelledClasses);
-        performanceData.put("completionRate", completionRate);
-        performanceData.put("teaching", teaching);
-        performanceData.put("communication", communication);
-        performanceData.put("support", support);
-        performanceData.put("punctuality", punctuality);
-        performanceData.put("ratingExtremes", ratingExtremes);
-        performanceData.put("monthlyTrend", monthlyTrend);
-
-        return performanceData;
-    }
-
-    // Method untuk mendapatkan highest dan lowest rating
-    private Map<String, Double> getRatingExtremes(int instructorId) throws SQLException {
-        Map<String, Double> extremes = new HashMap<>();
-
-        String sql = "SELECT "
-                + "MIN(teachingSkill) as minTeaching, MAX(teachingSkill) as maxTeaching, "
-                + "MIN(communication) as minCommunication, MAX(communication) as maxCommunication, "
-                + "MIN(supportInteraction) as minSupport, MAX(supportInteraction) as maxSupport, "
-                + "MIN(punctuality) as minPunctuality, MAX(punctuality) as maxPunctuality, "
-                + "MIN(overallRating) as minOverall, MAX(overallRating) as maxOverall "
-                + "FROM feedback WHERE instructorID = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, instructorId);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                extremes.put("minTeaching", rs.getDouble("minTeaching"));
-                extremes.put("maxTeaching", rs.getDouble("maxTeaching"));
-                extremes.put("minCommunication", rs.getDouble("minCommunication"));
-                extremes.put("maxCommunication", rs.getDouble("maxCommunication"));
-                extremes.put("minSupport", rs.getDouble("minSupport"));
-                extremes.put("maxSupport", rs.getDouble("maxSupport"));
-                extremes.put("minPunctuality", rs.getDouble("minPunctuality"));
-                extremes.put("maxPunctuality", rs.getDouble("maxPunctuality"));
-                extremes.put("minOverall", rs.getDouble("minOverall"));
-                extremes.put("maxOverall", rs.getDouble("maxOverall"));
-            }
-        }
-
-        return extremes;
-    }
-
-    // Method untuk mendapatkan trend bulanan
-    private List<Map<String, Object>> getMonthlyPerformanceTrend(int instructorId, int months) throws SQLException {
-        List<Map<String, Object>> monthlyData = new ArrayList<>();
-
-        String sql = "SELECT "
-                + "EXTRACT(MONTH FROM f.feedbackDate) as month, "
-                + "EXTRACT(YEAR FROM f.feedbackDate) as year, "
-                + "AVG(f.overallRating) as avgRating, "
-                + "COUNT(DISTINCT f.classID) as classCount "
-                + "FROM feedback f "
-                + "JOIN class c ON f.classID = c.classID "
-                + "WHERE f.instructorID = ? "
-                + "AND f.feedbackDate >= DATEADD(MONTH, -?, CURRENT_DATE) "
-                + "GROUP BY EXTRACT(YEAR FROM f.feedbackDate), EXTRACT(MONTH FROM f.feedbackDate) "
-                + "ORDER BY year, month";
-
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, instructorId);
-            stmt.setInt(2, months);
-            ResultSet rs = stmt.executeQuery();
-
-            String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-            while (rs.next()) {
-                Map<String, Object> monthData = new HashMap<>();
-                int monthNum = rs.getInt("month");
-
-                monthData.put("month", monthNames[monthNum - 1]);
-                monthData.put("avgRating", rs.getDouble("avgRating"));
-                monthData.put("classCount", rs.getInt("classCount"));
-
-                monthlyData.add(monthData);
-            }
-        }
-
-        return monthlyData;
-    }
-
-    // METHOD BARU: Get complete performance data dengan semua rating
+    // ========== NEW: COMPLETE PERFORMANCE DATA WITH PERIOD FILTER ==========
+    // ========== NEW: COMPLETE PERFORMANCE DATA WITH PERIOD FILTER ==========
     private void getCompletePerformanceData(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
 
-        int instructorId = Integer.parseInt(request.getParameter("id"));
+        System.out.println("=== getCompletePerformanceData START ===");
+
+        // ✅ VALIDATE parameters first
+        String idParam = request.getParameter("id");
         String period = request.getParameter("period");
 
-        // Get instructor
-        com.skylightstudio.classmanagement.model.Instructor instructor
-                = instructorDAO.getInstructorById(instructorId);
+        System.out.println("ID param: " + idParam);
+        System.out.println("Period param: " + period);
 
-        if (instructor == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Instructor not found");
+        if (idParam == null || idParam.trim().isEmpty()) {
+            System.err.println("❌ ERROR: Missing instructor ID");
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error><message>Missing instructor ID</message></error>");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             return;
+        }
+
+        int instructorId;
+        try {
+            instructorId = Integer.parseInt(idParam);
+            System.out.println("✅ Parsed instructor ID: " + instructorId);
+        } catch (NumberFormatException e) {
+            System.err.println("❌ ERROR: Invalid instructor ID format: " + idParam);
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error><message>Invalid instructor ID</message></error>");
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        // Default period if not provided
+        if (period == null || period.trim().isEmpty()) {
+            period = "all";
+            System.out.println("⚠️ Period not provided, using default: all");
         }
 
         Connection conn = null;
         try {
-            conn = DBConnection.getConnection();
+            // Get instructor
+            System.out.println("Getting instructor by ID...");
+            com.skylightstudio.classmanagement.model.Instructor instructor
+                    = instructorDAO.getInstructorById(instructorId);
 
-            // ========== SIMPLE VERSION DULU (GET DATA ASAS) ==========
-            // Class statistics
-            ClassConfirmationDAO ccDAO = new ClassConfirmationDAO();
-            int totalConfirmedClasses = ccDAO.countConfirmedClassesForInstructor(instructorId);
-            int cancelledClasses = ccDAO.countCancelledClassesForInstructor(instructorId);
+            if (instructor == null) {
+                System.err.println("❌ ERROR: Instructor not found with ID: " + instructorId);
+                response.setContentType("text/xml;charset=UTF-8");
+                PrintWriter out = response.getWriter();
+                out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+                out.print("<error><message>Instructor not found</message></error>");
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+
+            System.out.println("✅ Found instructor: " + instructor.getName());
+
+            conn = DBConnection.getConnection();
+            System.out.println("✅ Database connection established");
+
+            // Get class statistics
+            System.out.println("Getting class statistics...");
+            int totalConfirmedClasses = classConfirmationDAO.countConfirmedClassesForInstructor(instructorId);
+            int cancelledClasses = classConfirmationDAO.countCancelledClassesForInstructor(instructorId);
             int completedClasses = totalConfirmedClasses - cancelledClasses;
             double completionRate = totalConfirmedClasses > 0
                     ? (completedClasses * 100.0 / totalConfirmedClasses) : 0;
 
+            System.out.println("Total classes: " + totalConfirmedClasses);
+            System.out.println("Cancelled: " + cancelledClasses);
+            System.out.println("Completed: " + completedClasses);
+
             // Get ratings
-            FeedbackDAO feedbackDAO = new FeedbackDAO();
+            System.out.println("Getting ratings...");
             Map<String, Double> ratings = feedbackDAO.getAverageRatingsForInstructor(instructorId);
 
             double avgTeaching = ratings.getOrDefault("teaching", 0.0);
@@ -994,7 +908,20 @@ public class MonitorInstructorServlet extends HttpServlet {
                 avgOverall = 0;
             }
 
-            // ========== GENERATE SIMPLE XML RESPONSE DULU ==========
+            System.out.println("✅ Ratings retrieved successfully");
+
+            // Get highest and lowest ratings based on period
+            System.out.println("Getting rating extremes for period: " + period);
+            Map<String, Object> ratingExtremes = getRatingExtremesForPeriod(instructorId, period);
+            System.out.println("✅ Rating extremes retrieved");
+
+            // Get monthly trend data based on period
+            System.out.println("Getting monthly trend for period: " + period);
+            List<Map<String, Object>> monthlyTrend = getMonthlyTrendForPeriod(instructorId, period);
+            System.out.println("✅ Monthly trend retrieved, count: " + monthlyTrend.size());
+
+            // ========== GENERATE XML RESPONSE ==========
+            System.out.println("Generating XML response...");
             response.setContentType("text/xml;charset=UTF-8");
             PrintWriter out = response.getWriter();
 
@@ -1016,80 +943,114 @@ public class MonitorInstructorServlet extends HttpServlet {
             out.print("<punctuality>" + String.format("%.1f", avgPunctuality) + "</punctuality>");
             out.print("<overallRating>" + String.format("%.1f", avgOverall) + "</overallRating>");
 
-            // Untuk sementara, set highest/lowest sama dengan average
-            out.print("<teachingHighest>" + String.format("%.1f", avgTeaching) + "</teachingHighest>");
-            out.print("<communicationHighest>" + String.format("%.1f", avgCommunication) + "</communicationHighest>");
-            out.print("<supportHighest>" + String.format("%.1f", avgSupport) + "</supportHighest>");
-            out.print("<punctualityHighest>" + String.format("%.1f", avgPunctuality) + "</punctualityHighest>");
-            out.print("<overallHighest>" + String.format("%.1f", avgOverall) + "</overallHighest>");
+            // Highest ratings
+            out.print("<teachingHighest>" + ratingExtremes.getOrDefault("maxTeaching", String.format("%.1f", avgTeaching)) + "</teachingHighest>");
+            out.print("<communicationHighest>" + ratingExtremes.getOrDefault("maxCommunication", String.format("%.1f", avgCommunication)) + "</communicationHighest>");
+            out.print("<supportHighest>" + ratingExtremes.getOrDefault("maxSupport", String.format("%.1f", avgSupport)) + "</supportHighest>");
+            out.print("<punctualityHighest>" + ratingExtremes.getOrDefault("maxPunctuality", String.format("%.1f", avgPunctuality)) + "</punctualityHighest>");
+            out.print("<overallHighest>" + ratingExtremes.getOrDefault("maxOverall", String.format("%.1f", avgOverall)) + "</overallHighest>");
 
-            out.print("<teachingLowest>" + String.format("%.1f", avgTeaching) + "</teachingLowest>");
-            out.print("<communicationLowest>" + String.format("%.1f", avgCommunication) + "</communicationLowest>");
-            out.print("<supportLowest>" + String.format("%.1f", avgSupport) + "</supportLowest>");
-            out.print("<punctualityLowest>" + String.format("%.1f", avgPunctuality) + "</punctualityLowest>");
-            out.print("<overallLowest>" + String.format("%.1f", avgOverall) + "</overallLowest>");
+            // Lowest ratings
+            out.print("<teachingLowest>" + ratingExtremes.getOrDefault("minTeaching", String.format("%.1f", avgTeaching)) + "</teachingLowest>");
+            out.print("<communicationLowest>" + ratingExtremes.getOrDefault("minCommunication", String.format("%.1f", avgCommunication)) + "</communicationLowest>");
+            out.print("<supportLowest>" + ratingExtremes.getOrDefault("minSupport", String.format("%.1f", avgSupport)) + "</supportLowest>");
+            out.print("<punctualityLowest>" + ratingExtremes.getOrDefault("minPunctuality", String.format("%.1f", avgPunctuality)) + "</punctualityLowest>");
+            out.print("<overallLowest>" + ratingExtremes.getOrDefault("minOverall", String.format("%.1f", avgOverall)) + "</overallLowest>");
 
-            // Monthly Trend - simple dummy data untuk testing
+            // Monthly Trend
             out.print("<monthlyTrend>");
-            String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun"};
-            for (String month : months) {
+            for (Map<String, Object> monthData : monthlyTrend) {
                 out.print("<month>");
-                out.print("<name>" + month + "</name>");
-                out.print("<rating>" + String.format("%.1f", avgOverall) + "</rating>");
-                out.print("<totalClasses>5</totalClasses>");
+                out.print("<name>" + monthData.get("name") + "</name>");
+                out.print("<rating>" + monthData.get("rating") + "</rating>");
+                out.print("<totalClasses>" + monthData.get("totalClasses") + "</totalClasses>");
                 out.print("</month>");
             }
             out.print("</monthlyTrend>");
 
             out.print("</performance>");
 
+            System.out.println("✅ XML response sent successfully");
+            System.out.println("=== getCompletePerformanceData END ===");
+
         } catch (SQLException e) {
+            System.err.println("❌ SQL ERROR in getCompletePerformanceData:");
             e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Database error: " + e.getMessage());
+
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error><message>Database error: " + escapeXml(e.getMessage()) + "</message></error>");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            System.err.println("❌ GENERAL ERROR in getCompletePerformanceData:");
+            e.printStackTrace();
+
+            response.setContentType("text/xml;charset=UTF-8");
+            PrintWriter out = response.getWriter();
+            out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+            out.print("<error><message>Server error: " + escapeXml(e.getMessage()) + "</message></error>");
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } finally {
             if (conn != null) {
                 try {
                     conn.close();
+                    System.out.println("✅ Database connection closed");
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    System.err.println("⚠️ Error closing connection: " + e.getMessage());
                 }
             }
         }
     }
 
-    // Helper methods untuk dapatkan highest dan lowest ratings
-    private Map<String, Double> getHighestRatingsForInstructor(int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        Map<String, Double> highestRatings = new HashMap<>();
+    // Helper method untuk get monthly trend berdasarkan period
+    // ✅ ULTIMATE FIX: Cast both sides to DATE type
+    private Map<String, Object> getRatingExtremesForPeriod(int instructorId, String period) throws SQLException {
+        Map<String, Object> extremes = new HashMap<>();
         Connection conn = null;
 
         try {
             conn = DBConnection.getConnection();
-            String sql = "SELECT "
-                    + "MAX(teachingSkill) as maxTeaching, "
-                    + "MAX(communication) as maxCommunication, "
-                    + "MAX(supportInteraction) as maxSupport, "
-                    + "MAX(punctuality) as maxPunctuality "
-                    + "FROM feedback WHERE instructorID = ? ";
+            StringBuilder sql = new StringBuilder();
 
-            if (startDate != null) {
-                sql += "AND feedbackDate >= ? ";
+            sql.append("SELECT ")
+                    .append("MAX(teachingSkill) as maxTeaching, ")
+                    .append("MIN(teachingSkill) as minTeaching, ")
+                    .append("MAX(communication) as maxCommunication, ")
+                    .append("MIN(communication) as minCommunication, ")
+                    .append("MAX(supportInteraction) as maxSupport, ")
+                    .append("MIN(supportInteraction) as minSupport, ")
+                    .append("MAX(punctuality) as maxPunctuality, ")
+                    .append("MIN(punctuality) as minPunctuality, ")
+                    .append("MAX(overallRating) as maxOverall, ")
+                    .append("MIN(overallRating) as minOverall ")
+                    .append("FROM feedback WHERE instructorID = ? ");
+
+            // ✅ ULTIMATE FIX: Cast TIMESTAMPADD result to DATE
+            if ("3months".equals(period)) {
+                sql.append("AND feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -90, CURRENT_DATE)} AS DATE) ");
+            } else if ("6months".equals(period)) {
+                sql.append("AND feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -180, CURRENT_DATE)} AS DATE) ");
+            } else if ("1year".equals(period)) {
+                sql.append("AND feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -365, CURRENT_DATE)} AS DATE) ");
             }
+            // "all" - no filter
 
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql.toString());
             stmt.setInt(1, instructorId);
-
-            if (startDate != null) {
-                stmt.setDate(2, startDate);
-            }
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                highestRatings.put("teaching", rs.getDouble("maxTeaching"));
-                highestRatings.put("communication", rs.getDouble("maxCommunication"));
-                highestRatings.put("support", rs.getDouble("maxSupport"));
-                highestRatings.put("punctuality", rs.getDouble("maxPunctuality"));
+                extremes.put("maxTeaching", String.format("%.1f", rs.getDouble("maxTeaching")));
+                extremes.put("minTeaching", String.format("%.1f", rs.getDouble("minTeaching")));
+                extremes.put("maxCommunication", String.format("%.1f", rs.getDouble("maxCommunication")));
+                extremes.put("minCommunication", String.format("%.1f", rs.getDouble("minCommunication")));
+                extremes.put("maxSupport", String.format("%.1f", rs.getDouble("maxSupport")));
+                extremes.put("minSupport", String.format("%.1f", rs.getDouble("minSupport")));
+                extremes.put("maxPunctuality", String.format("%.1f", rs.getDouble("maxPunctuality")));
+                extremes.put("minPunctuality", String.format("%.1f", rs.getDouble("minPunctuality")));
+                extremes.put("maxOverall", String.format("%.1f", rs.getDouble("maxOverall")));
+                extremes.put("minOverall", String.format("%.1f", rs.getDouble("minOverall")));
             }
 
             stmt.close();
@@ -1099,112 +1060,69 @@ public class MonitorInstructorServlet extends HttpServlet {
             }
         }
 
-        return highestRatings;
+        return extremes;
     }
 
-    private Map<String, Double> getLowestRatingsForInstructor(int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        Map<String, Double> lowestRatings = new HashMap<>();
-        Connection conn = null;
-
-        try {
-            conn = DBConnection.getConnection();
-            String sql = "SELECT "
-                    + "MIN(teachingSkill) as minTeaching, "
-                    + "MIN(communication) as minCommunication, "
-                    + "MIN(supportInteraction) as minSupport, "
-                    + "MIN(punctuality) as minPunctuality "
-                    + "FROM feedback WHERE instructorID = ? AND teachingSkill > 0 ";
-
-            if (startDate != null) {
-                sql += "AND feedbackDate >= ? ";
-            }
-
-            PreparedStatement stmt = conn.prepareStatement(sql);
-            stmt.setInt(1, instructorId);
-
-            if (startDate != null) {
-                stmt.setDate(2, startDate);
-            }
-
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                lowestRatings.put("teaching", rs.getDouble("minTeaching"));
-                lowestRatings.put("communication", rs.getDouble("minCommunication"));
-                lowestRatings.put("support", rs.getDouble("minSupport"));
-                lowestRatings.put("punctuality", rs.getDouble("minPunctuality"));
-            }
-
-            stmt.close();
-        } finally {
-            if (conn != null) {
-                conn.close();
-            }
-        }
-
-        return lowestRatings;
-    }
-
-    private List<Map<String, Object>> getMonthlyPerformanceTrend(int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
+    // Get monthly trend (for 3months, 6months, 1year)
+    // ✅ ULTIMATE FIX: Cast TIMESTAMPADD result to DATE
+    private List<Map<String, Object>> getMonthlyTrend(int instructorId, String period) throws SQLException {
         List<Map<String, Object>> monthlyData = new ArrayList<>();
         Connection conn = null;
 
         try {
             conn = DBConnection.getConnection();
+            StringBuilder sql = new StringBuilder();
 
-            // Query untuk dapatkan data bulanan
-            String sql = "SELECT "
-                    + "TO_CHAR(f.feedbackDate, 'Mon') as month, "
-                    + "EXTRACT(MONTH FROM f.feedbackDate) as monthNum, "
-                    + "AVG(f.overallRating) as avgRating, "
-                    + "COUNT(DISTINCT f.feedbackID) as feedbackCount, "
-                    + "COUNT(DISTINCT cc.classID) as totalClasses "
-                    + "FROM feedback f "
-                    + "LEFT JOIN class_confirmation cc ON f.instructorID = cc.instructorID "
-                    + "AND EXTRACT(MONTH FROM f.feedbackDate) = EXTRACT(MONTH FROM c.classDate) "
-                    + "AND EXTRACT(YEAR FROM f.feedbackDate) = EXTRACT(YEAR FROM c.classDate) "
-                    + "LEFT JOIN class c ON cc.classID = c.classID "
-                    + "WHERE f.instructorID = ? ";
+            sql.append("SELECT ")
+                    .append("MONTH(f.feedbackDate) as month_num, ")
+                    .append("YEAR(f.feedbackDate) as year_num, ")
+                    .append("AVG(f.overallRating) as avg_rating, ")
+                    .append("COUNT(DISTINCT f.feedbackID) as feedback_count, ")
+                    .append("COUNT(DISTINCT cc.classID) as total_classes ")
+                    .append("FROM feedback f ")
+                    .append("LEFT JOIN class_confirmation cc ON f.instructorID = cc.instructorID ")
+                    .append("AND MONTH(f.feedbackDate) = MONTH(cc.actionAt) ")
+                    .append("AND YEAR(f.feedbackDate) = YEAR(cc.actionAt) ")
+                    .append("WHERE f.instructorID = ? ");
 
-            if (startDate != null) {
-                sql += "AND f.feedbackDate >= ? ";
+            // ✅ ULTIMATE FIX: Cast TIMESTAMPADD result to DATE
+            if ("3months".equals(period)) {
+                sql.append("AND f.feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -90, CURRENT_DATE)} AS DATE) ");
+            } else if ("6months".equals(period)) {
+                sql.append("AND f.feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -180, CURRENT_DATE)} AS DATE) ");
+            } else if ("1year".equals(period)) {
+                sql.append("AND f.feedbackDate >= CAST({fn TIMESTAMPADD(SQL_TSI_DAY, -365, CURRENT_DATE)} AS DATE) ");
             }
 
-            sql += "GROUP BY TO_CHAR(f.feedbackDate, 'Mon'), EXTRACT(MONTH FROM f.feedbackDate) "
-                    + "ORDER BY EXTRACT(MONTH FROM f.feedbackDate) DESC "
-                    + "FETCH FIRST 6 ROWS ONLY";
+            sql.append("GROUP BY YEAR(f.feedbackDate), MONTH(f.feedbackDate) ")
+                    .append("ORDER BY YEAR(f.feedbackDate) DESC, MONTH(f.feedbackDate) DESC ");
 
-            PreparedStatement stmt = conn.prepareStatement(sql);
+            PreparedStatement stmt = conn.prepareStatement(sql.toString());
             stmt.setInt(1, instructorId);
-
-            if (startDate != null) {
-                stmt.setDate(2, startDate);
-            }
+            stmt.setMaxRows(12);
 
             ResultSet rs = stmt.executeQuery();
 
-            // Jika tiada data, return dummy data
-            if (!rs.isBeforeFirst()) {
-                // Return dummy data untuk testing
-                String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun"};
-                for (String month : months) {
-                    Map<String, Object> monthData = new HashMap<>();
-                    monthData.put("month", month);
-                    monthData.put("avgRating", "4.0");
-                    monthData.put("totalClasses", "5");
-                    monthlyData.add(monthData);
-                }
-            } else {
-                while (rs.next()) {
-                    Map<String, Object> monthData = new HashMap<>();
-                    monthData.put("month", rs.getString("month"));
-                    monthData.put("avgRating", String.format("%.1f", rs.getDouble("avgRating")));
-                    monthData.put("totalClasses", rs.getInt("totalClasses"));
-                    monthlyData.add(monthData);
-                }
+            String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+            while (rs.next()) {
+                Map<String, Object> monthData = new HashMap<>();
+                int monthNum = rs.getInt("month_num");
+                int yearNum = rs.getInt("year_num");
+
+                String monthYear = monthNames[monthNum - 1] + " " + yearNum;
+
+                monthData.put("name", monthYear);
+                monthData.put("rating", String.format("%.1f", rs.getDouble("avg_rating")));
+                monthData.put("totalClasses", rs.getInt("total_classes"));
+
+                monthlyData.add(monthData);
+            }
+
+            // If no data, create dummy data
+            if (monthlyData.isEmpty()) {
+                monthlyData = createDummyMonthlyData(period);
             }
 
             stmt.close();
@@ -1215,5 +1133,141 @@ public class MonitorInstructorServlet extends HttpServlet {
         }
 
         return monthlyData;
+    }
+
+// Keep method getMonthlyTrendForPeriod() as is (takde masalah)
+    private List<Map<String, Object>> getMonthlyTrendForPeriod(int instructorId, String period) throws SQLException {
+        List<Map<String, Object>> monthlyData = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+
+            if ("all".equals(period)) {
+                // For "all time", group by year
+                monthlyData = getYearlyTrend(instructorId);
+            } else {
+                // For other periods, group by month
+                monthlyData = getMonthlyTrend(instructorId, period);
+            }
+
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+
+        return monthlyData;
+    }
+
+    // ✅ FIXED: Get yearly trend (DERBY COMPATIBLE)
+    private List<Map<String, Object>> getYearlyTrend(int instructorId) throws SQLException {
+        List<Map<String, Object>> yearlyData = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+
+            String sql = "SELECT "
+                    + "YEAR(f.feedbackDate) as year_num, "
+                    + "AVG(f.overallRating) as avg_rating, "
+                    + "COUNT(DISTINCT f.feedbackID) as feedback_count, "
+                    + "COUNT(DISTINCT cc.classID) as total_classes "
+                    + "FROM feedback f "
+                    + "LEFT JOIN class_confirmation cc ON f.instructorID = cc.instructorID "
+                    + "AND YEAR(f.feedbackDate) = YEAR(cc.actionAt) "
+                    + "WHERE f.instructorID = ? "
+                    + "GROUP BY YEAR(f.feedbackDate) "
+                    + "ORDER BY YEAR(f.feedbackDate) DESC";
+
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, instructorId);
+            stmt.setMaxRows(5); // ✅ FIXED: Guna setMaxRows() instead of FETCH FIRST
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> yearData = new HashMap<>();
+                int yearNum = rs.getInt("year_num");
+
+                yearData.put("name", String.valueOf(yearNum));
+                yearData.put("rating", String.format("%.1f", rs.getDouble("avg_rating")));
+                yearData.put("totalClasses", rs.getInt("total_classes"));
+
+                yearlyData.add(yearData);
+            }
+
+            // If no data, create dummy data
+            if (yearlyData.isEmpty()) {
+                yearlyData = createDummyYearlyData();
+            }
+
+            stmt.close();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+
+        return yearlyData;
+    }
+
+    // Create dummy monthly data for testing
+    private List<Map<String, Object>> createDummyMonthlyData(String period) {
+        List<Map<String, Object>> dummyData = new ArrayList<>();
+        String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+        int monthsToShow = 6; // default
+        if ("3months".equals(period)) {
+            monthsToShow = 3;
+        } else if ("6months".equals(period)) {
+            monthsToShow = 6;
+        } else if ("1year".equals(period)) {
+            monthsToShow = 12;
+        }
+
+        int currentMonth = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH);
+        int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+
+        for (int i = 0; i < monthsToShow; i++) {
+            Map<String, Object> monthData = new HashMap<>();
+            int monthIndex = (currentMonth - i + 12) % 12;
+            int year = currentYear;
+            if (currentMonth - i < 0) {
+                year = currentYear - 1;
+            }
+
+            String monthYear = monthNames[monthIndex] + " " + year;
+            monthData.put("name", monthYear);
+            monthData.put("rating", "4.0");
+            monthData.put("totalClasses", "5");
+
+            dummyData.add(monthData);
+        }
+
+        // Reverse to chronological order
+        java.util.Collections.reverse(dummyData);
+
+        return dummyData;
+    }
+
+    // Create dummy yearly data for testing
+    private List<Map<String, Object>> createDummyYearlyData() {
+        List<Map<String, Object>> dummyData = new ArrayList<>();
+        int currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+
+        for (int i = 0; i < 3; i++) {
+            Map<String, Object> yearData = new HashMap<>();
+            int year = currentYear - i;
+
+            yearData.put("name", String.valueOf(year));
+            yearData.put("rating", "4.0");
+            yearData.put("totalClasses", "15");
+
+            dummyData.add(yearData);
+        }
+
+        return dummyData;
     }
 }
