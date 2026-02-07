@@ -2,7 +2,7 @@
 const menus = {
     instructor: [
         {label: 'Profile', href: '../general/profile.jsp'},
-        {label: 'Dashboard (My Schedule)', href: '../instructor/dashboard_instructor.jsp'},
+        {label: 'Dashboard', href: '../instructor/dashboard_instructor.jsp'},
         {label: 'Schedule (Class List)', href: '../instructor/schedule_instructor.jsp'},
         {label: 'Inbox Messages', href: '../instructor/inboxMessages_instructor.jsp', badge: 3},
         {label: 'Privacy Policy', href: '../general/privacy_policy.jsp'}
@@ -10,7 +10,7 @@ const menus = {
     admin: [
         {label: 'Profile', href: '../general/profile.jsp'},
         {label: 'Dashboard', href: '../admin/dashboard_admin.jsp'},
-        {label: 'Schedule (Class List)', href: '../admin/schedule_admin.jsp'},
+        {label: 'Class List', href: '../admin/schedule_admin.jsp'},
         {label: 'Monitor Instructor', href: '../admin/monitor_instructor.jsp'},
         {label: 'Review Registration', href: '../admin/review_registration.jsp'},
         {label: 'Inbox Messages', href: '../admin/inboxMessages_admin.jsp', badge: 12},

@@ -3,11 +3,9 @@
 <%
     // Check if user is instructor
     if (!SessionUtil.checkInstructorAccess(session)) {
-        // Always redirect to login with appropriate message
         if (!SessionUtil.isLoggedIn(session)) {
             response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
         } else {
-            // If logged in but not instructor
             response.sendRedirect("../general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
         }
         return;
@@ -24,8 +22,6 @@
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Icons -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-        <!-- Chart.js -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <!-- Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
 
@@ -46,30 +42,28 @@
                             cloud: '#FDF8F8',
                             whitePure: '#FFFFFF',
                             petal: '#EFE1E1',
-
                             /* Text */
                             espresso: '#3D3434',
                             successText: '#1E3A1E',
-
                             /* Blue Accents */
                             teal: '#6D9B9B',
                             tealSoft: '#A3C1D6',
                             tealHover: '#557878',
-
                             /* Alerts */
                             successBg: '#A5D6A7',
                             successTextDark: '#1B5E20',
-
                             warningBg: '#FFCC80',
                             warningText: '#E65100',
-
                             dangerBg: '#EF9A9A',
                             dangerText: '#B71C1C',
-
                             infoBg: '#A3C1D6',
                             infoText: '#2C5555',
-
-                            /* New Colors */
+                            /* Status Colors */
+                            activeBg: '#D4EDDA',
+                            activeText: '#155724',
+                            pendingReliefBg: '#D1ECF1',
+                            pendingReliefText: '#0C5460',
+                            /* Chart Colors */
                             chartBlue: '#4A90E2',
                             chartGreen: '#50C878',
                             chartOrange: '#FFA500',
@@ -84,159 +78,154 @@
             @media (max-width: 640px) {
                 .mobile-stack { flex-direction: column !important; }
                 .mobile-full { width: 100% !important; }
-                .mobile-text-center { text-align: center !important; }
-                .mobile-p-4 { padding: 1rem !important; }
                 .mobile-mb-4 { margin-bottom: 1rem !important; }
-            }
-
-            .card-hover {
-                transition: all 0.3s ease;
-            }
-            .card-hover:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 10px 25px rgba(179, 109, 109, 0.15);
-            }
-
-            .pulse {
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
-                70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
-            }
-
-            .gradient-bg {
-                background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
-            }
-
-            .calendar-day {
-                width: 2rem;
-                height: 2rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .calendar-day:hover {
-                background-color: #F2D1D1;
-            }
-
-            .calendar-day.has-class {
-                background-color: #B36D6D;
-                color: white;
-            }
-
-            .notification-badge {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                background: #B71C1C;
-                color: white;
-                border-radius: 50%;
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .qr-container {
-                position: relative;
-                display: inline-block;
-            }
-
-            .qr-placeholder {
-                width: 60px;
-                height: 60px;
-                background-color: #f0f0f0;
-                border: 2px dashed #B36D6D;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-            .qr-placeholder:hover {
-                background-color: #F2D1D1;
-                transform: scale(1.05);
+                .mobile-mb-2 { margin-bottom: 0.5rem !important; }
             }
 
             .qr-expanded {
-                position: absolute;
-                top: 70px;
-                left: 0;
-                z-index: 100;
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 1000;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-                padding: 15px;
+                border-radius: 16px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                padding: 30px;
                 display: none;
-                width: 200px;
+                width: 320px;
                 text-align: center;
+                border: 3px solid #F2D1D1;
             }
 
             .qr-expanded img {
-                width: 160px;
-                height: 160px;
-                margin-bottom: 10px;
+                width: 200px;
+                height: 200px;
+                margin: 0 auto 15px;
+                border-radius: 8px;
+                border: 1px solid #EFE1E1;
+                display: block;
             }
 
             .qr-expanded.show {
                 display: block;
+                animation: fadeInScale 0.3s ease-out;
             }
 
-            .main-container {
-                background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
-                border-radius: 20px;
-                border: 2px solid #F2D1D1;
-                box-shadow: 0 8px 30px rgba(179, 109, 109, 0.08);
-                overflow: hidden;
+            .qr-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+                display: none;
             }
 
-            .welcome-header {
-                background: linear-gradient(135deg, #F2D1D1 0%, #EFE1E1 100%);
-                padding: 2rem;
-                border-bottom: 2px solid #EFE1E1;
+            .qr-overlay.show {
+                display: block;
             }
 
-            .dashboard-grid {
-                padding: 2rem;
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 2rem;
+            @keyframes fadeInScale {
+                from {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
             }
 
-            .section-card {
-                background: white;
-                border-radius: 16px;
-                border: 1px solid #EFE1E1;
-                padding: 1.5rem;
-                transition: all 0.3s ease;
-            }
-
-            .section-card:hover {
-                box-shadow: 0 10px 25px rgba(179, 109, 109, 0.1);
-                border-color: #F2D1D1;
-            }
-
-            .section-title {
-                color: #3D3434;
-                font-weight: 600;
-                font-size: 1.25rem;
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.75rem;
-                border-bottom: 2px solid #F2D1D1;
+            .qr-close-btn {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                background: #EFE1E1;
+                border: none;
+                border-radius: 50%;
+                width: 30px;
+                height: 30px;
                 display: flex;
                 align-items: center;
-                gap: 0.5rem;
+                justify-content: center;
+                cursor: pointer;
+                color: #3D3434;
+                font-size: 16px;
+                transition: all 0.2s ease;
+                z-index: 1001;
+            }
+
+            .qr-close-btn:hover {
+                background: #F2D1D1;
+                color: #B36D6D;
+            }
+
+            .week-day-classes {
+                display: flex;
+                flex-direction: column;
+                gap: 0.375rem;
+            }
+
+            .week-class-item {
+                font-size: 0.75rem;
+                padding: 0.375rem;
+                border-radius: 6px;
+                border-left: 3px solid;
+                background: white;
+            }
+
+            .week-class-item.confirm {
+                border-left-color: #1B5E20;
+                background-color: #A5D6A7;
+            }
+
+            .week-class-item.pending {
+                border-left-color: #E65100;
+                background-color: #FFCC80;
+            }
+
+            .week-class-time {
+                font-size: 0.7rem;
+                color: rgba(61, 52, 52, 0.7);
+                margin-top: 0.125rem;
+            }
+
+            .week-class-title {
+                font-weight: 500;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #B36D6D;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .week-nav-btn {
+                transition: all 0.2s ease;
+            }
+
+            .week-nav-btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(179, 109, 109, 0.2);
+            }
+
+            .week-nav-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
         </style>
     </head>
@@ -245,13 +234,13 @@
 
         <jsp:include page="../util/header.jsp" />
 
-        <main class="p-4 md:p-6 flex-1 flex flex-col items-center">
+        <main class="py-6 px-4 md:px-8 flex-1 flex flex-col items-center">
+            <!-- MAIN CONTAINER -->
+            <div class="w-full bg-whitePure rounded-xl shadow-sm border border-blush flex-1 flex flex-col"
+                 style="max-width:1500px">
 
-            <!-- MAIN CONTAINER: Welcome Sarah Lim! -->
-            <div class="w-full main-container" style="max-width:1500px">
-
-                <!-- Welcome Header -->
-                <div class="welcome-header">
+                <!-- Welcome Header (Will be populated via JavaScript) -->
+                <div id="welcomeHeader" class="bg-gradient-to-br from-blush to-petal rounded-t-xl py-8 px-6 md:px-8 border-b border-petal">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mobile-stack">
                         <div class="mobile-full mobile-mb-4 md:mb-0">
                             <div class="flex items-center mb-3">
@@ -259,506 +248,583 @@
                                     <i class="fas fa-user text-dusty text-2xl"></i>
                                 </div>
                                 <div>
-                                    <h1 class="text-3xl font-bold text-espresso">
-                                        Welcome, <span class="text-dusty">Sarah Lim</span>!
+                                    <h1 id="welcomeMessage" class="text-3xl font-bold text-espresso">
+                                        Loading...
                                     </h1>
-                                    <p class="text-espresso/70 text-sm mt-1">
+                                    <p id="instructorInfo" class="text-espresso/70 text-sm mt-1">
                                         <i class="fas fa-certificate text-dusty mr-2"></i>
-                                        Certified Mat Pilates Instructor • Since 2022
+                                        <span id="statusPlaceholder">Loading...</span>
                                     </p>
                                     <div class="flex items-center mt-3 space-x-4">
-                                        <span class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
+                                        <span id="monthlyClasses" class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
                                             <i class="fas fa-calendar-check text-dusty mr-2"></i>
-                                            12 Classes This Month
+                                            Loading...
                                         </span>
-                                        <span class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
+                                        <span id="averageRating" class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
                                             <i class="fas fa-star text-yellow-500 mr-2"></i>
-                                            4.8 Avg Rating
+                                            Loading...
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Stats -->
-                        <div class="flex space-x-6 mobile-full mobile-justify-center">
-                            <div class="text-center bg-whitePure/90 p-4 rounded-xl shadow-sm min-w-[100px]">
-                                <div class="text-3xl font-bold text-dusty">3</div>
-                                <div class="text-sm text-espresso/70">Today</div>
-                                <div class="text-xs text-espresso/50 mt-1">Classes</div>
-                            </div>
-                            <div class="text-center bg-whitePure/90 p-4 rounded-xl shadow-sm min-w-[100px]">
-                                <div class="text-3xl font-bold text-teal">8</div>
-                                <div class="text-sm text-espresso/70">Available</div>
-                                <div class="text-xs text-espresso/50 mt-1">Classes</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Dashboard Content Grid - CHANGED TO SINGLE COLUMN -->
-                <div class="dashboard-grid">
-
+                <!-- Dashboard Content Grid -->
+                <div class="p-6 md:p-8 space-y-8 flex-1">
                     <!-- TODAY'S SCHEDULE -->
-                    <div class="section-card">
-                        <h2 class="section-title">
-                            <i class="fas fa-calendar-day text-dusty"></i>
+                    <div class="bg-white rounded-xl border border-petal p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <h2 class="text-xl font-bold text-espresso mb-2 flex items-center">
+                            <i class="fas fa-calendar-day text-dusty mr-3"></i>
                             Today's Schedule
                         </h2>
-                        <p class="text-sm text-espresso/60 mb-6">
-                            <span id="current-date"></span> • You have 3 classes today
+                        <p id="todayDate" class="text-sm text-espresso/60 mb-6">
+                            Loading date...
                         </p>
 
+                        <!-- Loading Spinner -->
+                        <div id="todayLoading" class="flex items-center justify-center py-8">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-espresso">Loading today's schedule...</span>
+                        </div>
+
                         <!-- Today's Classes Timeline -->
-                        <div class="space-y-4">
-                            <!-- Morning Class -->
-                            <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
-                                <div class="w-20 text-center">
-                                    <div class="text-lg font-bold text-dusty">9:00 AM</div>
-                                    <div class="text-xs text-espresso/60">60 mins</div>
-                                </div>
-                                <div class="flex-1 ml-6">
-                                    <div class="flex justify-between items-start mobile-stack">
-                                        <div class="mobile-full mobile-mb-2 md:mb-0">
-                                            <h3 class="font-semibold text-espresso text-lg">Mat Pilates Beginner</h3>
-                                            <p class="text-sm text-espresso/70">
-                                                <i class="fas fa-map-marker-alt mr-2 text-dusty"></i>
-                                                Studio A • <span class="font-medium">12 students enrolled</span>
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <!-- QR Code Placeholder -->
-                                            <div class="qr-container">
-                                                <div class="qr-placeholder" onclick="toggleQR('qr1')">
-                                                    <i class="fas fa-qrcode text-dusty text-xl"></i>
-                                                </div>
-                                                <div class="qr-expanded" id="qr1">
-                                                    <img src="qr_codes/dummy.PNG" alt="QR Code for Mat Pilates Beginner">
-                                                    <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
-                                                        <i class="fas fa-chart-bar mr-2"></i>View Feedback
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 flex items-center text-sm text-espresso/60">
-                                        <span class="mr-4">
-                                            <i class="fas fa-user mr-1"></i>Sarah Lim (You)
-                                        </span>
-                                        <span>
-                                            <i class="fas fa-chart-bar mr-1"></i>Avg. Rating: 4.8/5
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div id="todayClassesContainer" class="space-y-4 hidden">
+                            <!-- Classes will be loaded here via JavaScript -->
+                        </div>
 
-                            <!-- Afternoon Class -->
-                            <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
-                                <div class="w-20 text-center">
-                                    <div class="text-lg font-bold text-dusty">2:00 PM</div>
-                                    <div class="text-xs text-espresso/60">60 mins</div>
-                                </div>
-                                <div class="flex-1 ml-6">
-                                    <div class="flex justify-between items-start mobile-stack">
-                                        <div class="mobile-full mobile-mb-2 md:mb-0">
-                                            <h3 class="font-semibold text-espresso text-lg">Reformer Intermediate</h3>
-                                            <p class="text-sm text-espresso/70">
-                                                <i class="fas fa-map-marker-alt mr-2 text-dusty"></i>
-                                                Studio B • <span class="font-medium">8 students enrolled</span>
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <!-- QR Code Placeholder -->
-                                            <div class="qr-container">
-                                                <div class="qr-placeholder" onclick="toggleQR('qr2')">
-                                                    <i class="fas fa-qrcode text-dusty text-xl"></i>
-                                                </div>
-                                                <div class="qr-expanded" id="qr2">
-                                                    <img src="qr_codes/dummy.PNG" alt="QR Code for Reformer Intermediate">
-                                                    <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
-                                                        <i class="fas fa-chart-bar mr-2"></i>View Feedback
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Evening Class -->
-                            <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
-                                <div class="w-20 text-center">
-                                    <div class="text-lg font-bold text-dusty">6:00 PM</div>
-                                    <div class="text-xs text-espresso/60">60 mins</div>
-                                </div>
-                                <div class="flex-1 ml-6">
-                                    <div class="flex justify-between items-start mobile-stack">
-                                        <div class="mobile-full mobile-mb-2 md:mb-0">
-                                            <h3 class="font-semibold text-espresso text-lg">Advanced Pilates</h3>
-                                            <p class="text-sm text-espresso/70">
-                                                <i class="fas fa-map-marker-alt mr-2 text-dusty"></i>
-                                                Studio A • <span class="font-medium">10 students enrolled</span>
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center space-x-3">
-                                            <!-- QR Code Placeholder -->
-                                            <div class="qr-container">
-                                                <div class="qr-placeholder" onclick="toggleQR('qr3')">
-                                                    <i class="fas fa-qrcode text-dusty text-xl"></i>
-                                                </div>
-                                                <div class="qr-expanded" id="qr3">
-                                                    <img src="qr_codes/dummy.PNG" alt="QR Code for Advanced Pilates">
-                                                    <button onclick="location.href = 'feedback.jsp'" 
-                                                            class="mt-3 w-full bg-dusty text-whitePure py-2 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
-                                                        <i class="fas fa-chart-bar mr-2"></i>View Feedback
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- No Classes Message -->
+                        <div id="noClassesToday" class="hidden text-center py-8 text-espresso/60">
+                            <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                            <p>No classes scheduled for today</p>
                         </div>
                     </div>
 
-                    <!-- WEEK AT A GLANCE - NOW BELOW TODAY'S SCHEDULE -->
-                    <div class="section-card">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="section-title">
-                                <i class="fas fa-calendar text-dusty"></i>
-                                Week at a Glance
+                    <!-- WEEK OVERVIEW -->
+                    <div class="bg-white rounded-xl border border-petal p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+                            <h2 class="text-xl font-bold text-espresso flex items-center">
+                                <i class="fas fa-calendar text-dusty mr-3"></i>
+                                Week Overview
                             </h2>
-                            <span class="text-sm text-espresso/60">Nov 2024</span>
-                        </div>
 
-                        <!-- Calendar Header -->
-                        <div class="grid grid-cols-7 gap-1 mb-3">
-                            <div class="text-center text-xs font-medium text-espresso/60">Sun</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Mon</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Tue</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Wed</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Thu</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Fri</div>
-                            <div class="text-center text-xs font-medium text-espresso/60">Sat</div>
-                        </div>
+                            <!-- Week Navigation Controls -->
+                            <div class="flex items-center gap-3 w-full md:w-auto">
+                                <button id="prevWeekBtn" onclick="navigateWeek(-1)" 
+                                        class="week-nav-btn flex items-center gap-2 px-4 py-2 bg-dusty text-white rounded-lg hover:bg-dustyHover transition-colors">
+                                    <i class="fas fa-chevron-left"></i>
+                                    <span class="hidden sm:inline">Previous</span>
+                                </button>
 
-                        <!-- Calendar Days -->
-                        <div class="grid grid-cols-7 gap-1 mb-6" id="mini-calendar">
-                            <!-- Calendar days will be populated by JavaScript -->
-                        </div>
+                                <div class="flex-1 md:flex-none text-center">
+                                    <span id="currentWeekRange" class="text-sm font-medium text-espresso whitespace-nowrap">
+                                        Loading...
+                                    </span>
+                                </div>
 
-                        <!-- Class Status Legend -->
-                        <div class="mt-6 pt-6 border-t border-petal">
-                            <h4 class="font-medium text-espresso mb-3">Class Status</h4>
-                            <div class="space-y-2">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-dusty mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Your Class</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">3 classes</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-teal mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Available for Relief</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">2 classes</span>
-                                </div>
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center">
-                                        <div class="w-3 h-3 rounded-full bg-successTextDark mr-2"></div>
-                                        <span class="text-sm text-espresso/70">Completed Relief</span>
-                                    </div>
-                                    <span class="text-xs text-espresso/60">2 classes</span>
-                                </div>
+                                <button id="nextWeekBtn" onclick="navigateWeek(1)" 
+                                        class="week-nav-btn flex items-center gap-2 px-4 py-2 bg-dusty text-white rounded-lg hover:bg-dustyHover transition-colors">
+                                    <span class="hidden sm:inline">Next</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+
+                                <button id="todayWeekBtn" onclick="goToCurrentWeek()" 
+                                        class="week-nav-btn px-4 py-2 bg-teal text-white rounded-lg hover:bg-tealHover transition-colors whitespace-nowrap">
+                                    <i class="fas fa-calendar-day mr-1"></i>
+                                    <span class="hidden sm:inline">This Week</span>
+                                    <span class="sm:hidden">Today</span>
+                                </button>
                             </div>
                         </div>
 
-                        <!-- Quick Stats -->
-                        <div class="mt-6 pt-6 border-t border-petal">
-                            <h4 class="font-medium text-espresso mb-3">This Week</h4>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="text-center p-3 rounded-lg bg-blush/20">
-                                    <div class="text-lg font-bold text-dusty">5</div>
-                                    <div class="text-xs text-espresso/70">Total Classes</div>
-                                </div>
-                                <div class="text-center p-3 rounded-lg bg-successBg/20">
-                                    <div class="text-lg font-bold text-successTextDark">2</div>
-                                    <div class="text-xs text-espresso/70">Relieved</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2-Column Grid for Relief Updates & Available Classes -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        <!-- RELIEF CLASS UPDATES -->
-                        <div class="section-card">
-                            <div class="flex items-center justify-between mb-6">
-                                <h2 class="section-title">
-                                    <i class="fas fa-exchange-alt text-infoText"></i>
-                                    Relief Class Updates
-                                </h2>
-                                <a href="pending.jsp" class="text-dusty text-sm font-medium hover:text-dustyHover">
-                                    History →
-                                </a>
-                            </div>
-
-                            <div class="space-y-4">
-                                <!-- Successfully Relieved Class -->
-                                <div class="p-4 rounded-lg border border-successBg/50 bg-successBg/10">
-                                    <div class="flex items-center mb-3">
-                                        <div class="w-10 h-10 rounded-full bg-successBg flex items-center justify-center mr-3">
-                                            <i class="fas fa-check-circle text-successTextDark"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-semibold text-espresso">Successfully Relieved</h4>
-                                            <p class="text-xs text-espresso/70">You took over a class</p>
-                                        </div>
-                                    </div>
-                                    <div class="space-y-3">
-                                        <div class="p-3 rounded-lg bg-whitePure/50 border border-successBg/30">
-                                            <div class="flex items-center justify-between mb-1">
-                                                <span class="font-medium text-espresso">Evening Flow Class</span>
-                                                <span class="text-xs bg-successBg text-successTextDark px-2 py-1 rounded">COMPLETED</span>
-                                            </div>
-                                            <p class="text-sm text-espresso/70">
-                                                <i class="fas fa-calendar-alt mr-2"></i>
-                                                Thursday, Nov 14 • 7:00 PM • Studio C
-                                            </p>
-                                            <div class="flex items-center justify-between mt-2 text-xs">
-                                                <span class="text-espresso/60">
-                                                    <i class="fas fa-user-friends mr-1"></i>
-                                                    9 students attended
-                                                </span>
-                                                <span class="text-successTextDark font-medium">
-                                                    <i class="fas fa-star mr-1"></i>
-                                                    4.5/5 rating
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="p-3 rounded-lg bg-whitePure/50 border border-successBg/30">
-                                            <div class="flex items-center justify-between mb-1">
-                                                <span class="font-medium text-espresso">Weekend Reformer</span>
-                                                <span class="text-xs bg-successBg text-successTextDark px-2 py-1 rounded">COMPLETED</span>
-                                            </div>
-                                            <p class="text-sm text-espresso/70">
-                                                <i class="fas fa-calendar-alt mr-2"></i>
-                                                Saturday, Nov 9 • 9:00 AM • Studio B
-                                            </p>
-                                            <div class="flex items-center justify-between mt-2 text-xs">
-                                                <span class="text-espresso/60">
-                                                    <i class="fas fa-user-friends mr-1"></i>
-                                                    7 students attended
-                                                </span>
-                                                <span class="text-successTextDark font-medium">
-                                                    <i class="fas fa-star mr-1"></i>
-                                                    4.8/5 rating
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-4 pt-3 border-t border-successBg/30">
-                                        <p class="text-xs text-espresso/60 text-center">
-                                            <i class="fas fa-info-circle mr-1"></i>
-                                            You successfully relieved 2 classes this month
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- Upcoming Relief Opportunities -->
-                                <div class="p-4 rounded-lg border border-infoBg/50 bg-infoBg/10">
-                                    <div class="flex items-center mb-3">
-                                        <div class="w-10 h-10 rounded-full bg-infoBg flex items-center justify-center mr-3">
-                                            <i class="fas fa-clock text-infoText"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-semibold text-espresso">Available for Relief</h4>
-                                            <p class="text-xs text-espresso/70">Position in queue</p>
-                                        </div>
-                                    </div>
-                                    <p class="text-sm text-espresso/80 mb-2">
-                                        <i class="fas fa-list-ol text-infoText mr-2"></i>
-                                        "Morning Flow" - Position #3
-                                    </p>
-                                    <div class="flex items-center text-xs text-espresso/60 mb-3">
-                                        <i class="fas fa-info-circle mr-1"></i>
-                                        You will be notified if position #1 becomes available
-                                    </div>
-                                    <div class="bg-whitePure/50 p-3 rounded-lg border border-infoBg/30">
-                                        <p class="text-xs text-espresso/70 mb-1">Next in line:</p>
-                                        <div class="flex items-center justify-between">
-                                            <span class="text-sm font-medium text-espresso">Michael Chen</span>
-                                            <span class="text-xs bg-infoBg text-infoText px-2 py-1 rounded">POSITION #1</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <!-- Loading Spinner -->
+                        <div id="weekLoading" class="flex items-center justify-center py-8">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-espresso">Loading weekly calendar...</span>
                         </div>
 
-                        <!-- AVAILABLE CLASSES -->
-                        <div class="section-card">
-                            <div class="flex items-center justify-between mb-6">
-                                <h2 class="section-title">
-                                    <i class="fas fa-search text-teal"></i>
-                                    Available Classes
-                                </h2>
-                                <a href="schedule_instructor.jsp" class="text-teal text-sm font-medium hover:text-tealHover">
-                                    Browse All →
-                                </a>
-                            </div>
+                        <!-- Weekly Calendar Grid -->
+                        <div id="weekCalendarContainer" class="mb-8 hidden">
+                            <!-- Calendar will be loaded here via JavaScript -->
+                        </div>
 
-                            <div class="space-y-4">
-                                <!-- New Class -->
-                                <div class="p-4 rounded-lg border border-infoBg/30 bg-infoBg/5">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-semibold text-espresso">Weekend Reformer</h4>
-                                        <span class="text-xs bg-infoBg text-infoText px-2 py-1 rounded">NEW</span>
-                                    </div>
-                                    <p class="text-sm text-espresso/70 mb-3">
-                                        <i class="fas fa-calendar-alt mr-2"></i>
-                                        Saturday, Nov 16 • 9:00 AM • Studio B
-                                    </p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs text-espresso/60">
-                                            <i class="fas fa-user-friends mr-1"></i>
-                                            6/8 spots filled
-                                        </span>
-                                        <span class="text-xs text-espresso/60">Available</span>
+                        <div id="weekSummaryContainer" class="w-full pt-6 border-t border-petal hidden">
+                            <h4 class="font-medium text-espresso mb-4">This Week Summary</h4>
+
+                            <!-- Use SAME 7-column grid as calendar -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 w-full">
+
+                                <!-- Total Confirm Class (span 4/7) -->
+                                <div class="md:col-span-4 col-span-2 sm:col-span-2">
+                                    <div id="confirmedClassesCard" class="text-center p-6 rounded-lg bg-successBg/20 border border-successBg/30 w-full h-full">
+                                        <div class="text-2xl font-bold text-successTextDark">0</div>
+                                        <div class="text-sm text-espresso/70 mt-1">Total Confirm Class</div>
                                     </div>
                                 </div>
 
-                                <!-- Available Class -->
-                                <div class="p-4 rounded-lg border border-blush/30">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="font-semibold text-espresso">Morning Flow</h4>
-                                        <span class="text-xs bg-blush text-dusty px-2 py-1 rounded">OPEN</span>
-                                    </div>
-                                    <p class="text-sm text-espresso/70 mb-3">
-                                        <i class="fas fa-calendar-alt mr-2"></i>
-                                        Monday, Nov 18 • 8:00 AM • Studio A
-                                    </p>
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-xs text-espresso/60">
-                                            <i class="fas fa-user-friends mr-1"></i>
-                                            4/10 spots filled
-                                        </span>
-                                        <span class="text-xs text-espresso/60">Available</span>
+                                <!-- Pending Relief (span 3/7) -->
+                                <div class="md:col-span-3 col-span-2 sm:col-span-1">
+                                    <div id="pendingClassesCard" class="text-center p-6 rounded-lg bg-warningBg/20 border border-warningBg/30 w-full h-full">
+                                        <div class="text-2xl font-bold text-warningText">0</div>
+                                        <div class="text-sm text-espresso/70 mt-1">Pending Relief</div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div class="mt-6 pt-4 border-t border-petal">
-                                <a href="schedule_instructor.jsp" class="text-dusty font-medium text-sm hover:text-dustyHover flex items-center justify-center">
-                                    <i class="fas fa-plus-circle mr-2"></i>
-                                    View All 8 Available Classes
-                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </main>
+
+        <!-- QR Code Modal (Dynamically created) -->
+        <div id="qrModalContainer"></div>
 
         <jsp:include page="../util/footer.jsp" />
         <jsp:include page="../util/sidebar.jsp" />
         <script src="../util/sidebar.js"></script>
 
         <script>
-                                                        // Initialize when page loads
-                                                        document.addEventListener('DOMContentLoaded', function () {
-                                                            // Set current date
-                                                            const now = new Date();
-                                                            const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
-                                                            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+                                    // Global variables for week navigation
+                                    let currentWeekStart = null;
+                                    let currentWeekEnd = null;
 
-                                                            // Initialize mini calendar
-                                                            initializeMiniCalendar();
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        // Initialize dashboard
+                                        loadDashboardData();
+                                    });
 
-                                                            // Close QR when clicking outside
-                                                            document.addEventListener('click', function (event) {
-                                                                const qrExpanded = document.querySelectorAll('.qr-expanded.show');
-                                                                qrExpanded.forEach(qr => {
-                                                                    if (!qr.contains(event.target) && !event.target.closest('.qr-placeholder')) {
-                                                                        qr.classList.remove('show');
-                                                                    }
-                                                                });
-                                                            });
-                                                        });
+                                    async function loadDashboardData() {
+                                        try {
+                                            // Show loading states
+                                            document.getElementById('todayLoading').classList.remove('hidden');
+                                            document.getElementById('weekLoading').classList.remove('hidden');
 
-                                                        function initializeMiniCalendar() {
-                                                            const calendarEl = document.getElementById('mini-calendar');
-                                                            const now = new Date();
-                                                            const currentMonth = now.getMonth();
-                                                            const currentYear = now.getFullYear();
-                                                            const currentDay = now.getDate();
+                                            // Load instructor data
+                                            await loadInstructorInfo();
 
-                                                            // Get first day of month
-                                                            const firstDay = new Date(currentYear, currentMonth, 1);
-                                                            const startingDay = firstDay.getDay(); // 0 = Sunday
+                                            // Load today's schedule
+                                            await loadTodaySchedule();
 
-                                                            // Get days in month
-                                                            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                                            // Load weekly overview (current week by default)
+                                            await loadWeekOverview();
 
-                                                            // Days with classes (simulated data)
-                                                            const classDays = [12, 15, 18, 20, 22]; // Regular classes
-                                                            const reliefAvailableDays = [16, 19]; // Available for relief
-                                                            const completedReliefDays = [9, 14]; // Completed relief classes
+                                        } catch (error) {
+                                            console.error('Error loading dashboard:', error);
+                                            alert('Failed to load dashboard data. Please refresh the page.');
+                                        }
+                                    }
 
-                                                            let calendarHTML = '';
+                                    async function loadInstructorInfo() {
+                                        try {
+                                            const response = await fetch('../DashboardInstructorServlet?action=getInstructorInfo');
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
 
-                                                            // Empty cells for days before month starts
-                                                            for (let i = 0; i < startingDay; i++) {
-                                                                calendarHTML += '<div class="calendar-day"></div>';
-                                                            }
+                                            const data = await response.json();
 
-                                                            // Days of the month
-                                                            for (let day = 1; day <= daysInMonth; day++) {
-                                                                let dayClass = 'calendar-day';
-                                                                let dayContent = day;
+                                            if (data.success) {
+                                                const instructor = data.data.instructor;
+                                                const stats = data.data.stats;
 
-                                                                // Highlight today
-                                                                if (day === currentDay) {
-                                                                    dayClass += ' bg-dusty text-whitePure';
-                                                                }
-                                                                // Mark days with regular classes
-                                                                else if (classDays.includes(day)) {
-                                                                    dayClass += ' has-class';
-                                                                }
-                                                                // Mark days available for relief
-                                                                else if (reliefAvailableDays.includes(day)) {
-                                                                    dayClass += ' border-2 border-teal';
-                                                                }
-                                                                // Mark completed relief days
-                                                                else if (completedReliefDays.includes(day)) {
-                                                                    dayClass += ' border-2 border-successTextDark';
-                                                                }
+                                                const welcomeMessage = 'Welcome, <span class="text-dusty">' + instructor.name + '</span>!';
+                                                document.getElementById('welcomeMessage').innerHTML = welcomeMessage;
 
-                                                                calendarHTML += `<div class="${dayClass}" title="${day} Nov ${currentYear}">${dayContent}</div>`;
-                                                            }
+                                                const statusText = (instructor.status === 'active') ? 'Active' : 'Inactive';
+                                                const instructorInfoText = statusText + ' • Since ' + instructor.joinedYear;
+                                                document.getElementById('statusPlaceholder').innerHTML = instructorInfoText;
 
-                                                            calendarEl.innerHTML = calendarHTML;
-                                                        }
+                                                // Store instructor ID globally for QR modal
+                                                window.currentInstructorId = instructor.instructorID;
 
-                                                        function toggleQR(qrId) {
-                                                            const qrElement = document.getElementById(qrId);
+                                                // Update monthly classes
+                                                document.getElementById('monthlyClasses').innerHTML =
+                                                        '<i class="fas fa-calendar-check text-dusty mr-2"></i>' + stats.monthlyClassCount + ' Classes This Month';
 
-                                                            // Close all other QR codes
-                                                            document.querySelectorAll('.qr-expanded.show').forEach(qr => {
-                                                                if (qr.id !== qrId) {
-                                                                    qr.classList.remove('show');
-                                                                }
-                                                            });
+                                                // Update average rating
+                                                document.getElementById('averageRating').innerHTML =
+                                                        '<i class="fas fa-star text-yellow-500 mr-2"></i>' + stats.overallRating.toFixed(1) + ' Avg Rating';
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading instructor info:', error);
+                                            document.getElementById('welcomeMessage').textContent = 'Error loading data';
+                                        }
+                                    }
 
-                                                            // Toggle current QR code
-                                                            qrElement.classList.toggle('show');
-                                                        }
+                                    async function loadTodaySchedule() {
+                                        try {
+                                            const response = await fetch('../DashboardInstructorServlet?action=getTodaySchedule');
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
+
+                                            const data = await response.json();
+
+                                            if (data.success) {
+                                                // Hide loading
+                                                document.getElementById('todayLoading').classList.add('hidden');
+
+                                                const todayData = data.data;
+
+                                                // Update date
+                                                document.getElementById('todayDate').textContent =
+                                                        todayData.formattedDate + ' • You have ' + todayData.todayClassesCount + ' classes today';
+
+                                                if (todayData.todayClasses.length === 0) {
+                                                    // Show no classes message
+                                                    document.getElementById('noClassesToday').classList.remove('hidden');
+                                                    document.getElementById('todayClassesContainer').classList.add('hidden');
+                                                } else {
+                                                    // Show classes container
+                                                    document.getElementById('noClassesToday').classList.add('hidden');
+                                                    document.getElementById('todayClassesContainer').classList.remove('hidden');
+
+                                                    // Render today's classes
+                                                    renderTodayClasses(todayData.todayClasses);
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading today schedule:', error);
+                                            document.getElementById('todayLoading').innerHTML =
+                                                    '<span class="text-dangerText">Error loading schedule</span>';
+                                        }
+                                    }
+
+                                    function renderTodayClasses(classes) {
+                                        const container = document.getElementById('todayClassesContainer');
+                                        container.innerHTML = '';
+
+                                        classes.forEach((classData, index) => {
+                                            const qrPath = classData.qrcodeFilePath || '../qr_codes/dummy.png';
+                                            const statusClass = (classData.status === 'confirmed') ? 'text-successTextDark' : 'text-warningText';
+                                            const statusText = (classData.status === 'confirmed') ? 'Confirmed' : 'Pending Relief';
+
+                                            // Format time
+                                            const startTime = new Date('1970-01-01T' + classData.classStartTime);
+                                            const endTime = new Date('1970-01-01T' + classData.classEndTime);
+                                            const startTimeStr = startTime.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+
+                                            // Calculate duration
+                                            const durationMs = endTime - startTime;
+                                            const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                                            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                                            const duration = hours > 0 ? hours + ' hrs ' + minutes + ' mins' : minutes + ' mins';
+
+                                            const classHTML =
+                                                    '<div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30 hover:border-dusty/30 transition-colors duration-200">' +
+                                                    '<div class="w-20 text-center flex-shrink-0">' +
+                                                    '<div class="text-lg font-bold text-dusty">' +
+                                                    startTimeStr +
+                                                    '</div>' +
+                                                    '<div class="text-xs text-espresso/60">' +
+                                                    duration +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '<div class="flex-1 ml-6">' +
+                                                    '<div class="flex justify-between items-start mobile-stack">' +
+                                                    '<div class="mobile-full mobile-mb-2 md:mb-0">' +
+                                                    '<h3 class="font-semibold text-espresso text-lg">' + escapeHtml(classData.className) + '</h3>' +
+                                                    '<p class="text-sm text-espresso/70 mt-1">' +
+                                                    '<i class="fas fa-map-marker-alt mr-2 text-dusty"></i>' +
+                                                    escapeHtml(classData.location) + ' • ' +
+                                                    '<span class="font-medium ' + statusClass + '">' +
+                                                    statusText +
+                                                    '</span>' +
+                                                    '</p>' +
+                                                    '</div>' +
+                                                    '<div class="flex items-center space-x-3 flex-shrink-0">' +
+                                                    '<div class="relative">' +
+                                                    '<div class="w-14 h-14 bg-gray-50 border-2 border-dashed border-dusty rounded-lg flex items-center justify-center cursor-pointer hover:bg-blush transition-colors duration-200"' +
+                                                    ' onclick="showQRModal(\'' + escapeHtml(qrPath) + '\', \'' +
+                                                    escapeHtml(classData.className) + '\', \'' +
+                                                    escapeHtml(startTimeStr) + '\', \'' +
+                                                    escapeHtml(classData.location) + '\', ' +
+                                                    classData.classID + ')">' +
+                                                    '<i class="fas fa-qrcode text-dusty text-xl"></i>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '<div class="mt-3 flex items-center text-sm text-espresso/60">' +
+                                                    '<span class="mr-4">' +
+                                                    '<i class="fas fa-user mr-1"></i>' + escapeHtml(classData.instructorName) +
+                                                    '</span>' +
+                                                    '<span>' +
+                                                    '<i class="fas fa-chart-bar mr-1"></i>Avg. Rating: ' +
+                                                    (classData.averageRating ? classData.averageRating.toFixed(1) : 'N/A') + '/5' +
+                                                    '</span>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>';
+
+                                            container.innerHTML += classHTML;
+                                        });
+                                    }
+
+                                    async function loadWeekOverview(weekStart = null, weekEnd = null) {
+                                        try {
+                                            // Show loading
+                                            document.getElementById('weekLoading').classList.remove('hidden');
+                                            document.getElementById('weekCalendarContainer').classList.add('hidden');
+                                            document.getElementById('weekSummaryContainer').classList.add('hidden');
+
+                                            let url = '../DashboardInstructorServlet?action=getWeekOverview';
+
+                                            // Add week parameters if provided
+                                            if (weekStart && weekEnd) {
+                                                url += '&weekStart=' + weekStart + '&weekEnd=' + weekEnd;
+                                            }
+
+                                            const response = await fetch(url);
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
+
+                                            const data = await response.json();
+
+                                            if (data.success) {
+                                                // Hide loading
+                                                document.getElementById('weekLoading').classList.add('hidden');
+
+                                                const weekData = data.data;
+
+                                                // Store current week dates
+                                                currentWeekStart = weekData.weekStart;
+                                                currentWeekEnd = weekData.weekEnd;
+
+                                                // Update week range
+                                                document.getElementById('currentWeekRange').textContent = weekData.weekRange;
+
+                                                // Show containers
+                                                document.getElementById('weekCalendarContainer').classList.remove('hidden');
+                                                document.getElementById('weekSummaryContainer').classList.remove('hidden');
+
+                                                // Render calendar
+                                                renderWeekCalendar(weekData.weeklyCalendar, weekData.weekStart, weekData.weekEnd);
+
+                                                // Update summary cards
+                                                document.querySelector('#confirmedClassesCard .text-2xl').textContent =
+                                                        weekData.weeklyStats.confirmed || 0;
+                                                document.querySelector('#pendingClassesCard .text-2xl').textContent =
+                                                        weekData.weeklyStats.pending || 0;
+
+                                                // Update button states
+                                                updateWeekNavigationButtons();
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading week overview:', error);
+                                            document.getElementById('weekLoading').innerHTML =
+                                                    '<span class="text-dangerText">Error loading weekly data</span>';
+                                    }
+                                    }
+
+                                    function navigateWeek(offset) {
+                                        if (!currentWeekStart || !currentWeekEnd) {
+                                            console.error('Current week dates not set');
+                                            return;
+                                        }
+
+                                        // Parse current week dates
+                                        const startDate = new Date(currentWeekStart);
+                                        const endDate = new Date(currentWeekEnd);
+
+                                        // Calculate new week (offset in weeks)
+                                        const daysToAdd = offset * 7;
+                                        startDate.setDate(startDate.getDate() + daysToAdd);
+                                        endDate.setDate(endDate.getDate() + daysToAdd);
+
+                                        // Format dates as YYYY-MM-DD
+                                        const newWeekStart = formatDateToString(startDate);
+                                        const newWeekEnd = formatDateToString(endDate);
+
+                                        // Load new week
+                                        loadWeekOverview(newWeekStart, newWeekEnd);
+                                    }
+
+                                    function goToCurrentWeek() {
+                                        // Load current week (no parameters = current week)
+                                        loadWeekOverview();
+                                    }
+
+                                    function updateWeekNavigationButtons() {
+                                        // Check if we're viewing the current week
+                                        const today = new Date();
+                                        const currentStart = new Date(currentWeekStart);
+                                        const currentEnd = new Date(currentWeekEnd);
+
+                                        // Normalize dates to compare (remove time component)
+                                        today.setHours(0, 0, 0, 0);
+                                        currentStart.setHours(0, 0, 0, 0);
+                                        currentEnd.setHours(0, 0, 0, 0);
+
+                                        const isCurrentWeek = today >= currentStart && today <= currentEnd;
+
+                                        // Disable/enable "This Week" button
+                                        const todayBtn = document.getElementById('todayWeekBtn');
+                                        if (isCurrentWeek) {
+                                            todayBtn.disabled = true;
+                                            todayBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                        } else {
+                                            todayBtn.disabled = false;
+                                            todayBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                        }
+                                    }
+
+                                    function formatDateToString(date) {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        return year + '-' + month + '-' + day;
+                                    }
+
+                                    function renderWeekCalendar(weeklyCalendar, weekStart, weekEnd) {
+                                        const container = document.getElementById('weekCalendarContainer');
+                                        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+                                        let calendarHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3">';
+
+                                        // Parse week start and end dates
+                                        const startDate = new Date(weekStart);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+
+                                        // Generate 7 days
+                                        for (let i = 0; i < 7; i++) {
+                                            const currentDate = new Date(startDate);
+                                            currentDate.setDate(startDate.getDate() + i);
+
+                                            // Use getDay() to get day index (0=Sunday, 1=Monday, etc.)
+                                            const dayIndex = currentDate.getDay();
+                                            const dayName = dayNames[dayIndex];
+                                            const dayKey = dayName + '_' + currentDate.getDate();
+
+                                            const dayClasses = weeklyCalendar[dayKey] || [];
+                                            const isToday = currentDate.toDateString() === today.toDateString();
+
+                                            const monthName = currentDate.toLocaleString('default', {month: 'short'});
+                                            const dayNumber = currentDate.getDate();
+
+                                            let classesHTML = '';
+                                            if (dayClasses.length === 0) {
+                                                classesHTML =
+                                                        '<div class="text-center text-espresso/40 text-xs py-4">' +
+                                                        'No classes' +
+                                                        '</div>';
+                                            } else {
+                                                dayClasses.forEach(classData => {
+                                                    const time = new Date('1970-01-01T' + classData.classStartTime);
+                                                    const timeStr = time.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+                                                    const statusClass = (classData.status === 'confirmed') ? 'confirm' : 'pending';
+
+                                                    classesHTML +=
+                                                            '<div class="week-class-item ' + statusClass + '">' +
+                                                            '<div class="week-class-title">' + escapeHtml(classData.className) + '</div>' +
+                                                            '<div class="week-class-time">' + timeStr + '</div>' +
+                                                            '</div>';
+                                                });
+                                            }
+
+                                            calendarHTML +=
+                                                    '<div class="bg-cloud border border-petal rounded-lg p-4 min-h-[140px] hover:border-dusty/30 transition-colors cursor-pointer ' +
+                                                    (isToday ? 'bg-gradient-to-br from-blush to-petal/50 border-dusty' : '') + '"' +
+                                                    ' onclick="showDayClasses(\'' + dayName + '\', ' + dayNumber + ', ' + dayClasses.length + ')">' +
+                                                    '<div class="flex justify-between items-center mb-3 pb-2 border-b border-petal">' +
+                                                    '<span class="font-semibold text-espresso ' + (isToday ? 'text-dusty' : '') + '">' +
+                                                    dayName +
+                                                    '</span>' +
+                                                    '<span class="text-sm ' + (isToday ? 'bg-dusty text-white' : 'bg-gray-100 text-espresso/70') + ' px-2 py-1 rounded">' +
+                                                    monthName + ' ' + dayNumber +
+                                                    '</span>' +
+                                                    '</div>' +
+                                                    '<div class="week-day-classes">' +
+                                                    classesHTML +
+                                                    '</div>' +
+                                                    '</div>';
+                                        }
+
+                                        calendarHTML += '</div>';
+                                        container.innerHTML = calendarHTML;
+                                    }
+
+                                    function showQRModal(qrPath, className, time, location, classId) {
+                                        console.log("QR Modal called:", {qrPath, className, classId});
+
+                                        const instructorId = window.currentInstructorId || '';
+
+                                        // Clear existing modal first
+                                        closeQRModal();
+
+                                        // Create overlay
+                                        const overlay = document.createElement('div');
+                                        overlay.className = 'qr-overlay show';
+                                        overlay.id = 'qrOverlay';
+                                        overlay.onclick = closeQRModal;
+
+                                        // Create modal content
+                                        const modalContent = document.createElement('div');
+                                        modalContent.className = 'qr-expanded show';
+                                        modalContent.id = 'qrModalContent';
+
+                                        // Modal content HTML
+                                        modalContent.innerHTML =
+                                                '<button class="qr-close-btn" onclick="closeQRModal()">' +
+                                                '<i class="fas fa-times"></i>' +
+                                                '</button>' +
+                                                '<h4 class="font-semibold text-espresso mb-3">' + escapeHtml(className) + '</h4>' +
+                                                '<p class="text-sm text-espresso/70 mb-6">' +
+                                                escapeHtml(time) + ' • ' + escapeHtml(location) +
+                                                '</p>' +
+                                                '<img src="' + escapeHtml(qrPath) + '" alt="QR Code for ' + escapeHtml(className) + '" ' +
+                                                'onerror="this.src=\'../qr_codes/dummy.png\'">';
+
+                                        // Add feedback button if we have instructorId
+                                        if (instructorId) {
+                                            const feedbackBtn = document.createElement('button');
+                                            feedbackBtn.className = 'mt-6 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium';
+                                            feedbackBtn.onclick = function () {
+                                                window.location.href = '../instructor/feedback.jsp?classID=' + classId + '&instructorID=' + instructorId;
+                                            };
+                                            feedbackBtn.innerHTML = '<i class="fas fa-chart-bar mr-2"></i>Submit Feedback';
+                                            modalContent.appendChild(feedbackBtn);
+                                        }
+
+                                        // Get container or create new one
+                                        let container = document.getElementById('qrModalContainer');
+                                        if (!container) {
+                                            container = document.createElement('div');
+                                            container.id = 'qrModalContainer';
+                                            document.body.appendChild(container);
+                                        }
+
+                                        // Add new modal elements
+                                        container.appendChild(overlay);
+                                        container.appendChild(modalContent);
+
+                                        console.log("Modal created with QR path:", qrPath);
+                                    }
+
+                                    function closeQRModal() {
+                                        const container = document.getElementById('qrModalContainer');
+                                        if (container) {
+                                            container.innerHTML = '';
+                                        }
+                                    }
+
+                                    function showDayClasses(dayName, date, classCount) {
+                                        if (classCount > 0) {
+                                            alert(dayName + ', ' + date + ' has ' + classCount + ' class(es).\nClick on individual class for details.');
+                                        }
+                                    }
+
+                                    // Helper function to escape HTML
+                                    function escapeHtml(text) {
+                                        if (!text)
+                                            return '';
+                                        const div = document.createElement('div');
+                                        div.textContent = text;
+                                        return div.innerHTML;
+                                    }
+
+                                    // Refresh data every 5 minutes
+                                    setInterval(loadDashboardData, 5 * 60 * 1000);
         </script>
 
     </body>

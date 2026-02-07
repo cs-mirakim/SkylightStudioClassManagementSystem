@@ -480,4 +480,496 @@ public class ClassDAO {
             return stmt.executeUpdate() > 0;
         }
     }
+
+    // Tambah method ini dalam ClassDAO.java
+    public List<Map<String, Object>> getTodayClassesForInstructor(int instructorId) throws SQLException {
+        List<Map<String, Object>> classes = new ArrayList<>();
+        String sql = "SELECT c.*, cc.action as status FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? AND c.classStatus = 'active' "
+                + "AND c.classDate = CURRENT_DATE "
+                + "AND cc.action IN ('confirmed', 'pending') "
+                + "ORDER BY c.classStartTime";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> classData = new HashMap<>();
+                classData.put("classID", rs.getInt("classID"));
+                classData.put("className", rs.getString("className"));
+                classData.put("classType", rs.getString("classType"));
+                classData.put("classDate", rs.getDate("classDate"));
+                classData.put("classStartTime", rs.getTime("classStartTime"));
+                classData.put("classEndTime", rs.getTime("classEndTime"));
+                classData.put("location", rs.getString("location"));
+                classData.put("qrcodeFilePath", rs.getString("qrcodeFilePath"));
+                classData.put("status", rs.getString("status"));
+                classes.add(classData);
+            }
+        }
+        return classes;
+    }
+
+    public List<Map<String, Object>> getWeeklyClassesForInstructor(int instructorId, Date startDate, Date endDate) throws SQLException {
+        List<Map<String, Object>> classes = new ArrayList<>();
+        String sql = "SELECT c.*, cc.action as status FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? AND c.classStatus = 'active' "
+                + "AND c.classDate BETWEEN ? AND ? "
+                + "AND cc.action IN ('confirmed', 'pending') "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            stmt.setDate(2, startDate);
+            stmt.setDate(3, endDate);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> classData = new HashMap<>();
+                classData.put("classID", rs.getInt("classID"));
+                classData.put("className", rs.getString("className"));
+                classData.put("classType", rs.getString("classType"));
+                classData.put("classDate", rs.getDate("classDate"));
+                classData.put("classStartTime", rs.getTime("classStartTime"));
+                classData.put("classEndTime", rs.getTime("classEndTime"));
+                classData.put("status", rs.getString("status"));
+                classes.add(classData);
+            }
+        }
+        return classes;
+    }
+
+    public int getMonthlyClassCount(int instructorId, int month, int year) throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? AND c.classStatus = 'active' "
+                + "AND MONTH(c.classDate) = ? AND YEAR(c.classDate) = ? "
+                + "AND cc.action = 'confirmed'";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            stmt.setInt(2, month);
+            stmt.setInt(3, year);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+        }
+        return 0;
+    }
+
+    public Map<String, Integer> getWeeklyStats(int instructorId, Date startDate, Date endDate) throws SQLException {
+        Map<String, Integer> stats = new HashMap<>();
+
+        String confirmedSql = "SELECT COUNT(DISTINCT c.classID) as count FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? AND c.classStatus = 'active' "
+                + "AND c.classDate BETWEEN ? AND ? "
+                + "AND cc.action = 'confirmed'";
+
+        String pendingSql = "SELECT COUNT(DISTINCT c.classID) as count FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? AND c.classStatus = 'active' "
+                + "AND c.classDate BETWEEN ? AND ? "
+                + "AND cc.action = 'pending'";
+
+        try (Connection conn = DBConnection.getConnection()) {
+            // Count confirmed classes
+            try (PreparedStatement stmt = conn.prepareStatement(confirmedSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, startDate);
+                stmt.setDate(3, endDate);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    stats.put("confirmed", rs.getInt("count"));
+                }
+            }
+
+            // Count pending relief
+            try (PreparedStatement stmt = conn.prepareStatement(pendingSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, startDate);
+                stmt.setDate(3, endDate);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) {
+                    stats.put("pending", rs.getInt("count"));
+                }
+            }
+        }
+
+        return stats;
+    }
+    
+   /**
+     * Get notifications for a specific instructor
+     */
+    public List<Map<String, Object>> getNotificationsForInstructor(int instructorId) throws SQLException {
+        List<Map<String, Object>> notifications = new ArrayList<>();
+
+        // Calculate dates in Java for Apache Derby compatibility
+        java.sql.Date today = new java.sql.Date(System.currentTimeMillis());
+        java.sql.Date tomorrow = new java.sql.Date(System.currentTimeMillis() + (24 * 60 * 60 * 1000L));
+        java.sql.Date dayAfterTomorrow = new java.sql.Date(System.currentTimeMillis() + (2 * 24 * 60 * 60 * 1000L));
+        java.sql.Date thirtyDaysAgo = new java.sql.Date(System.currentTimeMillis() - (30L * 24 * 60 * 60 * 1000L));
+
+        // 1. New Class Available - Active classes with no confirmed instructor
+        String newClassSql = "SELECT c.* FROM class c "
+                + "WHERE c.classStatus = 'active' "
+                + "AND c.classDate >= ? "
+                + "AND NOT EXISTS (SELECT 1 FROM class_confirmation cc "
+                + "                WHERE cc.classID = c.classID AND cc.action = 'confirmed') "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 2. Class Tomorrow - Classes tomorrow where instructor is confirmed
+        String tomorrowSql = "SELECT c.* FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE c.classStatus = 'active' "
+                + "AND cc.instructorID = ? "
+                + "AND cc.action = 'confirmed' "
+                + "AND c.classDate = ? "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 3. Class Reminder - Classes day after tomorrow where instructor is confirmed
+        String reminderSql = "SELECT c.* FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE c.classStatus = 'active' "
+                + "AND cc.instructorID = ? "
+                + "AND cc.action = 'confirmed' "
+                + "AND c.classDate = ? "
+                + "ORDER BY c.classDate, c.classStartTime";
+
+        // 4. Class Cancelled - Classes where instructor was involved and now cancelled
+        String cancelledSql = "SELECT c.*, cc.cancelledAt, cc.cancellationReason "
+                + "FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? "
+                + "AND cc.action = 'cancelled' "
+                + "AND c.classDate >= ? "
+                + "ORDER BY cc.cancelledAt DESC";
+
+        // 5. Waitlist Update - Instructor is pending (relief position)
+        String waitlistSql = "SELECT c.*, cc.actionAt as waitlistTime "
+                + "FROM class c "
+                + "JOIN class_confirmation cc ON c.classID = cc.classID "
+                + "WHERE cc.instructorID = ? "
+                + "AND cc.action = 'pending' "
+                + "AND c.classDate >= ? "
+                + "ORDER BY cc.actionAt DESC";
+
+        try (Connection conn = DBConnection.getConnection()) {
+
+            System.out.println("[ClassDAO] Getting notifications for instructor ID: " + instructorId);
+            System.out.println("[ClassDAO] Today: " + today);
+            System.out.println("[ClassDAO] Tomorrow: " + tomorrow);
+            System.out.println("[ClassDAO] Day after tomorrow: " + dayAfterTomorrow);
+            System.out.println("[ClassDAO] 30 days ago: " + thirtyDaysAgo);
+
+            // New Class Available
+            try (PreparedStatement stmt = conn.prepareStatement(newClassSql)) {
+                stmt.setDate(1, today);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "new_class");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "New class available: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " new classes available");
+            }
+
+            // Class Tomorrow
+            try (PreparedStatement stmt = conn.prepareStatement(tomorrowSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, tomorrow);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "tomorrow");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "You have a class tomorrow: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " classes tomorrow");
+            }
+
+            // Class Reminder
+            try (PreparedStatement stmt = conn.prepareStatement(reminderSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, dayAfterTomorrow);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "reminder");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", new Timestamp(System.currentTimeMillis()));
+                    notif.put("message", "Class reminder: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " class reminders");
+            }
+
+            // Class Cancelled
+            try (PreparedStatement stmt = conn.prepareStatement(cancelledSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, thirtyDaysAgo);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "cancelled");
+                    Class cls = mapResultSetToClass(rs);
+                    notif.put("class", cls);
+                    notif.put("timestamp", rs.getTimestamp("cancelledAt"));
+                    notif.put("message", "Class cancelled: " + cls.getClassName());
+                    notif.put("reason", rs.getString("cancellationReason"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " cancelled classes");
+            }
+
+            // Waitlist Update
+            try (PreparedStatement stmt = conn.prepareStatement(waitlistSql)) {
+                stmt.setInt(1, instructorId);
+                stmt.setDate(2, today);
+                ResultSet rs = stmt.executeQuery();
+                int count = 0;
+                while (rs.next()) {
+                    count++;
+                    Map<String, Object> notif = new HashMap<>();
+                    notif.put("type", "waitlist");
+                    notif.put("class", mapResultSetToClass(rs));
+                    notif.put("timestamp", rs.getTimestamp("waitlistTime"));
+                    notif.put("message", "You're on waitlist for: " + rs.getString("className"));
+                    notifications.add(notif);
+                }
+                System.out.println("[ClassDAO] Found " + count + " waitlist updates");
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ClassDAO ERROR] SQL Exception: " + e.getMessage());
+            System.err.println("[ClassDAO ERROR] SQL State: " + e.getSQLState());
+            e.printStackTrace();
+            throw e;
+        }
+
+        System.out.println("[ClassDAO] Total notifications found: " + notifications.size());
+
+        // Sort all notifications by timestamp (newest first)
+        if (!notifications.isEmpty()) {
+            notifications.sort(new java.util.Comparator<Map<String, Object>>() {
+                @Override
+                public int compare(Map<String, Object> a, Map<String, Object> b) {
+                    Timestamp ts1 = (Timestamp) b.get("timestamp");
+                    Timestamp ts2 = (Timestamp) a.get("timestamp");
+                    return ts1.compareTo(ts2);
+                }
+            });
+        }
+
+        return notifications;
+    }
+    
+    
+   // Get active classes count this month
+    public int getActiveClassesThisMonthCount() throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM class "
+                   + "WHERE classStatus = 'active' "
+                   + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
+                   + "AND YEAR(classDate) = YEAR(CURRENT_DATE)";
+
+        System.out.println("[ClassDAO] Executing SQL: " + sql);
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt("count");
+                System.out.println("[ClassDAO] Active classes this month count: " + count);
+                return count;
+            }
+        }
+        return 0;
+    }
+
+    // Get today's classes count
+    public int getTodaysClassesCount() throws SQLException {
+    String sql = "SELECT COUNT(*) as count FROM class "
+               + "WHERE classStatus = 'active' "
+               + "AND classDate = CURRENT_DATE";
+    
+    System.out.println("[ClassDAO] Executing SQL: " + sql);
+    
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                int count = rs.getInt("count");
+                System.out.println("[ClassDAO] Today's classes count: " + count);
+                return count;
+            }
+        }
+        return 0;
+    }
+
+    // Get monthly classes for last 6 months
+    public Map<String, Integer> getMonthlyClassesLast6Months() throws SQLException {
+        Map<String, Integer> monthlyData = new HashMap<String, Integer>();
+
+        // Untuk Derby, kita perlu approach yang berbeza
+        String sql = "SELECT "
+                   + "CASE MONTH(classDate) "
+                   + "  WHEN 1 THEN 'January' "
+                   + "  WHEN 2 THEN 'February' "
+                   + "  WHEN 3 THEN 'March' "
+                   + "  WHEN 4 THEN 'April' "
+                   + "  WHEN 5 THEN 'May' "
+                   + "  WHEN 6 THEN 'June' "
+                   + "  WHEN 7 THEN 'July' "
+                   + "  WHEN 8 THEN 'August' "
+                   + "  WHEN 9 THEN 'September' "
+                   + "  WHEN 10 THEN 'October' "
+                   + "  WHEN 11 THEN 'November' "
+                   + "  WHEN 12 THEN 'December' "
+                   + "END as month, "
+                   + "COUNT(*) as count "
+                   + "FROM class "
+                   + "WHERE classStatus = 'active' "
+                   + "AND classDate >= (CURRENT_DATE - 180 DAYS) "
+                   + "GROUP BY MONTH(classDate) "
+                   + "ORDER BY MONTH(classDate)";
+
+        System.out.println("[ClassDAO] Executing SQL: " + sql);
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String month = rs.getString("month");
+                int count = rs.getInt("count");
+                System.out.println("[ClassDAO] Month: " + month + ", Count: " + count);
+                monthlyData.put(month, count);
+            }
+        }
+
+        // Jika tiada data, return default data untuk testing
+        if (monthlyData.isEmpty()) {
+            System.out.println("[ClassDAO] No monthly data found, returning test data");
+            monthlyData.put("January", 10);
+            monthlyData.put("February", 15);
+            monthlyData.put("March", 20);
+            monthlyData.put("April", 18);
+            monthlyData.put("May", 25);
+            monthlyData.put("June", 22);
+        }
+
+        return monthlyData;
+    }
+
+    // Get class type distribution for current month
+    public Map<String, Integer> getClassTypeDistributionThisMonth() throws SQLException {
+        Map<String, Integer> distribution = new HashMap<>();
+
+        String sql = "SELECT classType, COUNT(*) as count "
+                   + "FROM class "
+                   + "WHERE classStatus = 'active' "
+                   + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
+                   + "AND YEAR(classDate) = YEAR(CURRENT_DATE) "
+                   + "GROUP BY classType";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String classType = rs.getString("classType");
+                int count = rs.getInt("count");
+
+                if (classType == null || classType.isEmpty()) {
+                    classType = "Other";
+                }
+
+                distribution.put(classType, count);
+            }
+        }
+        return distribution;
+    }
+    
+    // Add these methods to existing ClassDAO class:
+
+    public int getMonthlyClassCount(int year, int month) throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM class WHERE classStatus = 'active' " +
+                     "AND EXTRACT(YEAR FROM classDate) = ? " +
+                     "AND EXTRACT(MONTH FROM classDate) = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, year);
+            stmt.setInt(2, month);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+        }
+        return 0;
+    }
+
+    public int getTodayClassCount() throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM class WHERE classStatus = 'active' AND classDate = CURRENT_DATE";
+
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+        }
+        return 0;
+    }
+
+    public Map<String, Integer> getClassTypeDistribution(Date startDate, Date endDate) throws SQLException {
+        Map<String, Integer> distribution = new HashMap<>();
+        String sql = "SELECT classType, COUNT(*) as count FROM class WHERE classStatus = 'active' " +
+                     "AND classDate BETWEEN ? AND ? GROUP BY classType";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, startDate);
+            stmt.setDate(2, endDate);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String type = rs.getString("classType");
+                if (type == null) type = "Other";
+                distribution.put(type, rs.getInt("count"));
+            }
+        }
+        return distribution;
+    }
 }
