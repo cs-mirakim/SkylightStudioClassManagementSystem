@@ -39,19 +39,6 @@ function initSidebar() {
             return roleFromAttr;
         }
 
-        // Fallback: check radio button
-        var adminRadio = document.querySelector('input[name="sidebar_role"][value="admin"]');
-        var instructorRadio = document.querySelector('input[name="sidebar_role"][value="instructor"]');
-
-        if (adminRadio && adminRadio.checked) {
-            console.log('User role from radio: admin');
-            return 'admin';
-        }
-        if (instructorRadio && instructorRadio.checked) {
-            console.log('User role from radio: instructor');
-            return 'instructor';
-        }
-
         console.warn('No role detected, defaulting to admin');
         return 'admin'; // default fallback
     }
