@@ -939,14 +939,11 @@ public class MonitorInstructorServlet extends HttpServlet {
     }
 
     // METHOD BARU: Get complete performance data dengan semua rating
-    // METHOD BARU: Get complete performance data dengan semua rating DAN FILTER PERIOD
     private void getCompletePerformanceData(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
 
         int instructorId = Integer.parseInt(request.getParameter("id"));
         String period = request.getParameter("period");
-
-        System.out.println("DEBUG - getCompletePerformanceData: instructorId=" + instructorId + ", period=" + period);
 
         // Get instructor
         com.skylightstudio.classmanagement.model.Instructor instructor
@@ -961,74 +958,8 @@ public class MonitorInstructorServlet extends HttpServlet {
         try {
             conn = DBConnection.getConnection();
 
-            // ========== SET DATE RANGE BASED ON PERIOD ==========
-            java.sql.Date sqlStartDate = null;
-
-            if (!"all".equals(period)) {
-                java.util.Calendar cal = java.util.Calendar.getInstance();
-
-                if ("3months".equals(period)) {
-                    cal.add(java.util.Calendar.MONTH, -3);
-                } else if ("6months".equals(period)) {
-                    cal.add(java.util.Calendar.MONTH, -6);
-                } else if ("1year".equals(period)) {
-                    cal.add(java.util.Calendar.YEAR, -1);
-                } else {
-                    // Default ke 3 bulan
-                    cal.add(java.util.Calendar.MONTH, -3);
-                }
-
-                sqlStartDate = new java.sql.Date(cal.getTimeInMillis());
-                System.out.println("DEBUG - Start date for period " + period + ": " + sqlStartDate);
-            }
-
-            // ========== GET FILTERED RATINGS (GUNA METHOD DAO YANG ADA) ==========
-            FeedbackDAO feedbackDAO = new FeedbackDAO();
-
-            // Gunakan method DAO yang ada
-            Map<String, Double> ratings = feedbackDAO.getAverageRatingsForInstructor(instructorId);
-
-            // Untuk filter date, kita perlu query manual
-            Map<String, Double> filteredRatings = new HashMap<>();
-            if (sqlStartDate != null) {
-                // Query dengan date filter
-                filteredRatings = getFilteredRatings(conn, instructorId, sqlStartDate);
-            } else {
-                // No filter, use all ratings
-                filteredRatings = ratings;
-            }
-
-            double avgTeaching = filteredRatings.getOrDefault("teaching", 0.0);
-            double avgCommunication = filteredRatings.getOrDefault("communication", 0.0);
-            double avgSupport = filteredRatings.getOrDefault("support", 0.0);
-            double avgPunctuality = filteredRatings.getOrDefault("punctuality", 0.0);
-            double avgOverall = filteredRatings.getOrDefault("overall", 0.0);
-
-            // Handle NaN
-            if (Double.isNaN(avgTeaching)) {
-                avgTeaching = 0.0;
-            }
-            if (Double.isNaN(avgCommunication)) {
-                avgCommunication = 0.0;
-            }
-            if (Double.isNaN(avgSupport)) {
-                avgSupport = 0.0;
-            }
-            if (Double.isNaN(avgPunctuality)) {
-                avgPunctuality = 0.0;
-            }
-            if (Double.isNaN(avgOverall)) {
-                avgOverall = 0.0;
-            }
-
-            System.out.println("DEBUG - Filtered Ratings:");
-            System.out.println("  Teaching: " + avgTeaching);
-            System.out.println("  Communication: " + avgCommunication);
-            System.out.println("  Support: " + avgSupport);
-            System.out.println("  Punctuality: " + avgPunctuality);
-            System.out.println("  Overall: " + avgOverall);
-
-            // ========== GET CLASS STATISTICS (GUNA METHOD DAO YANG ADA) ==========
+            // ========== SIMPLE VERSION DULU (GET DATA ASAS) ==========
+            // Class statistics
             ClassConfirmationDAO ccDAO = new ClassConfirmationDAO();
             int totalConfirmedClasses = ccDAO.countConfirmedClassesForInstructor(instructorId);
             int cancelledClasses = ccDAO.countCancelledClassesForInstructor(instructorId);
@@ -1036,28 +967,34 @@ public class MonitorInstructorServlet extends HttpServlet {
             double completionRate = totalConfirmedClasses > 0
                     ? (completedClasses * 100.0 / totalConfirmedClasses) : 0;
 
-            // ========== GET HIGHEST AND LOWEST RATINGS ==========
-            Map<String, Double> highestRatings = getHighestRatings(conn, instructorId, sqlStartDate);
-            Map<String, Double> lowestRatings = getLowestRatings(conn, instructorId, sqlStartDate);
+            // Get ratings
+            FeedbackDAO feedbackDAO = new FeedbackDAO();
+            Map<String, Double> ratings = feedbackDAO.getAverageRatingsForInstructor(instructorId);
 
-            double highestTeaching = highestRatings.getOrDefault("teaching", avgTeaching);
-            double highestCommunication = highestRatings.getOrDefault("communication", avgCommunication);
-            double highestSupport = highestRatings.getOrDefault("support", avgSupport);
-            double highestPunctuality = highestRatings.getOrDefault("punctuality", avgPunctuality);
-            double highestOverall = highestRatings.getOrDefault("overall", avgOverall);
+            double avgTeaching = ratings.getOrDefault("teaching", 0.0);
+            double avgCommunication = ratings.getOrDefault("communication", 0.0);
+            double avgSupport = ratings.getOrDefault("support", 0.0);
+            double avgPunctuality = ratings.getOrDefault("punctuality", 0.0);
+            double avgOverall = ratings.getOrDefault("overall", 0.0);
 
-            double lowestTeaching = lowestRatings.getOrDefault("teaching", avgTeaching);
-            double lowestCommunication = lowestRatings.getOrDefault("communication", avgCommunication);
-            double lowestSupport = lowestRatings.getOrDefault("support", avgSupport);
-            double lowestPunctuality = lowestRatings.getOrDefault("punctuality", avgPunctuality);
-            double lowestOverall = lowestRatings.getOrDefault("overall", avgOverall);
+            // Handle NaN
+            if (Double.isNaN(avgTeaching)) {
+                avgTeaching = 0;
+            }
+            if (Double.isNaN(avgCommunication)) {
+                avgCommunication = 0;
+            }
+            if (Double.isNaN(avgSupport)) {
+                avgSupport = 0;
+            }
+            if (Double.isNaN(avgPunctuality)) {
+                avgPunctuality = 0;
+            }
+            if (Double.isNaN(avgOverall)) {
+                avgOverall = 0;
+            }
 
-            // ========== GET MONTHLY TREND DATA ==========
-            List<Map<String, Object>> monthlyTrend = getMonthlyTrend(conn, instructorId, sqlStartDate);
-
-            System.out.println("DEBUG - Monthly trend data points: " + monthlyTrend.size());
-
-            // ========== GENERATE XML RESPONSE ==========
+            // ========== GENERATE SIMPLE XML RESPONSE DULU ==========
             response.setContentType("text/xml;charset=UTF-8");
             PrintWriter out = response.getWriter();
 
@@ -1066,63 +1003,45 @@ public class MonitorInstructorServlet extends HttpServlet {
 
             // Basic Info
             out.print("<instructorName>" + escapeXml(instructor.getName()) + "</instructorName>");
-            out.print("<period>" + escapeXml(period) + "</period>");
 
             // Class Statistics
             out.print("<totalClasses>" + totalConfirmedClasses + "</totalClasses>");
             out.print("<cancelled>" + cancelledClasses + "</cancelled>");
             out.print("<completion>" + String.format("%.0f", completionRate) + "%</completion>");
 
-            // All 5 Ratings (Average)
+            // All 5 Ratings
             out.print("<teaching>" + String.format("%.1f", avgTeaching) + "</teaching>");
             out.print("<communication>" + String.format("%.1f", avgCommunication) + "</communication>");
             out.print("<support>" + String.format("%.1f", avgSupport) + "</support>");
             out.print("<punctuality>" + String.format("%.1f", avgPunctuality) + "</punctuality>");
             out.print("<overallRating>" + String.format("%.1f", avgOverall) + "</overallRating>");
 
-            // Highest Ratings
-            out.print("<teachingHighest>" + String.format("%.1f", highestTeaching) + "</teachingHighest>");
-            out.print("<communicationHighest>" + String.format("%.1f", highestCommunication) + "</communicationHighest>");
-            out.print("<supportHighest>" + String.format("%.1f", highestSupport) + "</supportHighest>");
-            out.print("<punctualityHighest>" + String.format("%.1f", highestPunctuality) + "</punctualityHighest>");
-            out.print("<overallHighest>" + String.format("%.1f", highestOverall) + "</overallHighest>");
+            // Untuk sementara, set highest/lowest sama dengan average
+            out.print("<teachingHighest>" + String.format("%.1f", avgTeaching) + "</teachingHighest>");
+            out.print("<communicationHighest>" + String.format("%.1f", avgCommunication) + "</communicationHighest>");
+            out.print("<supportHighest>" + String.format("%.1f", avgSupport) + "</supportHighest>");
+            out.print("<punctualityHighest>" + String.format("%.1f", avgPunctuality) + "</punctualityHighest>");
+            out.print("<overallHighest>" + String.format("%.1f", avgOverall) + "</overallHighest>");
 
-            // Lowest Ratings
-            out.print("<teachingLowest>" + String.format("%.1f", lowestTeaching) + "</teachingLowest>");
-            out.print("<communicationLowest>" + String.format("%.1f", lowestCommunication) + "</communicationLowest>");
-            out.print("<supportLowest>" + String.format("%.1f", lowestSupport) + "</supportLowest>");
-            out.print("<punctualityLowest>" + String.format("%.1f", lowestPunctuality) + "</punctualityLowest>");
-            out.print("<overallLowest>" + String.format("%.1f", lowestOverall) + "</overallLowest>");
+            out.print("<teachingLowest>" + String.format("%.1f", avgTeaching) + "</teachingLowest>");
+            out.print("<communicationLowest>" + String.format("%.1f", avgCommunication) + "</communicationLowest>");
+            out.print("<supportLowest>" + String.format("%.1f", avgSupport) + "</supportLowest>");
+            out.print("<punctualityLowest>" + String.format("%.1f", avgPunctuality) + "</punctualityLowest>");
+            out.print("<overallLowest>" + String.format("%.1f", avgOverall) + "</overallLowest>");
 
-            // Monthly Trend Data
+            // Monthly Trend - simple dummy data untuk testing
             out.print("<monthlyTrend>");
-
-            if (monthlyTrend.isEmpty()) {
-                // Jika tiada data, hantar 6 bulan kosong
-                System.out.println("DEBUG - No monthly trend data found, generating empty months");
-                String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun"};
-                for (String month : monthNames) {
-                    out.print("<month>");
-                    out.print("<name>" + month + "</name>");
-                    out.print("<rating>0.0</rating>");
-                    out.print("<totalClasses>0</totalClasses>");
-                    out.print("</month>");
-                }
-            } else {
-                for (Map<String, Object> monthData : monthlyTrend) {
-                    out.print("<month>");
-                    out.print("<name>" + escapeXml(monthData.get("month").toString()) + "</name>");
-                    out.print("<rating>" + String.format("%.1f", monthData.get("avgRating")) + "</rating>");
-                    out.print("<totalClasses>" + monthData.get("totalClasses") + "</totalClasses>");
-                    out.print("</month>");
-                }
+            String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun"};
+            for (String month : months) {
+                out.print("<month>");
+                out.print("<name>" + month + "</name>");
+                out.print("<rating>" + String.format("%.1f", avgOverall) + "</rating>");
+                out.print("<totalClasses>5</totalClasses>");
+                out.print("</month>");
             }
-
             out.print("</monthlyTrend>");
 
             out.print("</performance>");
-
-            System.out.println("DEBUG - XML response generated successfully for period: " + period);
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -1136,176 +1055,6 @@ public class MonitorInstructorServlet extends HttpServlet {
                 }
             }
         }
-    }
-
-// ========== HELPER METHODS ==========
-// Helper untuk get filtered ratings
-    private Map<String, Double> getFilteredRatings(Connection conn, int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        Map<String, Double> ratings = new HashMap<>();
-
-        String sql = "SELECT "
-                + "AVG(teachingSkill) as avgTeaching, "
-                + "AVG(communication) as avgCommunication, "
-                + "AVG(supportInteraction) as avgSupport, "
-                + "AVG(punctuality) as avgPunctuality, "
-                + "AVG(overallRating) as avgOverall "
-                + "FROM feedback WHERE instructorID = ? AND feedbackDate >= ?";
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, instructorId);
-            stmt.setDate(2, startDate);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                ratings.put("teaching", rs.getDouble("avgTeaching"));
-                ratings.put("communication", rs.getDouble("avgCommunication"));
-                ratings.put("support", rs.getDouble("avgSupport"));
-                ratings.put("punctuality", rs.getDouble("avgPunctuality"));
-                ratings.put("overall", rs.getDouble("avgOverall"));
-            }
-        }
-
-        // Handle null values
-        for (String key : new String[]{"teaching", "communication", "support", "punctuality", "overall"}) {
-            if (!ratings.containsKey(key) || Double.isNaN(ratings.get(key))) {
-                ratings.put(key, 0.0);
-            }
-        }
-
-        return ratings;
-    }
-
-// Helper untuk get highest ratings
-    private Map<String, Double> getHighestRatings(Connection conn, int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        Map<String, Double> highestRatings = new HashMap<>();
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-                .append("MAX(teachingSkill) as maxTeaching, ")
-                .append("MAX(communication) as maxCommunication, ")
-                .append("MAX(supportInteraction) as maxSupport, ")
-                .append("MAX(punctuality) as maxPunctuality, ")
-                .append("MAX(overallRating) as maxOverall ")
-                .append("FROM feedback WHERE instructorID = ? ");
-
-        if (startDate != null) {
-            sql.append("AND feedbackDate >= ? ");
-        }
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            stmt.setInt(1, instructorId);
-            if (startDate != null) {
-                stmt.setDate(2, startDate);
-            }
-
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                highestRatings.put("teaching", rs.getDouble("maxTeaching"));
-                highestRatings.put("communication", rs.getDouble("maxCommunication"));
-                highestRatings.put("support", rs.getDouble("maxSupport"));
-                highestRatings.put("punctuality", rs.getDouble("maxPunctuality"));
-                highestRatings.put("overall", rs.getDouble("maxOverall"));
-            }
-        }
-
-        return highestRatings;
-    }
-
-// Helper untuk get lowest ratings
-    private Map<String, Double> getLowestRatings(Connection conn, int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        Map<String, Double> lowestRatings = new HashMap<>();
-
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-                .append("MIN(teachingSkill) as minTeaching, ")
-                .append("MIN(communication) as minCommunication, ")
-                .append("MIN(supportInteraction) as minSupport, ")
-                .append("MIN(punctuality) as minPunctuality, ")
-                .append("MIN(overallRating) as minOverall ")
-                .append("FROM feedback WHERE instructorID = ? AND teachingSkill > 0 ");
-
-        if (startDate != null) {
-            sql.append("AND feedbackDate >= ? ");
-        }
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            stmt.setInt(1, instructorId);
-            if (startDate != null) {
-                stmt.setDate(2, startDate);
-            }
-
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                lowestRatings.put("teaching", rs.getDouble("minTeaching"));
-                lowestRatings.put("communication", rs.getDouble("minCommunication"));
-                lowestRatings.put("support", rs.getDouble("minSupport"));
-                lowestRatings.put("punctuality", rs.getDouble("minPunctuality"));
-                lowestRatings.put("overall", rs.getDouble("minOverall"));
-            }
-        }
-
-        return lowestRatings;
-    }
-
-// Helper untuk get monthly trend
-    private List<Map<String, Object>> getMonthlyTrend(Connection conn, int instructorId, java.sql.Date startDate)
-            throws SQLException {
-
-        List<Map<String, Object>> monthlyData = new ArrayList<>();
-
-        // Tentukan berapa bulan nak papar berdasarkan period
-        int monthsToShow = 6; // default
-
-        // Query untuk dapatkan rating bulanan
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT ")
-                .append("TO_CHAR(feedbackDate, 'Mon') as month_name, ")
-                .append("EXTRACT(MONTH FROM feedbackDate) as month_num, ")
-                .append("AVG(overallRating) as avg_rating, ")
-                .append("COUNT(*) as feedback_count ")
-                .append("FROM feedback WHERE instructorID = ? ");
-
-        if (startDate != null) {
-            sql.append("AND feedbackDate >= ? ");
-        }
-
-        sql.append("GROUP BY TO_CHAR(feedbackDate, 'Mon'), EXTRACT(MONTH FROM feedbackDate) ")
-                .append("ORDER BY EXTRACT(MONTH FROM feedbackDate) DESC ")
-                .append("FETCH FIRST ? ROWS ONLY");
-
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
-            stmt.setInt(1, instructorId);
-            int paramIndex = 2;
-
-            if (startDate != null) {
-                stmt.setDate(paramIndex, startDate);
-                paramIndex++;
-            }
-            stmt.setInt(paramIndex, monthsToShow);
-
-            ResultSet rs = stmt.executeQuery();
-
-            while (rs.next()) {
-                Map<String, Object> monthData = new HashMap<>();
-                monthData.put("month", rs.getString("month_name"));
-                monthData.put("avgRating", rs.getDouble("avg_rating"));
-                monthData.put("totalClasses", rs.getInt("feedback_count")); // Ini sebenarnya feedback count
-                monthlyData.add(monthData);
-            }
-
-            // Jika tiada data sebenar, return empty list
-            if (monthlyData.isEmpty()) {
-                System.out.println("DEBUG - No monthly trend data in database");
-            }
-        }
-
-        return monthlyData;
     }
 
     // Helper methods untuk dapatkan highest dan lowest ratings

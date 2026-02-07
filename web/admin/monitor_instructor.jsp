@@ -1214,12 +1214,18 @@
                                     currentInstructorId = null;
                                 }
 
-                                // PERBAIKI FUNCTION showPerformance()
+                                // PERUBAHAN: Load semua rating untuk performance modal
                                 function showPerformance() {
                                     if (!currentInstructorId)
                                         return;
 
-                                    var period = document.getElementById('timePeriod').value;
+                                    // ========== PERUBAHAN: GUNA ACTION BARU ==========
+                                    // DARIPADA:
+                                    // fetch('monitor-instructor?action=performance&id=' + currentInstructorId + '&period=all')
+
+                                    // KEPADA:
+                                    var period = document.getElementById('timePeriod') ?
+                                            document.getElementById('timePeriod').value : 'all';
 
                                     fetch('monitor-instructor?action=completePerformance&id=' + currentInstructorId + '&period=' + period)
                                             .then(function (response) {
@@ -1228,78 +1234,54 @@
                                                 return response.text();
                                             })
                                             .then(function (xmlText) {
-                                                console.log('Performance XML for period', period, ':', xmlText);
+                                                console.log('Performance XML:', xmlText); // Debug
 
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // Update UI dengan data
-                                                document.getElementById('performanceInstructorName').textContent =
-                                                        getXmlValue(xmlDoc, 'instructorName');
-                                                document.getElementById('perfOverallRating').textContent =
-                                                        getXmlValue(xmlDoc, 'overallRating');
-                                                document.getElementById('perfTotalClasses').textContent =
-                                                        getXmlValue(xmlDoc, 'totalClasses');
-                                                document.getElementById('perfCancelled').textContent =
-                                                        getXmlValue(xmlDoc, 'cancelled');
-                                                document.getElementById('perfCompletion').textContent =
-                                                        getXmlValue(xmlDoc, 'completion');
+                                                // Check for XML error
+                                                var errorElement = xmlDoc.querySelector('parsererror');
+                                                if (errorElement) {
+                                                    throw new Error('Invalid XML response from server');
+                                                }
+
+                                                // ========== PERUBAHAN: DAPATKAN DATA DENGAN CHECK NULL ==========
+                                                var instructorName = getXmlValue(xmlDoc, 'instructorName');
+                                                if (!instructorName || instructorName === 'Not available') {
+                                                    throw new Error('Instructor data not found');
+                                                }
+
+                                                document.getElementById('performanceInstructorName').textContent = instructorName;
+
+                                                // DAPATKAN SEMUA 5 RATING
+                                                var teaching = parseFloat(getXmlValue(xmlDoc, 'teaching')) || 0;
+                                                var communication = parseFloat(getXmlValue(xmlDoc, 'communication')) || 0;
+                                                var support = parseFloat(getXmlValue(xmlDoc, 'support')) || 0;
+                                                var punctuality = parseFloat(getXmlValue(xmlDoc, 'punctuality')) || 0;
+                                                var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
+
+                                                // KIRA AVERAGE DARI 5 RATING
+                                                var totalRating = teaching + communication + support + punctuality + overall;
+                                                var avgOverallRating = totalRating / 5;
+
+                                                // Update performance metrics
+                                                document.getElementById('perfOverallRating').textContent = avgOverallRating.toFixed(1);
+                                                document.getElementById('perfTotalClasses').textContent = getXmlValue(xmlDoc, 'totalClasses');
+                                                document.getElementById('perfCancelled').textContent = getXmlValue(xmlDoc, 'cancelled');
+                                                document.getElementById('perfCompletion').textContent = getXmlValue(xmlDoc, 'completion');
 
                                                 // Show modal
                                                 document.getElementById('performanceModal').classList.remove('hidden');
 
-                                                // Update charts dengan data YANG DIFILTER
-                                                updateChartsWithFilteredData(xmlDoc, period);
+                                                // Update charts dengan semua data
+                                                setTimeout(function () {
+                                                    updateCharts(xmlDoc);
+                                                }, 100);
                                             })
                                             .catch(function (error) {
                                                 console.error('Error loading performance:', error);
                                                 alert('Error loading performance data: ' + error.message);
                                             });
-                                }
-
-// FUNCTION BARU: Update charts dengan data filtered
-                                function updateChartsWithFilteredData(xmlDoc, period) {
-                                    // Destroy existing charts
-                                    for (var key in chartInstances) {
-                                        if (chartInstances[key]) {
-                                            chartInstances[key].destroy();
-                                        }
-                                    }
-
-                                    // Get monthly data based on period
-                                    var monthlyElements = xmlDoc.getElementsByTagName('month');
-                                    var monthlyTrend = [];
-
-                                    for (var i = 0; i < monthlyElements.length; i++) {
-                                        var monthElement = monthlyElements[i];
-                                        var monthName = getXmlValueFromElement(monthElement, 'name');
-                                        var monthRating = parseFloat(getXmlValueFromElement(monthElement, 'rating')) || 0;
-                                        var totalClasses = parseInt(getXmlValueFromElement(monthElement, 'totalClasses')) || 0;
-
-                                        monthlyTrend.push({
-                                            month: monthName,
-                                            rating: monthRating,
-                                            totalClasses: totalClasses
-                                        });
-                                    }
-
-                                    // Sort by date jika perlu
-                                    monthlyTrend.sort(function (a, b) {
-                                        var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-                                        return months.indexOf(a.month) - months.indexOf(b.month);
-                                    });
-
-                                    // Update trend chart
-                                    updateTrendChart(monthlyTrend);
-
-                                    // Update rating breakdown dengan data filtered
-                                    updateRatingBreakdownTable(xmlDoc);
-                                }
-
-                                // FUNCTION BARU: Helper untuk get value dari element
-                                function getXmlValueFromElement(element, tagName) {
-                                    var child = element.getElementsByTagName(tagName)[0];
-                                    return child ? child.textContent : '0';
                                 }
 
                                 function closePerformance() {
@@ -1681,8 +1663,8 @@
                                     }
                                 }
 
+                                // Chart functions
                                 // PERUBAHAN: Update chart data dengan 5 rating
-                                // PERUBAHAN: Update chart data dengan period filter
                                 function updateCharts(xmlDoc) {
                                     if (!xmlDoc)
                                         return;
@@ -1694,23 +1676,20 @@
                                         }
                                     }
 
-                                    // Get period dari dropdown
-                                    var period = document.getElementById('timePeriod').value;
-                                    console.log('Updating charts for period:', period);
-
-                                    // Get data dari XML
+                                    // Get data dari XML - SEMUA 5 RATING
                                     var teaching = parseFloat(getXmlValue(xmlDoc, 'teaching')) || 0;
                                     var communication = parseFloat(getXmlValue(xmlDoc, 'communication')) || 0;
                                     var support = parseFloat(getXmlValue(xmlDoc, 'support')) || 0;
                                     var punctuality = parseFloat(getXmlValue(xmlDoc, 'punctuality')) || 0;
                                     var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
 
-                                    // ========== CHART 1: CATEGORY RATINGS ==========
+                                    // ========== CHART 1: CATEGORY RATINGS (SEMUA 5) ==========
                                     var categoryCtx = document.getElementById('categoryChart').getContext('2d');
                                     chartInstances.categoryChart = new Chart(categoryCtx, {
                                         type: 'bar',
                                         data: {
-                                            labels: ['Teaching', 'Communication', 'Support', 'Punctuality', 'Overall'],
+                                            // TAMBAH OVERALL DALAM CHART
+                                            labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality', 'Overall'],
                                             datasets: [{
                                                     label: 'Average Rating',
                                                     data: [teaching, communication, support, punctuality, overall],
@@ -1746,36 +1725,36 @@
                                         }
                                     });
 
-                                    // ========== CHART 2: MONTHLY TREND ==========
+                                    // ========== CHART 2: MONTHLY TREND (MENGIKUT FILTER) ==========
                                     var trendCtx = document.getElementById('trendChart').getContext('2d');
 
                                     // Dapatkan monthly data dari XML
-                                    var monthlyElements = xmlDoc.getElementsByTagName('month');
                                     var monthlyTrend = [];
-                                    var monthLabels = [];
-                                    var ratingData = [];
-
+                                    var monthlyElements = xmlDoc.getElementsByTagName('month');
                                     for (var i = 0; i < monthlyElements.length; i++) {
                                         var monthElement = monthlyElements[i];
-                                        var monthName = getXmlValueFromElement(monthElement, 'name');
-                                        var monthRating = parseFloat(getXmlValueFromElement(monthElement, 'rating')) || 0;
-
+                                        var monthName = monthElement.getElementsByTagName('name')[0].textContent;
+                                        var monthRating = parseFloat(monthElement.getElementsByTagName('rating')[0].textContent) || 0;
                                         monthlyTrend.push({
                                             month: monthName,
                                             rating: monthRating
                                         });
-
-                                        monthLabels.push(monthName);
-                                        ratingData.push(monthRating);
                                     }
 
-                                    console.log('Monthly trend data for', period, ':', monthlyTrend);
-
+                                    // Jika tiada data, papar placeholder message
                                     if (monthlyTrend.length === 0) {
-                                        // Show message jika tiada data
                                         var chartContainer = document.getElementById('trendChart').parentElement;
-                                        chartContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No data available for ' + period + '</p></div>';
+                                        chartContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
                                     } else {
+                                        // Prepare data untuk chart
+                                        var monthLabels = [];
+                                        var ratingData = [];
+
+                                        for (var j = 0; j < monthlyTrend.length; j++) {
+                                            monthLabels.push(monthlyTrend[j].month);
+                                            ratingData.push(monthlyTrend[j].rating);
+                                        }
+
                                         chartInstances.trendChart = new Chart(trendCtx, {
                                             type: 'line',
                                             data: {
@@ -1817,14 +1796,62 @@
                                         });
                                     }
 
+                                    // ========== CHART 3: CLASS DISTRIBUTION (ACTUAL DATA) ==========
+                                    var distributionCtx = document.getElementById('distributionChart').getContext('2d');
+
+                                    // Dapatkan actual data dari XML
+                                    var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
+                                    var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelled')) || 0;
+                                    var completedClasses = totalClasses - cancelledClasses;
+
+                                    // Jika tiada data
+                                    if (totalClasses === 0) {
+                                        var distContainer = document.getElementById('distributionChart').parentElement;
+                                        distContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No classes found</p></div>';
+                                    } else {
+                                        chartInstances.distributionChart = new Chart(distributionCtx, {
+                                            type: 'pie',
+                                            data: {
+                                                labels: ['Completed', 'Cancelled'],
+                                                datasets: [{
+                                                        data: [completedClasses, cancelledClasses],
+                                                        backgroundColor: ['#A5D6A7', '#EF9A9A'],
+                                                        borderColor: ['#8BC34A', '#F44336'],
+                                                        borderWidth: 2
+                                                    }]
+                                            },
+                                            options: {
+                                                responsive: true,
+                                                maintainAspectRatio: false,
+                                                plugins: {
+                                                    legend: {
+                                                        position: 'bottom',
+                                                        labels: {
+                                                            color: '#3D3434',
+                                                            padding: 20,
+                                                            font: {size: 12}
+                                                        }
+                                                    },
+                                                    tooltip: {
+                                                        callbacks: {
+                                                            label: function (context) {
+                                                                var label = context.label || '';
+                                                                var value = context.raw || 0;
+                                                                var percentage = Math.round((value / totalClasses) * 100);
+                                                                return label + ': ' + value + ' (' + percentage + '%)';
+                                                            }
+                                                        },
+                                                        backgroundColor: '#3D3434',
+                                                        titleColor: '#FDF8F8',
+                                                        bodyColor: '#FDF8F8'
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+
                                     // ========== UPDATE RATING BREAKDOWN TABLE ==========
                                     updateRatingBreakdownTable(xmlDoc);
-                                }
-
-// FUNCTION BARU: Helper untuk get value dari element
-                                function getXmlValueFromElement(element, tagName) {
-                                    var child = element.getElementsByTagName(tagName)[0];
-                                    return child ? child.textContent : '0';
                                 }
 
 // FUNCTION BARU: Update rating breakdown table
@@ -1874,6 +1901,7 @@
                                     if (!currentInstructorId)
                                         return;
 
+                                    // Get current instructor details
                                     var instructor = null;
                                     for (var i = 0; i < allInstructors.length; i++) {
                                         if (allInstructors[i].id == currentInstructorId) {
@@ -1887,7 +1915,7 @@
                                         return;
                                     }
 
-                                    // Fetch COMPLETE data untuk PDF (gunakan action yang sama dengan details)
+                                    // Fetch detailed data for PDF
                                     fetch('monitor-instructor?action=details&id=' + currentInstructorId)
                                             .then(function (response) {
                                                 if (!response.ok)
@@ -1898,39 +1926,22 @@
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // Extract SEMUA 5 rating dengan betul
+                                                // Extract data for PDF
                                                 var name = getXmlValue(xmlDoc, 'name');
                                                 var email = getXmlValue(xmlDoc, 'email');
                                                 var experience = getXmlValue(xmlDoc, 'experience');
                                                 var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                                 var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelledClasses')) || 0;
-
-                                                // PERUBAHAN PENTING: AMBIL averageAllRatings bukan avgRating
-                                                var avgRatingElement = xmlDoc.getElementsByTagName('averageAllRatings')[0];
-                                                var avgRating = '0.0';
-
-                                                if (avgRatingElement && avgRatingElement.textContent !== 'Not available') {
-                                                    avgRating = avgRatingElement.textContent;
-                                                } else {
-                                                    // Fallback: kira dari 5 rating individu
-                                                    var teaching = parseFloat(getXmlValue(xmlDoc, 'avgTeaching')) || 0;
-                                                    var communication = parseFloat(getXmlValue(xmlDoc, 'avgCommunication')) || 0;
-                                                    var support = parseFloat(getXmlValue(xmlDoc, 'avgSupport')) || 0;
-                                                    var punctuality = parseFloat(getXmlValue(xmlDoc, 'avgPunctuality')) || 0;
-                                                    var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
-
-                                                    var totalAllRatings = teaching + communication + support + punctuality + overall;
-                                                    avgRating = (totalAllRatings / 5).toFixed(1);
-                                                }
-
+                                                var avgRating = getXmlValue(xmlDoc, 'avgRating') || '0.0';
                                                 var feedbackCount = parseInt(getXmlValue(xmlDoc, 'feedbackCount')) || 0;
                                                 var completedClasses = totalClasses - cancelledClasses;
                                                 var completionRate = totalClasses > 0 ? Math.round((completedClasses / totalClasses) * 100) : 0;
 
-                                                // Create PDF dengan rating yang betul
+                                                // Create PDF
                                                 var pdfBlob = createPerformancePDF(name, email, experience, totalClasses, cancelledClasses,
                                                         completedClasses, avgRating, feedbackCount, completionRate);
 
+                                                // Show preview in modal
                                                 showPDFPreview(pdfBlob, name);
                                             })
                                             .catch(function (error) {
@@ -2017,7 +2028,7 @@
                                             ['Completed Classes', completedClasses.toString()],
                                             ['Cancelled Classes', cancelledClasses.toString()],
                                             ['Completion Rate', completionRate + '%'],
-                                            ['Average Rating', parseFloat(avgRating).toFixed(1) + '/5.0'],
+                                            ['Average Rating', avgRating + '/5.0'],
                                             ['Total Feedbacks', feedbackCount.toString()]
                                         ];
 
