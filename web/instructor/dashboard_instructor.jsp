@@ -1,16 +1,11 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%
     // Check if user is instructor
     if (!SessionUtil.checkInstructorAccess(session)) {
-        // Always redirect to login with appropriate message
         if (!SessionUtil.isLoggedIn(session)) {
             response.sendRedirect("../general/login.jsp?error=access_denied&message=Please_login_to_access_instructor_pages");
         } else {
-            // If logged in but not instructor
             response.sendRedirect("../general/login.jsp?error=instructor_access_required&message=Instructor_privileges_required_to_access_this_page");
         }
         return;
@@ -27,8 +22,6 @@
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <!-- Icons -->
         <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-        <!-- Chart.js -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <!-- Tailwind CDN -->
         <script src="https://cdn.tailwindcss.com"></script>
 
@@ -49,30 +42,28 @@
                             cloud: '#FDF8F8',
                             whitePure: '#FFFFFF',
                             petal: '#EFE1E1',
-
                             /* Text */
                             espresso: '#3D3434',
                             successText: '#1E3A1E',
-
                             /* Blue Accents */
                             teal: '#6D9B9B',
                             tealSoft: '#A3C1D6',
                             tealHover: '#557878',
-
                             /* Alerts */
                             successBg: '#A5D6A7',
                             successTextDark: '#1B5E20',
-
                             warningBg: '#FFCC80',
                             warningText: '#E65100',
-
                             dangerBg: '#EF9A9A',
                             dangerText: '#B71C1C',
-
                             infoBg: '#A3C1D6',
                             infoText: '#2C5555',
-
-                            /* New Colors */
+                            /* Status Colors */
+                            activeBg: '#D4EDDA',
+                            activeText: '#155724',
+                            pendingReliefBg: '#D1ECF1',
+                            pendingReliefText: '#0C5460',
+                            /* Chart Colors */
                             chartBlue: '#4A90E2',
                             chartGreen: '#50C878',
                             chartOrange: '#FFA500',
@@ -87,90 +78,8 @@
             @media (max-width: 640px) {
                 .mobile-stack { flex-direction: column !important; }
                 .mobile-full { width: 100% !important; }
-                .mobile-text-center { text-align: center !important; }
-                .mobile-p-4 { padding: 1rem !important; }
                 .mobile-mb-4 { margin-bottom: 1rem !important; }
-            }
-
-            .card-hover {
-                transition: all 0.3s ease;
-            }
-            .card-hover:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 10px 25px rgba(179, 109, 109, 0.15);
-            }
-
-            .pulse {
-                animation: pulse 2s infinite;
-            }
-
-            @keyframes pulse {
-                0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
-                70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); }
-            }
-
-            .gradient-bg {
-                background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
-            }
-
-            .calendar-day {
-                width: 2rem;
-                height: 2rem;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 50%;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .calendar-day:hover {
-                background-color: #F2D1D1;
-            }
-
-            .calendar-day.has-class {
-                background-color: #B36D6D;
-                color: white;
-            }
-
-            .notification-badge {
-                position: absolute;
-                top: -5px;
-                right: -5px;
-                background: #B71C1C;
-                color: white;
-                border-radius: 50%;
-                width: 18px;
-                height: 18px;
-                font-size: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            /* QR Code Styles */
-            .qr-container {
-                position: relative;
-                display: inline-block;
-            }
-
-            .qr-placeholder {
-                width: 60px;
-                height: 60px;
-                background-color: #f0f0f0;
-                border: 2px dashed #B36D6D;
-                border-radius: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
-
-            .qr-placeholder:hover {
-                background-color: #F2D1D1;
-                transform: scale(1.05);
+                .mobile-mb-2 { margin-bottom: 0.5rem !important; }
             }
 
             .qr-expanded {
@@ -182,9 +91,9 @@
                 background: white;
                 border-radius: 16px;
                 box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                padding: 25px;
+                padding: 30px;
                 display: none;
-                width: 280px;
+                width: 320px;
                 text-align: center;
                 border: 3px solid #F2D1D1;
             }
@@ -192,9 +101,10 @@
             .qr-expanded img {
                 width: 200px;
                 height: 200px;
-                margin-bottom: 15px;
+                margin: 0 auto 15px;
                 border-radius: 8px;
                 border: 1px solid #EFE1E1;
+                display: block;
             }
 
             .qr-expanded.show {
@@ -202,7 +112,6 @@
                 animation: fadeInScale 0.3s ease-out;
             }
 
-            /* Add overlay for when QR is shown */
             .qr-overlay {
                 position: fixed;
                 top: 0;
@@ -229,11 +138,10 @@
                 }
             }
 
-            /* Add close button for QR modal */
             .qr-close-btn {
                 position: absolute;
-                top: 10px;
-                right: 10px;
+                top: 12px;
+                right: 12px;
                 background: #EFE1E1;
                 border: none;
                 border-radius: 50%;
@@ -246,127 +154,12 @@
                 color: #3D3434;
                 font-size: 16px;
                 transition: all 0.2s ease;
+                z-index: 1001;
             }
 
             .qr-close-btn:hover {
                 background: #F2D1D1;
                 color: #B36D6D;
-            }
-
-            .main-container {
-                background: linear-gradient(135deg, #FDF8F8 0%, #FFFFFF 100%);
-                border-radius: 20px;
-                border: 2px solid #F2D1D1;
-                box-shadow: 0 8px 30px rgba(179, 109, 109, 0.08);
-                overflow: hidden;
-            }
-
-            .welcome-header {
-                background: linear-gradient(135deg, #F2D1D1 0%, #EFE1E1 100%);
-                padding: 2rem;
-                border-bottom: 2px solid #EFE1E1;
-            }
-
-            .dashboard-grid {
-                padding: 2rem;
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-
-            .section-card {
-                background: white;
-                border-radius: 16px;
-                border: 1px solid #EFE1E1;
-                padding: 1.5rem;
-                transition: all 0.3s ease;
-            }
-
-            .section-card:hover {
-                box-shadow: 0 10px 25px rgba(179, 109, 109, 0.1);
-                border-color: #F2D1D1;
-            }
-
-            .section-title {
-                color: #3D3434;
-                font-weight: 600;
-                font-size: 1.25rem;
-                margin-bottom: 1.5rem;
-                padding-bottom: 0.75rem;
-                border-bottom: 2px solid #F2D1D1;
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .section-title.no-border {
-                border-bottom: 0 !important;
-                padding-bottom: 0 !important;
-                margin-bottom: 0 !important;
-            }
-
-            /* Square QR Modal */
-            .qr-expanded {
-                width: 280px;
-                height: 380px;
-                padding: 25px;
-            }
-
-            .qr-expanded img {
-                width: 200px;
-                height: 200px;
-                object-fit: contain;
-            }
-
-            /* Weekly Calendar Grid Styles */
-            .week-calendar {
-                display: grid;
-                grid-template-columns: repeat(7, 1fr);
-                gap: 0.5rem;
-                margin-bottom: 1.5rem;
-            }
-
-            .week-day {
-                background: #FDF8F8;
-                border-radius: 10px;
-                padding: 0.75rem;
-                border: 1px solid #EFE1E1;
-                min-height: 120px;
-                transition: all 0.2s ease;
-            }
-
-            .week-day:hover {
-                border-color: #F2D1D1;
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(179, 109, 109, 0.1);
-            }
-
-            .week-day.today {
-                background: linear-gradient(135deg, #F2D1D1 0%, #EFE1E1 100%);
-                border: 2px solid #B36D6D;
-            }
-
-            .week-day-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 0.5rem;
-                padding-bottom: 0.5rem;
-                border-bottom: 1px solid #EFE1E1;
-            }
-
-            .week-day-name {
-                font-size: 0.875rem;
-                font-weight: 600;
-                color: #3D3434;
-            }
-
-            .week-day-date {
-                font-size: 0.75rem;
-                color: #3D3434/70;
-                background: white;
-                padding: 0.125rem 0.375rem;
-                border-radius: 4px;
             }
 
             .week-day-classes {
@@ -395,7 +188,7 @@
 
             .week-class-time {
                 font-size: 0.7rem;
-                color: #3D3434/70;
+                color: rgba(61, 52, 52, 0.7);
                 margin-top: 0.125rem;
             }
 
@@ -405,6 +198,35 @@
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
+
+            .loading-spinner {
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                border: 2px solid #f3f3f3;
+                border-top: 2px solid #B36D6D;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .week-nav-btn {
+                transition: all 0.2s ease;
+            }
+
+            .week-nav-btn:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(179, 109, 109, 0.2);
+            }
+
+            .week-nav-btn:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
         </style>
     </head>
 
@@ -412,715 +234,598 @@
 
         <jsp:include page="../util/header.jsp" />
 
-        <main class="p-4 md:p-6 flex-1 flex flex-col items-center">
+        <main class="py-6 px-4 md:px-8 flex-1 flex flex-col items-center">
+            <!-- MAIN CONTAINER -->
+            <div class="w-full bg-whitePure rounded-xl shadow-sm border border-blush flex-1 flex flex-col"
+                 style="max-width:1500px">
 
-            <!-- MAIN CONTAINER: Welcome Sarah Lim! -->
-            <div class="w-full main-container" style="max-width:1500px">
-
-                <!-- Welcome Header -->
-                <div class="welcome-header">
+                <!-- Welcome Header (Will be populated via JavaScript) -->
+                <div id="welcomeHeader" class="bg-gradient-to-br from-blush to-petal rounded-t-xl py-8 px-6 md:px-8 border-b border-petal">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mobile-stack">
                         <div class="mobile-full mobile-mb-4 md:mb-0">
                             <div class="flex items-center mb-3">
                                 <div class="w-16 h-16 rounded-full bg-whitePure border-4 border-whitePure shadow-md flex items-center justify-center mr-4">
-                                    <c:choose>
-                                        <c:when test="${not empty instructor.profileImageFilePath and instructor.profileImageFilePath != ''}">
-                                            <img src="${instructor.profileImageFilePath}" alt="Profile Picture" class="w-full h-full rounded-full object-cover">
-                                        </c:when>
-                                        <c:otherwise>
-                                            <i class="fas fa-user text-dusty text-2xl"></i>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <i class="fas fa-user text-dusty text-2xl"></i>
                                 </div>
                                 <div>
-                                    <h1 class="text-3xl font-bold text-espresso">
-                                        Welcome, <span class="text-dusty">${instructor.name}</span>!
+                                    <h1 id="welcomeMessage" class="text-3xl font-bold text-espresso">
+                                        Loading...
                                     </h1>
-                                    <p class="text-espresso/70 text-sm mt-1">
+                                    <p id="instructorInfo" class="text-espresso/70 text-sm mt-1">
                                         <i class="fas fa-certificate text-dusty mr-2"></i>
-                                        Certified Mat Pilates Instructor • Since <fmt:formatDate value="${instructor.dateJoined}" pattern="yyyy" />
+                                        <span id="statusPlaceholder">Loading...</span>
                                     </p>
                                     <div class="flex items-center mt-3 space-x-4">
-                                        <span class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
+                                        <span id="monthlyClasses" class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
                                             <i class="fas fa-calendar-check text-dusty mr-2"></i>
-                                            ${classesThisMonth} Classes This Month
+                                            Loading...
                                         </span>
-                                        <span class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
+                                        <span id="averageRating" class="text-sm bg-whitePure/80 px-3 py-1 rounded-full text-espresso">
                                             <i class="fas fa-star text-yellow-500 mr-2"></i>
-                                            <c:choose>
-                                                <c:when test="${avgRating != '0.0' and avgRating != '0'}">
-                                                    ${avgRating} Avg Rating
-                                                </c:when>
-                                                <c:otherwise>
-                                                    No ratings yet
-                                                </c:otherwise>
-                                            </c:choose>
+                                            Loading...
                                         </span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Quick Stats -->
-                        <div class="flex space-x-6 mobile-full mobile-justify-center">
-                            <div class="text-center bg-whitePure/90 p-4 rounded-xl shadow-sm min-w-[100px]">
-                                <div class="text-3xl font-bold text-dusty">${todayClasses}</div>
-                                <div class="text-sm text-espresso/70">Today</div>
-                                <div class="text-xs text-espresso/50 mt-1">Classes</div>
-                            </div>
-                            <div class="text-center bg-whitePure/90 p-4 rounded-xl shadow-sm min-w-[100px]">
-                                <div class="text-3xl font-bold text-teal">${availableClassesCount}</div>
-                                <div class="text-sm text-espresso/70">Available</div>
-                                <div class="text-xs text-espresso/50 mt-1">Classes</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Dashboard Content Grid - CHANGED TO SINGLE COLUMN -->
-                <div class="dashboard-grid">
-
+                <!-- Dashboard Content Grid -->
+                <div class="p-6 md:p-8 space-y-8 flex-1">
                     <!-- TODAY'S SCHEDULE -->
-                    <div class="section-card">
-                        <h2 class="section-title">
-                            <i class="fas fa-calendar-day text-dusty"></i>
+                    <div class="bg-white rounded-xl border border-petal p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <h2 class="text-xl font-bold text-espresso mb-2 flex items-center">
+                            <i class="fas fa-calendar-day text-dusty mr-3"></i>
                             Today's Schedule
                         </h2>
-                        <p class="text-sm text-espresso/60 mb-6">
-                            <span id="current-date"></span> • You have ${todayClasses} classes today
+                        <p id="todayDate" class="text-sm text-espresso/60 mb-6">
+                            Loading date...
                         </p>
 
+                        <!-- Loading Spinner -->
+                        <div id="todayLoading" class="flex items-center justify-center py-8">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-espresso">Loading today's schedule...</span>
+                        </div>
+
                         <!-- Today's Classes Timeline -->
-                        <div class="space-y-4">
-                            <c:choose>
-                                <c:when test="${not empty todaysClasses}">
-                                    <c:forEach var="classItem" items="${todaysClasses}" varStatus="status">
-                                        <div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30">
-                                            <div class="w-20 text-center">
-                                                <div class="text-lg font-bold text-dusty">
-                                                    <fmt:formatDate value="${classItem.classStartTime}" pattern="h:mm a" />
-                                                </div>
-                                                <div class="text-xs text-espresso/60">
-                                                    <c:set var="startTime" value="${classItem.classStartTime}" />
-                                                    <c:set var="endTime" value="${classItem.classEndTime}" />
-                                                    <c:if test="${not empty startTime and not empty endTime}">
-                                                        <c:set var="durationMillis" value="${endTime.time - startTime.time}" />
-                                                        <c:set var="durationMinutes" value="${durationMillis / (1000 * 60)}" />
-                                                        <fmt:formatNumber value="${durationMinutes}" maxFractionDigits="0" /> mins
-                                                    </c:if>
-                                                </div>
-                                            </div>
-                                            <div class="flex-1 ml-6">
-                                                <div class="flex justify-between items-start mobile-stack">
-                                                    <div class="mobile-full mobile-mb-2 md:mb-0">
-                                                        <h3 class="font-semibold text-espresso text-lg">${classItem.className}</h3>
-                                                        <p class="text-sm text-espresso/70">
-                                                            <i class="fas fa-map-marker-alt mr-2 text-dusty"></i>
-                                                            ${classItem.location} • <span class="font-medium">${classItem.enrolledStudents} students enrolled</span>
-                                                        </p>
-                                                    </div>
-                                                    <div class="flex items-center space-x-3">
-                                                        <!-- QR Code Placeholder -->
-                                                        <div class="qr-container">
-                                                            <div class="qr-placeholder" onclick="toggleQR('qr${status.index}')">
-                                                                <i class="fas fa-qrcode text-dusty text-xl"></i>
-                                                            </div>
-                                                            <div class="qr-overlay" id="overlay-qr${status.index}" onclick="closeAllQR()"></div>
-                                                            <div class="qr-expanded" id="qr${status.index}">
-                                                                <button class="qr-close-btn" onclick="closeAllQR()">
-                                                                    <i class="fas fa-times"></i>
-                                                                </button>
-                                                                <h4 class="font-semibold text-espresso mb-2">${classItem.className}</h4>
-                                                                <p class="text-sm text-espresso/70 mb-4">
-                                                                    <fmt:formatDate value="${classItem.classStartTime}" pattern="h:mm a" /> • ${classItem.location}
-                                                                </p>
-                                                                <c:choose>
-                                                                    <c:when test="${not empty classItem.qrcodeFilePath}">
-                                                                        <img src="${classItem.qrcodeFilePath}" alt="QR Code for ${classItem.className}">
-                                                                    </c:when>
-                                                                    <c:otherwise>
-                                                                        <img src="qr_codes/dummy.PNG" alt="QR Code for ${classItem.className}">
-                                                                    </c:otherwise>
-                                                                </c:choose>
-                                                                <button onclick="location.href = 'feedback.jsp?classID=${classItem.classID}&instructorID=${instructor.instructorID}'" 
-                                                                        class="mt-4 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium">
-                                                                    <i class="fas fa-chart-bar mr-2"></i>View Feedback
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="mt-3 flex items-center text-sm text-espresso/60">
-                                                    <span class="mr-4">
-                                                        <i class="fas fa-user mr-1"></i>${instructor.name} (You)
-                                                    </span>
-                                                    <span>
-                                                        <i class="fas fa-chart-bar mr-1"></i>Avg. Rating: ${avgRating}/5
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </c:forEach>
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="text-center py-8">
-                                        <i class="fas fa-calendar-times text-dusty text-4xl mb-4"></i>
-                                        <p class="text-espresso/70">No classes scheduled for today</p>
-                                        <p class="text-sm text-espresso/50 mt-2">Check the available classes below to take on new sessions</p>
-                                    </div>
-                                </c:otherwise>
-                            </c:choose>
+                        <div id="todayClassesContainer" class="space-y-4 hidden">
+                            <!-- Classes will be loaded here via JavaScript -->
+                        </div>
+
+                        <!-- No Classes Message -->
+                        <div id="noClassesToday" class="hidden text-center py-8 text-espresso/60">
+                            <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                            <p>No classes scheduled for today</p>
                         </div>
                     </div>
 
-                    <!-- WEEK OVERVIEW - NOW BELOW TODAY'S SCHEDULE -->
-                    <div class="section-card">
-                        <div class="flex items-center justify-between mb-4">
-                            <h2 class="section-title" style="margin-bottom: 0; border-bottom: 0; padding-bottom: 0;">
-                                <i class="fas fa-calendar text-dusty"></i>
+                    <!-- WEEK OVERVIEW -->
+                    <div class="bg-white rounded-xl border border-petal p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
+                            <h2 class="text-xl font-bold text-espresso flex items-center">
+                                <i class="fas fa-calendar text-dusty mr-3"></i>
                                 Week Overview
                             </h2>
-                            <span class="text-sm text-espresso/60" id="current-week-range">
-                                <fmt:formatDate value="${weekStart}" pattern="MMM d" /> - <fmt:formatDate value="${weekEnd}" pattern="MMM d" />
-                            </span>
+
+                            <!-- Week Navigation Controls -->
+                            <div class="flex items-center gap-3 w-full md:w-auto">
+                                <button id="prevWeekBtn" onclick="navigateWeek(-1)" 
+                                        class="week-nav-btn flex items-center gap-2 px-4 py-2 bg-dusty text-white rounded-lg hover:bg-dustyHover transition-colors">
+                                    <i class="fas fa-chevron-left"></i>
+                                    <span class="hidden sm:inline">Previous</span>
+                                </button>
+
+                                <div class="flex-1 md:flex-none text-center">
+                                    <span id="currentWeekRange" class="text-sm font-medium text-espresso whitespace-nowrap">
+                                        Loading...
+                                    </span>
+                                </div>
+
+                                <button id="nextWeekBtn" onclick="navigateWeek(1)" 
+                                        class="week-nav-btn flex items-center gap-2 px-4 py-2 bg-dusty text-white rounded-lg hover:bg-dustyHover transition-colors">
+                                    <span class="hidden sm:inline">Next</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+
+                                <button id="todayWeekBtn" onclick="goToCurrentWeek()" 
+                                        class="week-nav-btn px-4 py-2 bg-teal text-white rounded-lg hover:bg-tealHover transition-colors whitespace-nowrap">
+                                    <i class="fas fa-calendar-day mr-1"></i>
+                                    <span class="hidden sm:inline">This Week</span>
+                                    <span class="sm:hidden">Today</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Loading Spinner -->
+                        <div id="weekLoading" class="flex items-center justify-center py-8">
+                            <div class="loading-spinner mr-3"></div>
+                            <span class="text-espresso">Loading weekly calendar...</span>
                         </div>
 
                         <!-- Weekly Calendar Grid -->
-                        <div class="mt-2 mb-6">
-                            <div class="week-calendar" id="week-calendar-grid">
-                                <!-- Will be populated by JavaScript -->
-                            </div>
+                        <div id="weekCalendarContainer" class="mb-8 hidden">
+                            <!-- Calendar will be loaded here via JavaScript -->
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-petal">
-                            <!-- Class Status Legend -->
-                            <div>
-                                <h4 class="font-medium text-espresso mb-3">Class Status</h4>
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <div class="w-3 h-3 rounded-full bg-successTextDark mr-2"></div>
-                                            <span class="text-sm text-espresso/70">Your Class (Confirm Placement)</span>
-                                        </div>
-                                        <span class="text-xs text-espresso/60">
-                                            <c:choose>
-                                                <c:when test="${not empty weeklySummary and not empty weeklySummary.confirmedClasses}">
-                                                    ${weeklySummary.confirmedClasses} classes
-                                                </c:when>
-                                                <c:otherwise>
-                                                    0 classes
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center">
-                                            <div class="w-3 h-3 rounded-full bg-warningText mr-2"></div>
-                                            <span class="text-sm text-espresso/70">Pending Relief</span>
-                                        </div>
-                                        <span class="text-xs text-espresso/60">
-                                            <c:choose>
-                                                <c:when test="${not empty weeklySummary and not empty weeklySummary.pendingClasses}">
-                                                    ${weeklySummary.pendingClasses} classes
-                                                </c:when>
-                                                <c:otherwise>
-                                                    0 classes
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </span>
+                        <div id="weekSummaryContainer" class="w-full pt-6 border-t border-petal hidden">
+                            <h4 class="font-medium text-espresso mb-4">This Week Summary</h4>
+
+                            <!-- Use SAME 7-column grid as calendar -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3 w-full">
+
+                                <!-- Total Confirm Class (span 4/7) -->
+                                <div class="md:col-span-4 col-span-2 sm:col-span-2">
+                                    <div id="confirmedClassesCard" class="text-center p-6 rounded-lg bg-successBg/20 border border-successBg/30 w-full h-full">
+                                        <div class="text-2xl font-bold text-successTextDark">0</div>
+                                        <div class="text-sm text-espresso/70 mt-1">Total Confirm Class</div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Quick Stats -->
-                            <div>
-                                <h4 class="font-medium text-espresso mb-3">This Week Summary</h4>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div class="text-center p-3 rounded-lg bg-successBg/20 border border-successBg/30">
-                                        <div class="text-lg font-bold text-successTextDark">
-                                            <c:choose>
-                                                <c:when test="${not empty weeklySummary and not empty weeklySummary.confirmedClasses}">
-                                                    ${weeklySummary.confirmedClasses}
-                                                </c:when>
-                                                <c:otherwise>
-                                                    0
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                        <div class="text-xs text-espresso/70">Total Confirm Class</div>
-                                    </div>
-                                    <div class="text-center p-3 rounded-lg bg-warningBg/20 border border-warningBg/30">
-                                        <div class="text-lg font-bold text-warningText">
-                                            <c:choose>
-                                                <c:when test="${not empty weeklySummary and not empty weeklySummary.pendingClasses}">
-                                                    ${weeklySummary.pendingClasses}
-                                                </c:when>
-                                                <c:otherwise>
-                                                    0
-                                                </c:otherwise>
-                                            </c:choose>
-                                        </div>
-                                        <div class="text-xs text-espresso/70">Pending Relief</div>
+                                <!-- Pending Relief (span 3/7) -->
+                                <div class="md:col-span-3 col-span-2 sm:col-span-1">
+                                    <div id="pendingClassesCard" class="text-center p-6 rounded-lg bg-warningBg/20 border border-warningBg/30 w-full h-full">
+                                        <div class="text-2xl font-bold text-warningText">0</div>
+                                        <div class="text-sm text-espresso/70 mt-1">Pending Relief</div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2-Column Grid for Relief Updates & Available Classes -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                        <!-- RELIEF CLASS UPDATES -->
-                        <div class="section-card">
-                            <div class="flex items-center justify-between mb-6">
-                                <h2 class="section-title">
-                                    <i class="fas fa-exchange-alt text-infoText"></i>
-                                    Relief Class Updates
-                                </h2>
-                            </div>
-
-                            <div class="space-y-4">
-                                <!-- Successfully Relieved Class -->
-                                <c:if test="${not empty reliefUpdates}">
-                                    <c:forEach var="update" items="${reliefUpdates}">
-                                        <c:if test="${update.type == 'completed'}">
-                                            <div class="p-4 rounded-lg border border-successBg/50 bg-successBg/10">
-                                                <div class="flex items-center mb-3">
-                                                    <div class="w-10 h-10 rounded-full bg-successBg flex items-center justify-center mr-3">
-                                                        <i class="fas fa-check-circle text-successTextDark"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="font-semibold text-espresso">Successfully Relieved</h4>
-                                                        <p class="text-xs text-espresso/70">You took over a class</p>
-                                                    </div>
-                                                </div>
-                                                <div class="space-y-3">
-                                                    <c:forEach var="reliefClass" items="${update.classes}">
-                                                        <div class="p-3 rounded-lg bg-whitePure/50 border border-successBg/30">
-                                                            <div class="flex items-center justify-between mb-1">
-                                                                <span class="font-medium text-espresso">${reliefClass.className}</span>
-                                                                <span class="text-xs bg-successBg text-successTextDark px-2 py-1 rounded">COMPLETED</span>
-                                                            </div>
-                                                            <p class="text-sm text-espresso/70">
-                                                                <i class="fas fa-calendar-alt mr-2"></i>
-                                                                <fmt:formatDate value="${reliefClass.classDate}" pattern="EEEE, MMM d" /> • 
-                                                                <fmt:formatDate value="${reliefClass.classStartTime}" pattern="h:mm a" /> • ${reliefClass.location}
-                                                            </p>
-                                                            <div class="flex items-center justify-between mt-2 text-xs">
-                                                                <span class="text-espresso/60">
-                                                                    <i class="fas fa-user-friends mr-1"></i>
-                                                                    ${reliefClass.studentsAttended} students attended
-                                                                </span>
-                                                                <span class="text-successTextDark font-medium">
-                                                                    <i class="fas fa-star mr-1"></i>
-                                                                    <c:choose>
-                                                                        <c:when test="${reliefClass.rating != 'No ratings yet'}">
-                                                                            ${reliefClass.rating}/5 rating
-                                                                        </c:when>
-                                                                        <c:otherwise>
-                                                                            No ratings yet
-                                                                        </c:otherwise>
-                                                                    </c:choose>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </c:forEach>
-                                                </div>
-                                                <div class="mt-4 pt-3 border-t border-successBg/30">
-                                                    <p class="text-xs text-espresso/60 text-center">
-                                                        <i class="fas fa-info-circle mr-1"></i>
-                                                        You successfully relieved ${update.count} classes this month
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </c:if>
-
-                                        <!-- Upcoming Relief Opportunities -->
-                                        <c:if test="${update.type == 'pending'}">
-                                            <div class="p-4 rounded-lg border border-infoBg/50 bg-infoBg/10">
-                                                <div class="flex items-center mb-3">
-                                                    <div class="w-10 h-10 rounded-full bg-infoBg flex items-center justify-center mr-3">
-                                                        <i class="fas fa-clock text-infoText"></i>
-                                                    </div>
-                                                    <div>
-                                                        <h4 class="font-semibold text-espresso">Available for Relief</h4>
-                                                        <p class="text-xs text-espresso/70">Position in queue</p>
-                                                    </div>
-                                                </div>
-                                                <c:forEach var="position" items="${update.positions}">
-                                                    <p class="text-sm text-espresso/80 mb-2">
-                                                        <i class="fas fa-list-ol text-infoText mr-2"></i>
-                                                        "${position.className}" - Position #${position.position}
-                                                    </p>
-                                                    <div class="flex items-center text-xs text-espresso/60 mb-3">
-                                                        <i class="fas fa-info-circle mr-1"></i>
-                                                        You will be notified if position #1 becomes available
-                                                    </div>
-                                                    <div class="bg-whitePure/50 p-3 rounded-lg border border-infoBg/30">
-                                                        <p class="text-xs text-espresso/70 mb-1">Next in line:</p>
-                                                        <div class="flex items-center justify-between">
-                                                            <span class="text-sm font-medium text-espresso">${position.firstInLine}</span>
-                                                            <span class="text-xs bg-infoBg text-infoText px-2 py-1 rounded">POSITION #1</span>
-                                                        </div>
-                                                    </div>
-                                                </c:forEach>
-                                            </div>
-                                        </c:if>
-                                    </c:forEach>
-                                </c:if>
-                                <c:if test="${empty reliefUpdates}">
-                                    <div class="text-center py-8">
-                                        <i class="fas fa-exchange-alt text-dusty text-4xl mb-4"></i>
-                                        <p class="text-espresso/70">No relief updates available</p>
-                                        <p class="text-sm text-espresso/50 mt-2">Check available classes to take on relief opportunities</p>
-                                    </div>
-                                </c:if>
-                            </div>
-                        </div>
-
-                        <!-- AVAILABLE CLASSES -->
-                        <div class="section-card">
-                            <div class="flex items-center justify-between mb-6">
-                                <h2 class="section-title">
-                                    <i class="fas fa-search text-teal"></i>
-                                    Available Classes
-                                </h2>
-                                <a href="schedule_instructor.jsp" class="text-teal text-sm font-medium hover:text-tealHover">
-                                    Browse All →
-                                </a>
-                            </div>
-
-                            <div class="space-y-4">
-                                <c:choose>
-                                    <c:when test="${not empty availableClasses}">
-                                        <c:forEach var="availableClass" items="${availableClasses}" varStatus="status">
-                                            <div class="p-4 rounded-lg border <c:if test="${status.index == 0}">border-infoBg/30 bg-infoBg/5</c:if><c:if test="${status.index > 0}">border-blush/30</c:if>">
-                                                <div class="flex justify-between items-start mb-2">
-                                                    <h4 class="font-semibold text-espresso">${availableClass.className}</h4>
-                                                    <c:choose>
-                                                        <c:when test="${status.index == 0}">
-                                                            <span class="text-xs bg-infoBg text-infoText px-2 py-1 rounded">NEW</span>
-                                                        </c:when>
-                                                        <c:otherwise>
-                                                            <span class="text-xs bg-blush text-dusty px-2 py-1 rounded">OPEN</span>
-                                                        </c:otherwise>
-                                                    </c:choose>
-                                                </div>
-                                                <p class="text-sm text-espresso/70 mb-3">
-                                                    <i class="fas fa-calendar-alt mr-2"></i>
-                                                    <fmt:formatDate value="${availableClass.classDate}" pattern="EEEE, MMM d" /> • 
-                                                    <fmt:formatDate value="${availableClass.classStartTime}" pattern="h:mm a" /> • ${availableClass.location}
-                                                </p>
-                                                <div class="flex justify-between items-center">
-                                                    <span class="text-xs text-espresso/60">
-                                                        <i class="fas fa-user-friends mr-1"></i>
-                                                        ${availableClass.enrolledStudents}/${availableClass.noOfParticipant} spots filled
-                                                    </span>
-                                                    <span class="text-xs text-espresso/60">
-                                                        <c:choose>
-                                                            <c:when test="${availableClass.instructorCount == 0}">No instructors assigned</c:when>
-                                                            <c:when test="${availableClass.instructorCount == 1}">1 instructor assigned</c:when>
-                                                            <c:otherwise>${availableClass.instructorCount} instructors assigned</c:otherwise>
-                                                        </c:choose>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </c:forEach>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <div class="text-center py-8">
-                                            <i class="fas fa-search text-dusty text-4xl mb-4"></i>
-                                            <p class="text-espresso/70">No available classes at the moment</p>
-                                            <p class="text-sm text-espresso/50 mt-2">Check back later for new opportunities</p>
-                                        </div>
-                                    </c:otherwise>
-                                </c:choose>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </main>
+
+        <!-- QR Code Modal (Dynamically created) -->
+        <div id="qrModalContainer"></div>
 
         <jsp:include page="../util/footer.jsp" />
         <jsp:include page="../util/sidebar.jsp" />
         <script src="../util/sidebar.js"></script>
 
         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Set current date
-                const now = new Date();
-                const options = {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'};
-                document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+                                    // Global variables for week navigation
+                                    let currentWeekStart = null;
+                                    let currentWeekEnd = null;
 
-                // Set week range
-                const weekStart = new Date(now);
-                weekStart.setDate(now.getDate() - now.getDay());
-                const weekEnd = new Date(weekStart);
-                weekEnd.setDate(weekStart.getDate() + 6);
+                                    document.addEventListener('DOMContentLoaded', function () {
+                                        // Initialize dashboard
+                                        loadDashboardData();
+                                    });
 
-                const weekStartStr = weekStart.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-                const weekEndStr = weekEnd.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-                
-                // Only update if JSTL didn't already set it
-                const weekRangeElement = document.getElementById('current-week-range');
-                if (weekRangeElement.textContent.trim() === '') {
-                    document.getElementById('current-week-range').textContent = weekStartStr + ' - ' + weekEndStr;
-                }
+                                    async function loadDashboardData() {
+                                        try {
+                                            // Show loading states
+                                            document.getElementById('todayLoading').classList.remove('hidden');
+                                            document.getElementById('weekLoading').classList.remove('hidden');
 
-                // Initialize weekly calendar grid
-                initializeWeekCalendarGrid();
+                                            // Load instructor data
+                                            await loadInstructorInfo();
 
-                // Close QR when clicking outside overlay
-                document.addEventListener('click', function (event) {
-                    // If clicking on overlay, close all QR codes
-                    if (event.target.classList.contains('qr-overlay')) {
-                        closeAllQR();
-                    }
-                    // If clicking outside QR modal and not on QR placeholder
-                    else if (!event.target.closest('.qr-expanded') && !event.target.closest('.qr-placeholder')) {
-                        closeAllQR();
-                    }
-                });
+                                            // Load today's schedule
+                                            await loadTodaySchedule();
 
-                // Close QR with Escape key
-                document.addEventListener('keydown', function (event) {
-                    if (event.key === 'Escape') {
-                        closeAllQR();
-                    }
-                });
-            });
+                                            // Load weekly overview (current week by default)
+                                            await loadWeekOverview();
 
-            // BUANG SEMUA FUNCTION initializeMiniCalendar() DAN PAKAIANNYA
+                                        } catch (error) {
+                                            console.error('Error loading dashboard:', error);
+                                            alert('Failed to load dashboard data. Please refresh the page.');
+                                        }
+                                    }
 
-            function initializeWeekCalendarGrid() {
-                const weekGrid = document.getElementById('week-calendar-grid');
-                const now = new Date();
-                const today = now.getDate();
+                                    async function loadInstructorInfo() {
+                                        try {
+                                            const response = await fetch('../DashboardInstructorServlet?action=getInstructorInfo');
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
 
-                // Check if weekClasses data is available from backend
-                const hasWeekData = document.querySelector('input[name="weekDataExists"]') ? 
-                                    document.querySelector('input[name="weekDataExists"]').value === 'true' : 
-                                    ${not empty weekClasses};
+                                            const data = await response.json();
 
-                if (hasWeekData) {
-                    // Use dynamic data from backend
-                    const weekData = [
-                        <c:forEach var="day" items="${weekClasses}" varStatus="status">
-                        {
-                            dayName: "${day.dayName}",
-                            date: ${day.date},
-                            isToday: ${day.isToday},
-                            classes: [
-                                <c:forEach var="cls" items="${day.classes}" varStatus="classStatus">
-                                {
-                                    title: "${fn:escapeXml(cls.title)}",
-                                    time: "${cls.time}",
-                                    type: "${cls.type}"
-                                }<c:if test="${!classStatus.last}">,</c:if>
-                                </c:forEach>
-                            ]
-                        }<c:if test="${!status.last}">,</c:if>
-                        </c:forEach>
-                    ];
+                                            if (data.success) {
+                                                const instructor = data.data.instructor;
+                                                const stats = data.data.stats;
 
-                    let weekHTML = '';
+                                                const welcomeMessage = 'Welcome, <span class="text-dusty">' + instructor.name + '</span>!';
+                                                document.getElementById('welcomeMessage').innerHTML = welcomeMessage;
 
-                    weekData.forEach(day => {
-                        const isToday = day.isToday;
-                        let dayClass = 'week-day';
-                        if (isToday) {
-                            dayClass += ' today';
-                        }
+                                                const statusText = (instructor.status === 'active') ? 'Active' : 'Inactive';
+                                                const instructorInfoText = statusText + ' • Since ' + instructor.joinedYear;
+                                                document.getElementById('statusPlaceholder').innerHTML = instructorInfoText;
 
-                        weekHTML += '<div class="' + dayClass + '">';
-                        weekHTML += '<div class="week-day-header">';
-                        weekHTML += '<span class="week-day-name">' + day.dayName + '</span>';
-                        weekHTML += '<span class="week-day-date">' + day.date + '</span>';
-                        weekHTML += '</div>';
-                        weekHTML += '<div class="week-day-classes">';
+                                                // Store instructor ID globally for QR modal
+                                                window.currentInstructorId = instructor.instructorID;
 
-                        if (day.classes.length > 0) {
-                            day.classes.forEach(cls => {
-                                weekHTML += '<div class="week-class-item ' + cls.type + '">';
-                                weekHTML += '<div class="week-class-title">' + cls.title + '</div>';
-                                weekHTML += '<div class="week-class-time">' + cls.time + '</div>';
-                                weekHTML += '</div>';
-                            });
-                        } else {
-                            weekHTML += '<div class="text-center text-espresso/40 text-xs py-4">';
-                            weekHTML += 'No classes';
-                            weekHTML += '</div>';
-                        }
+                                                // Update monthly classes
+                                                document.getElementById('monthlyClasses').innerHTML =
+                                                        '<i class="fas fa-calendar-check text-dusty mr-2"></i>' + stats.monthlyClassCount + ' Classes This Month';
 
-                        weekHTML += '</div>';
-                        weekHTML += '</div>';
-                    });
+                                                // Update average rating
+                                                document.getElementById('averageRating').innerHTML =
+                                                        '<i class="fas fa-star text-yellow-500 mr-2"></i>' + stats.overallRating.toFixed(1) + ' Avg Rating';
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading instructor info:', error);
+                                            document.getElementById('welcomeMessage').textContent = 'Error loading data';
+                                        }
+                                    }
 
-                    weekGrid.innerHTML = weekHTML;
+                                    async function loadTodaySchedule() {
+                                        try {
+                                            const response = await fetch('../DashboardInstructorServlet?action=getTodaySchedule');
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
 
-                    // Add click handlers to each day
-                    document.querySelectorAll('.week-day').forEach((dayElement, index) => {
-                        dayElement.addEventListener('click', function () {
-                            const dayData = weekData[index];
-                            if (dayData.classes.length > 0) {
-                                let message = dayData.dayName + ', ' + dayData.date + ':\n\n';
-                                dayData.classes.forEach(cls => {
-                                    message += '• ' + cls.title + ' (' + cls.time + ') - ' +
-                                            (cls.type === 'confirm' ? 'Confirm Placement' : 'Pending Relief') + '\n';
-                                });
-                                alert(message);
-                            }
-                        });
-                    });
-                } else {
-                    // Fallback to hardcoded data if no backend data
-                    const weekData = [
-                        {
-                            dayName: "Sun",
-                            date: 10,
-                            classes: []
-                        },
-                        {
-                            dayName: "Mon",
-                            date: 11,
-                            classes: [
-                                {title: "Mat Pilates Beginner", time: "9:00 AM", type: "confirm"},
-                                {title: "Advanced Pilates", time: "6:00 PM", type: "confirm"}
-                            ]
-                        },
-                        {
-                            dayName: "Tue",
-                            date: 12,
-                            classes: [
-                                {title: "Reformer Intermediate", time: "2:00 PM", type: "confirm"}
-                            ]
-                        },
-                        {
-                            dayName: "Wed",
-                            date: 13,
-                            isToday: true,
-                            classes: [
-                                {title: "Mat Pilates Beginner", time: "9:00 AM", type: "confirm"},
-                                {title: "Reformer Intermediate", time: "2:00 PM", type: "confirm"},
-                                {title: "Advanced Pilates", time: "6:00 PM", type: "confirm"}
-                            ]
-                        },
-                        {
-                            dayName: "Thu",
-                            date: 14,
-                            classes: [
-                                {title: "Morning Flow Class", time: "8:00 AM", type: "pending"}
-                            ]
-                        },
-                        {
-                            dayName: "Fri",
-                            date: 15,
-                            classes: [
-                                {title: "Pilates for Seniors", time: "10:00 AM", type: "confirm"},
-                                {title: "Evening Stretch", time: "5:30 PM", type: "pending"}
-                            ]
-                        },
-                        {
-                            dayName: "Sat",
-                            date: 16,
-                            classes: []
-                        }
-                    ];
+                                            const data = await response.json();
 
-                    let weekHTML = '';
+                                            if (data.success) {
+                                                // Hide loading
+                                                document.getElementById('todayLoading').classList.add('hidden');
 
-                    weekData.forEach(day => {
-                        const isToday = day.date === today;
-                        let dayClass = 'week-day';
-                        if (isToday) {
-                            dayClass += ' today';
-                        }
+                                                const todayData = data.data;
 
-                        weekHTML += '<div class="' + dayClass + '">';
-                        weekHTML += '<div class="week-day-header">';
-                        weekHTML += '<span class="week-day-name">' + day.dayName + '</span>';
-                        weekHTML += '<span class="week-day-date">' + day.date + '</span>';
-                        weekHTML += '</div>';
-                        weekHTML += '<div class="week-day-classes">';
+                                                // Update date
+                                                document.getElementById('todayDate').textContent =
+                                                        todayData.formattedDate + ' • You have ' + todayData.todayClassesCount + ' classes today';
 
-                        if (day.classes.length > 0) {
-                            day.classes.forEach(cls => {
-                                weekHTML += '<div class="week-class-item ' + cls.type + '">';
-                                weekHTML += '<div class="week-class-title">' + cls.title + '</div>';
-                                weekHTML += '<div class="week-class-time">' + cls.time + '</div>';
-                                weekHTML += '</div>';
-                            });
-                        } else {
-                            weekHTML += '<div class="text-center text-espresso/40 text-xs py-4">';
-                            weekHTML += 'No classes';
-                            weekHTML += '</div>';
-                        }
+                                                if (todayData.todayClasses.length === 0) {
+                                                    // Show no classes message
+                                                    document.getElementById('noClassesToday').classList.remove('hidden');
+                                                    document.getElementById('todayClassesContainer').classList.add('hidden');
+                                                } else {
+                                                    // Show classes container
+                                                    document.getElementById('noClassesToday').classList.add('hidden');
+                                                    document.getElementById('todayClassesContainer').classList.remove('hidden');
 
-                        weekHTML += '</div>';
-                        weekHTML += '</div>';
-                    });
+                                                    // Render today's classes
+                                                    renderTodayClasses(todayData.todayClasses);
+                                                }
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading today schedule:', error);
+                                            document.getElementById('todayLoading').innerHTML =
+                                                    '<span class="text-dangerText">Error loading schedule</span>';
+                                        }
+                                    }
 
-                    weekGrid.innerHTML = weekHTML;
+                                    function renderTodayClasses(classes) {
+                                        const container = document.getElementById('todayClassesContainer');
+                                        container.innerHTML = '';
 
-                    // Add click handlers to each day
-                    document.querySelectorAll('.week-day').forEach((dayElement, index) => {
-                        dayElement.addEventListener('click', function () {
-                            const dayData = weekData[index];
-                            if (dayData.classes.length > 0) {
-                                let message = dayData.dayName + ', ' + dayData.date + ':\n\n';
-                                dayData.classes.forEach(cls => {
-                                    message += '• ' + cls.title + ' (' + cls.time + ') - ' +
-                                            (cls.type === 'confirm' ? 'Confirm Placement' : 'Pending Relief') + '\n';
-                                });
-                                alert(message);
-                            }
-                        });
-                    });
-                }
-            }
+                                        classes.forEach((classData, index) => {
+                                            const qrPath = classData.qrcodeFilePath || '../qr_codes/dummy.png';
+                                            const statusClass = (classData.status === 'confirmed') ? 'text-successTextDark' : 'text-warningText';
+                                            const statusText = (classData.status === 'confirmed') ? 'Confirmed' : 'Pending Relief';
 
-            function toggleQR(qrId) {
-                // Close all other QR codes first
-                closeAllQR();
+                                            // Format time
+                                            const startTime = new Date('1970-01-01T' + classData.classStartTime);
+                                            const endTime = new Date('1970-01-01T' + classData.classEndTime);
+                                            const startTimeStr = startTime.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
 
-                const qrElement = document.getElementById(qrId);
-                const overlayElement = document.getElementById('overlay-' + qrId);
+                                            // Calculate duration
+                                            const durationMs = endTime - startTime;
+                                            const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                                            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                                            const duration = hours > 0 ? hours + ' hrs ' + minutes + ' mins' : minutes + ' mins';
 
-                // Show current QR code
-                qrElement.classList.add('show');
-                if (overlayElement) {
-                    overlayElement.classList.add('show');
-                }
-            }
+                                            const classHTML =
+                                                    '<div class="flex items-center p-4 rounded-lg border border-blush bg-cloud/30 hover:border-dusty/30 transition-colors duration-200">' +
+                                                    '<div class="w-20 text-center flex-shrink-0">' +
+                                                    '<div class="text-lg font-bold text-dusty">' +
+                                                    startTimeStr +
+                                                    '</div>' +
+                                                    '<div class="text-xs text-espresso/60">' +
+                                                    duration +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '<div class="flex-1 ml-6">' +
+                                                    '<div class="flex justify-between items-start mobile-stack">' +
+                                                    '<div class="mobile-full mobile-mb-2 md:mb-0">' +
+                                                    '<h3 class="font-semibold text-espresso text-lg">' + escapeHtml(classData.className) + '</h3>' +
+                                                    '<p class="text-sm text-espresso/70 mt-1">' +
+                                                    '<i class="fas fa-map-marker-alt mr-2 text-dusty"></i>' +
+                                                    escapeHtml(classData.location) + ' • ' +
+                                                    '<span class="font-medium ' + statusClass + '">' +
+                                                    statusText +
+                                                    '</span>' +
+                                                    '</p>' +
+                                                    '</div>' +
+                                                    '<div class="flex items-center space-x-3 flex-shrink-0">' +
+                                                    '<div class="relative">' +
+                                                    '<div class="w-14 h-14 bg-gray-50 border-2 border-dashed border-dusty rounded-lg flex items-center justify-center cursor-pointer hover:bg-blush transition-colors duration-200"' +
+                                                    ' onclick="showQRModal(\'' + escapeHtml(qrPath) + '\', \'' +
+                                                    escapeHtml(classData.className) + '\', \'' +
+                                                    escapeHtml(startTimeStr) + '\', \'' +
+                                                    escapeHtml(classData.location) + '\', ' +
+                                                    classData.classID + ')">' +
+                                                    '<i class="fas fa-qrcode text-dusty text-xl"></i>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '<div class="mt-3 flex items-center text-sm text-espresso/60">' +
+                                                    '<span class="mr-4">' +
+                                                    '<i class="fas fa-user mr-1"></i>' + escapeHtml(classData.instructorName) +
+                                                    '</span>' +
+                                                    '<span>' +
+                                                    '<i class="fas fa-chart-bar mr-1"></i>Avg. Rating: ' +
+                                                    (classData.averageRating ? classData.averageRating.toFixed(1) : 'N/A') + '/5' +
+                                                    '</span>' +
+                                                    '</div>' +
+                                                    '</div>' +
+                                                    '</div>';
 
-            function closeAllQR() {
-                // Close all QR modals and overlays
-                document.querySelectorAll('.qr-expanded.show').forEach(qr => {
-                    qr.classList.remove('show');
-                });
+                                            container.innerHTML += classHTML;
+                                        });
+                                    }
 
-                document.querySelectorAll('.qr-overlay.show').forEach(overlay => {
-                    overlay.classList.remove('show');
-                });
-            }
+                                    async function loadWeekOverview(weekStart = null, weekEnd = null) {
+                                        try {
+                                            // Show loading
+                                            document.getElementById('weekLoading').classList.remove('hidden');
+                                            document.getElementById('weekCalendarContainer').classList.add('hidden');
+                                            document.getElementById('weekSummaryContainer').classList.add('hidden');
+
+                                            let url = '../DashboardInstructorServlet?action=getWeekOverview';
+
+                                            // Add week parameters if provided
+                                            if (weekStart && weekEnd) {
+                                                url += '&weekStart=' + weekStart + '&weekEnd=' + weekEnd;
+                                            }
+
+                                            const response = await fetch(url);
+                                            if (!response.ok)
+                                                throw new Error('Network response was not ok');
+
+                                            const data = await response.json();
+
+                                            if (data.success) {
+                                                // Hide loading
+                                                document.getElementById('weekLoading').classList.add('hidden');
+
+                                                const weekData = data.data;
+
+                                                // Store current week dates
+                                                currentWeekStart = weekData.weekStart;
+                                                currentWeekEnd = weekData.weekEnd;
+
+                                                // Update week range
+                                                document.getElementById('currentWeekRange').textContent = weekData.weekRange;
+
+                                                // Show containers
+                                                document.getElementById('weekCalendarContainer').classList.remove('hidden');
+                                                document.getElementById('weekSummaryContainer').classList.remove('hidden');
+
+                                                // Render calendar
+                                                renderWeekCalendar(weekData.weeklyCalendar, weekData.weekStart, weekData.weekEnd);
+
+                                                // Update summary cards
+                                                document.querySelector('#confirmedClassesCard .text-2xl').textContent =
+                                                        weekData.weeklyStats.confirmed || 0;
+                                                document.querySelector('#pendingClassesCard .text-2xl').textContent =
+                                                        weekData.weeklyStats.pending || 0;
+
+                                                // Update button states
+                                                updateWeekNavigationButtons();
+                                            }
+                                        } catch (error) {
+                                            console.error('Error loading week overview:', error);
+                                            document.getElementById('weekLoading').innerHTML =
+                                                    '<span class="text-dangerText">Error loading weekly data</span>';
+                                    }
+                                    }
+
+                                    function navigateWeek(offset) {
+                                        if (!currentWeekStart || !currentWeekEnd) {
+                                            console.error('Current week dates not set');
+                                            return;
+                                        }
+
+                                        // Parse current week dates
+                                        const startDate = new Date(currentWeekStart);
+                                        const endDate = new Date(currentWeekEnd);
+
+                                        // Calculate new week (offset in weeks)
+                                        const daysToAdd = offset * 7;
+                                        startDate.setDate(startDate.getDate() + daysToAdd);
+                                        endDate.setDate(endDate.getDate() + daysToAdd);
+
+                                        // Format dates as YYYY-MM-DD
+                                        const newWeekStart = formatDateToString(startDate);
+                                        const newWeekEnd = formatDateToString(endDate);
+
+                                        // Load new week
+                                        loadWeekOverview(newWeekStart, newWeekEnd);
+                                    }
+
+                                    function goToCurrentWeek() {
+                                        // Load current week (no parameters = current week)
+                                        loadWeekOverview();
+                                    }
+
+                                    function updateWeekNavigationButtons() {
+                                        // Check if we're viewing the current week
+                                        const today = new Date();
+                                        const currentStart = new Date(currentWeekStart);
+                                        const currentEnd = new Date(currentWeekEnd);
+
+                                        // Normalize dates to compare (remove time component)
+                                        today.setHours(0, 0, 0, 0);
+                                        currentStart.setHours(0, 0, 0, 0);
+                                        currentEnd.setHours(0, 0, 0, 0);
+
+                                        const isCurrentWeek = today >= currentStart && today <= currentEnd;
+
+                                        // Disable/enable "This Week" button
+                                        const todayBtn = document.getElementById('todayWeekBtn');
+                                        if (isCurrentWeek) {
+                                            todayBtn.disabled = true;
+                                            todayBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                                        } else {
+                                            todayBtn.disabled = false;
+                                            todayBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                        }
+                                    }
+
+                                    function formatDateToString(date) {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                                        const day = String(date.getDate()).padStart(2, '0');
+                                        return year + '-' + month + '-' + day;
+                                    }
+
+                                    function renderWeekCalendar(weeklyCalendar, weekStart, weekEnd) {
+                                        const container = document.getElementById('weekCalendarContainer');
+                                        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+                                        let calendarHTML = '<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-7 gap-3">';
+
+                                        // Parse week start and end dates
+                                        const startDate = new Date(weekStart);
+                                        const today = new Date();
+                                        today.setHours(0, 0, 0, 0);
+
+                                        // Generate 7 days
+                                        for (let i = 0; i < 7; i++) {
+                                            const currentDate = new Date(startDate);
+                                            currentDate.setDate(startDate.getDate() + i);
+
+                                            // Use getDay() to get day index (0=Sunday, 1=Monday, etc.)
+                                            const dayIndex = currentDate.getDay();
+                                            const dayName = dayNames[dayIndex];
+                                            const dayKey = dayName + '_' + currentDate.getDate();
+
+                                            const dayClasses = weeklyCalendar[dayKey] || [];
+                                            const isToday = currentDate.toDateString() === today.toDateString();
+
+                                            const monthName = currentDate.toLocaleString('default', {month: 'short'});
+                                            const dayNumber = currentDate.getDate();
+
+                                            let classesHTML = '';
+                                            if (dayClasses.length === 0) {
+                                                classesHTML =
+                                                        '<div class="text-center text-espresso/40 text-xs py-4">' +
+                                                        'No classes' +
+                                                        '</div>';
+                                            } else {
+                                                dayClasses.forEach(classData => {
+                                                    const time = new Date('1970-01-01T' + classData.classStartTime);
+                                                    const timeStr = time.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+                                                    const statusClass = (classData.status === 'confirmed') ? 'confirm' : 'pending';
+
+                                                    classesHTML +=
+                                                            '<div class="week-class-item ' + statusClass + '">' +
+                                                            '<div class="week-class-title">' + escapeHtml(classData.className) + '</div>' +
+                                                            '<div class="week-class-time">' + timeStr + '</div>' +
+                                                            '</div>';
+                                                });
+                                            }
+
+                                            calendarHTML +=
+                                                    '<div class="bg-cloud border border-petal rounded-lg p-4 min-h-[140px] hover:border-dusty/30 transition-colors cursor-pointer ' +
+                                                    (isToday ? 'bg-gradient-to-br from-blush to-petal/50 border-dusty' : '') + '"' +
+                                                    ' onclick="showDayClasses(\'' + dayName + '\', ' + dayNumber + ', ' + dayClasses.length + ')">' +
+                                                    '<div class="flex justify-between items-center mb-3 pb-2 border-b border-petal">' +
+                                                    '<span class="font-semibold text-espresso ' + (isToday ? 'text-dusty' : '') + '">' +
+                                                    dayName +
+                                                    '</span>' +
+                                                    '<span class="text-sm ' + (isToday ? 'bg-dusty text-white' : 'bg-gray-100 text-espresso/70') + ' px-2 py-1 rounded">' +
+                                                    monthName + ' ' + dayNumber +
+                                                    '</span>' +
+                                                    '</div>' +
+                                                    '<div class="week-day-classes">' +
+                                                    classesHTML +
+                                                    '</div>' +
+                                                    '</div>';
+                                        }
+
+                                        calendarHTML += '</div>';
+                                        container.innerHTML = calendarHTML;
+                                    }
+
+                                    function showQRModal(qrPath, className, time, location, classId) {
+                                        console.log("QR Modal called:", {qrPath, className, classId});
+
+                                        const instructorId = window.currentInstructorId || '';
+
+                                        // Clear existing modal first
+                                        closeQRModal();
+
+                                        // Create overlay
+                                        const overlay = document.createElement('div');
+                                        overlay.className = 'qr-overlay show';
+                                        overlay.id = 'qrOverlay';
+                                        overlay.onclick = closeQRModal;
+
+                                        // Create modal content
+                                        const modalContent = document.createElement('div');
+                                        modalContent.className = 'qr-expanded show';
+                                        modalContent.id = 'qrModalContent';
+
+                                        // Modal content HTML
+                                        modalContent.innerHTML =
+                                                '<button class="qr-close-btn" onclick="closeQRModal()">' +
+                                                '<i class="fas fa-times"></i>' +
+                                                '</button>' +
+                                                '<h4 class="font-semibold text-espresso mb-3">' + escapeHtml(className) + '</h4>' +
+                                                '<p class="text-sm text-espresso/70 mb-6">' +
+                                                escapeHtml(time) + ' • ' + escapeHtml(location) +
+                                                '</p>' +
+                                                '<img src="' + escapeHtml(qrPath) + '" alt="QR Code for ' + escapeHtml(className) + '" ' +
+                                                'onerror="this.src=\'../qr_codes/dummy.png\'">';
+
+                                        // Add feedback button if we have instructorId
+                                        if (instructorId) {
+                                            const feedbackBtn = document.createElement('button');
+                                            feedbackBtn.className = 'mt-6 w-full bg-dusty text-whitePure py-3 rounded-lg hover:bg-dustyHover transition-colors text-sm font-medium';
+                                            feedbackBtn.onclick = function () {
+                                                window.location.href = '../instructor/feedback.jsp?classID=' + classId + '&instructorID=' + instructorId;
+                                            };
+                                            feedbackBtn.innerHTML = '<i class="fas fa-chart-bar mr-2"></i>Submit Feedback';
+                                            modalContent.appendChild(feedbackBtn);
+                                        }
+
+                                        // Get container or create new one
+                                        let container = document.getElementById('qrModalContainer');
+                                        if (!container) {
+                                            container = document.createElement('div');
+                                            container.id = 'qrModalContainer';
+                                            document.body.appendChild(container);
+                                        }
+
+                                        // Add new modal elements
+                                        container.appendChild(overlay);
+                                        container.appendChild(modalContent);
+
+                                        console.log("Modal created with QR path:", qrPath);
+                                    }
+
+                                    function closeQRModal() {
+                                        const container = document.getElementById('qrModalContainer');
+                                        if (container) {
+                                            container.innerHTML = '';
+                                        }
+                                    }
+
+                                    function showDayClasses(dayName, date, classCount) {
+                                        if (classCount > 0) {
+                                            alert(dayName + ', ' + date + ' has ' + classCount + ' class(es).\nClick on individual class for details.');
+                                        }
+                                    }
+
+                                    // Helper function to escape HTML
+                                    function escapeHtml(text) {
+                                        if (!text)
+                                            return '';
+                                        const div = document.createElement('div');
+                                        div.textContent = text;
+                                        return div.innerHTML;
+                                    }
+
+                                    // Refresh data every 5 minutes
+                                    setInterval(loadDashboardData, 5 * 60 * 1000);
         </script>
-
-        <!-- Debug information - hidden by default -->
-        <input type="hidden" name="weekDataExists" value="${not empty weekClasses}" />
-        
-        <div style="display: none; position: fixed; top: 10px; right: 10px; background: white; padding: 10px; border: 1px solid #ccc; z-index: 9999;">
-            <h3>Debug Info:</h3>
-            <p>Instructor: ${instructor.name}</p>
-            <p>Today's Classes Count: ${todaysClasses != null ? todaysClasses.size() : 'null'}</p>
-            <p>Week Classes Count: ${weekClasses != null ? weekClasses.size() : 'null'}</p>
-            <p>Available Classes Count: ${availableClasses != null ? availableClasses.size() : 'null'}</p>
-            <p>Relief Updates Count: ${reliefUpdates != null ? reliefUpdates.size() : 'null'}</p>
-            <p>Current Date: ${currentDate}</p>
-            <p>Week Start: ${weekStart}</p>
-            <p>Week End: ${weekEnd}</p>
-        </div>
 
     </body>
 </html>

@@ -151,19 +151,31 @@ public class SessionUtil {
         return name.substring(0, Math.min(2, name.length())).toUpperCase();
     }
 
-    public static Integer getInstructorId(HttpSession session) {
+    // ========== NOTIFICATION COUNT METHODS ==========
+    public static void setInboxCount(HttpSession session, int count) {
         if (session != null) {
-            Object instructorIdObj = session.getAttribute("instructorId");
-            if (instructorIdObj instanceof Integer) {
-                return (Integer) instructorIdObj;
-            } else if (instructorIdObj instanceof String) {
-                try {
-                    return Integer.parseInt((String) instructorIdObj);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
+            session.setAttribute("inboxCount", count);
         }
-        return null;
+    }
+
+    public static int getInboxCount(HttpSession session) {
+        try {
+            Integer count = (Integer) session.getAttribute("inboxCount");
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public static void updateInboxCountForAdmin(HttpSession session, int count) {
+        if (isAdmin(session)) {
+            setInboxCount(session, count);
+        }
+    }
+
+    public static void updateInboxCountForInstructor(HttpSession session, int count) {
+        if (isInstructor(session)) {
+            setInboxCount(session, count);
+        }
     }
 }

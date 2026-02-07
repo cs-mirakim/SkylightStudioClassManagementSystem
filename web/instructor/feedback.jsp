@@ -22,7 +22,7 @@
         <!-- Font Awesome for Icons -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            /* CSS styles tetap sama seperti sebelumnya */
+            /* CSS yang sama seperti sebelumnya */
             * {
                 box-sizing: border-box;
             }
@@ -108,13 +108,6 @@
                 color: #B36D6D;
             }
 
-            .star-rating label:hover,
-            .star-rating label:hover ~ label,
-            .star-rating input:checked ~ label,
-            .star-rating input:checked + label {
-                color: #B36D6D;
-            }
-
             .rating-text {
                 text-align: center;
                 margin-top: 16px;
@@ -162,7 +155,7 @@
                 box-shadow: 0 4px 15px rgba(179, 109, 109, 0.3);
             }
 
-            .submit-btn:hover {
+            .submit-btn:hover:not(:disabled) {
                 background: linear-gradient(135deg, #965656 0%, #7A4545 100%);
                 transform: translateY(-2px);
                 box-shadow: 0 6px 20px rgba(179, 109, 109, 0.4);
@@ -351,50 +344,32 @@
                 }
             }
 
-            /* Notification styling */
-            .notification-success {
-                background-color: #1E3A1E;
-                color: white;
-            }
-
-            .notification-error {
-                background-color: #B36D6D;
-                color: white;
-            }
-
-            .notification-info {
-                background-color: #965656;
-                color: white;
+            .error-message {
+                color: #B36D6D;
+                font-size: 14px;
+                margin-top: 8px;
+                text-align: center;
+                display: none;
             }
         </style>
     </head>
 
     <body class="bg-cloud">
         <%
-            // Get current date for the form
             SimpleDateFormat dateFormat = new SimpleDateFormat("MMMM dd, yyyy");
             String currentDate = dateFormat.format(new Date());
-
             SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a");
             String currentTime = timeFormat.format(new Date());
-
-            // Get instructorID and classID from request parameters
             String instructorID = request.getParameter("instructorID");
             String classID = request.getParameter("classID");
-
-            // For testing/demo, set defaults if not provided
             if (instructorID == null || instructorID.isEmpty()) {
                 instructorID = "1";
             }
             if (classID == null || classID.isEmpty()) {
                 classID = "1";
             }
-            
-            // Check for success/error messages from session
             String successMsg = (String) session.getAttribute("feedbackSuccess");
             String errorMsg = (String) session.getAttribute("feedbackError");
-            
-            // Clear messages after displaying
             if (successMsg != null) {
                 session.removeAttribute("feedbackSuccess");
             }
@@ -402,8 +377,6 @@
                 session.removeAttribute("feedbackError");
             }
         %>
-
-        <jsp:include page="../util/header.jsp" />
 
         <div class="form-container p-4 md:p-8">
             <!-- Progress Bar -->
@@ -422,34 +395,29 @@
                     <i class="far fa-calendar-alt mr-2"></i><%= currentDate%> • 
                     <i class="far fa-clock mr-2"></i><%= currentTime%>
                 </p>
-                <!-- Display which instructor and class this feedback is for -->
                 <div class="mt-4 p-3 bg-petal rounded-lg inline-block">
                     <p class="text-espresso text-sm">
                         <i class="fas fa-chalkboard-teacher mr-2"></i>Instructor ID: <span class="font-semibold"><%= instructorID%></span> •
                         <i class="fas fa-users mr-2 ml-4"></i>Class ID: <span class="font-semibold"><%= classID%></span>
                     </p>
                 </div>
-                
-                <!-- Display success/error messages -->
-                <% if (successMsg != null) { %>
-                <div class="mt-4 p-3 bg-successBg text-successTextDark rounded-lg">
-                    <i class="fas fa-check-circle mr-2"></i><%= successMsg %>
+                <% if (successMsg != null) {%>
+                <div class="mt-4 p-4 bg-green-100 text-green-700 rounded-lg">
+                    <i class="fas fa-check-circle mr-2"></i><%= successMsg%>
                 </div>
                 <% } %>
-                
-                <% if (errorMsg != null) { %>
-                <div class="mt-4 p-3 bg-dangerBg text-dangerText rounded-lg">
-                    <i class="fas fa-exclamation-circle mr-2"></i><%= errorMsg %>
+                <% if (errorMsg != null) {%>
+                <div class="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
+                    <i class="fas fa-exclamation-circle mr-2"></i><%= errorMsg%>
                 </div>
-                <% } %>
+                <% }%>
             </div>
 
             <!-- Feedback Form -->
-            <form id="feedbackForm" action="${pageContext.request.contextPath}/submitFeedback" method="POST" class="space-y-6">
-                <!-- Hidden fields for required database columns -->
+            <form id="feedbackForm" action="${pageContext.request.contextPath}/FeedbackServlet" method="POST">
                 <input type="hidden" name="instructorID" value="<%= instructorID%>">
                 <input type="hidden" name="classID" value="<%= classID%>">
-                
+
                 <!-- Question 1: Teaching Skills -->
                 <div class="question-card" id="question1">
                     <div class="flex items-start mb-4">
@@ -459,31 +427,24 @@
                             <p class="question-hint">How effectively did the instructor demonstrate and explain the exercises?</p>
                         </div>
                     </div>
-
                     <div class="star-rating-container">
                         <span class="rating-label-left">Poor</span>
-
-                        <div class="star-rating">
-                            <input type="radio" id="teachingSkill5" name="teachingSkill" value="5" required>
+                        <div class="star-rating" data-rating-name="teachingSkill">
+                            <input type="radio" id="teachingSkill5" name="teachingSkill" value="5">
                             <label for="teachingSkill5">★</label>
-
                             <input type="radio" id="teachingSkill4" name="teachingSkill" value="4">
                             <label for="teachingSkill4">★</label>
-
                             <input type="radio" id="teachingSkill3" name="teachingSkill" value="3">
                             <label for="teachingSkill3">★</label>
-
                             <input type="radio" id="teachingSkill2" name="teachingSkill" value="2">
                             <label for="teachingSkill2">★</label>
-
                             <input type="radio" id="teachingSkill1" name="teachingSkill" value="1">
                             <label for="teachingSkill1">★</label>
                         </div>
-
                         <span class="rating-label-right">Excellent</span>
                     </div>
-
                     <div id="teachingSkillText" class="rating-text"></div>
+                    <div id="teachingSkillError" class="error-message">Please select a rating for Teaching Skills</div>
                 </div>
 
                 <!-- Question 2: Communication -->
@@ -495,31 +456,24 @@
                             <p class="question-hint">How clearly did the instructor communicate instructions and provide feedback?</p>
                         </div>
                     </div>
-
                     <div class="star-rating-container">
                         <span class="rating-label-left">Poor</span>
-
-                        <div class="star-rating">
-                            <input type="radio" id="communication5" name="communication" value="5" required>
+                        <div class="star-rating" data-rating-name="communication">
+                            <input type="radio" id="communication5" name="communication" value="5">
                             <label for="communication5">★</label>
-
                             <input type="radio" id="communication4" name="communication" value="4">
                             <label for="communication4">★</label>
-
                             <input type="radio" id="communication3" name="communication" value="3">
                             <label for="communication3">★</label>
-
                             <input type="radio" id="communication2" name="communication" value="2">
                             <label for="communication2">★</label>
-
                             <input type="radio" id="communication1" name="communication" value="1">
                             <label for="communication1">★</label>
                         </div>
-
                         <span class="rating-label-right">Excellent</span>
                     </div>
-
                     <div id="communicationText" class="rating-text"></div>
+                    <div id="communicationError" class="error-message">Please select a rating for Communication</div>
                 </div>
 
                 <!-- Question 3: Support & Interaction -->
@@ -531,31 +485,24 @@
                             <p class="question-hint">How supportive and engaging was the instructor during the session?</p>
                         </div>
                     </div>
-
                     <div class="star-rating-container">
                         <span class="rating-label-left">Poor</span>
-
-                        <div class="star-rating">
-                            <input type="radio" id="supportInteraction5" name="supportInteraction" value="5" required>
+                        <div class="star-rating" data-rating-name="supportInteraction">
+                            <input type="radio" id="supportInteraction5" name="supportInteraction" value="5">
                             <label for="supportInteraction5">★</label>
-
                             <input type="radio" id="supportInteraction4" name="supportInteraction" value="4">
                             <label for="supportInteraction4">★</label>
-
                             <input type="radio" id="supportInteraction3" name="supportInteraction" value="3">
                             <label for="supportInteraction3">★</label>
-
                             <input type="radio" id="supportInteraction2" name="supportInteraction" value="2">
                             <label for="supportInteraction2">★</label>
-
                             <input type="radio" id="supportInteraction1" name="supportInteraction" value="1">
                             <label for="supportInteraction1">★</label>
                         </div>
-
                         <span class="rating-label-right">Excellent</span>
                     </div>
-
                     <div id="supportInteractionText" class="rating-text"></div>
+                    <div id="supportInteractionError" class="error-message">Please select a rating for Support & Interaction</div>
                 </div>
 
                 <!-- Question 4: Punctuality -->
@@ -567,31 +514,24 @@
                             <p class="question-hint">How punctual was the instructor in starting and ending the class?</p>
                         </div>
                     </div>
-
                     <div class="star-rating-container">
                         <span class="rating-label-left">Poor</span>
-
-                        <div class="star-rating">
-                            <input type="radio" id="punctuality5" name="punctuality" value="5" required>
+                        <div class="star-rating" data-rating-name="punctuality">
+                            <input type="radio" id="punctuality5" name="punctuality" value="5">
                             <label for="punctuality5">★</label>
-
                             <input type="radio" id="punctuality4" name="punctuality" value="4">
                             <label for="punctuality4">★</label>
-
                             <input type="radio" id="punctuality3" name="punctuality" value="3">
                             <label for="punctuality3">★</label>
-
                             <input type="radio" id="punctuality2" name="punctuality" value="2">
                             <label for="punctuality2">★</label>
-
                             <input type="radio" id="punctuality1" name="punctuality" value="1">
                             <label for="punctuality1">★</label>
                         </div>
-
                         <span class="rating-label-right">Excellent</span>
                     </div>
-
                     <div id="punctualityText" class="rating-text"></div>
+                    <div id="punctualityError" class="error-message">Please select a rating for Punctuality</div>
                 </div>
 
                 <!-- Question 5: Overall Rating -->
@@ -603,31 +543,24 @@
                             <p class="question-hint">Overall, how would you rate your experience with this instructor?</p>
                         </div>
                     </div>
-
                     <div class="star-rating-container">
                         <span class="rating-label-left">Poor</span>
-
-                        <div class="star-rating">
-                            <input type="radio" id="overallRating5" name="overallRating" value="5" required>
+                        <div class="star-rating" data-rating-name="overallRating">
+                            <input type="radio" id="overallRating5" name="overallRating" value="5">
                             <label for="overallRating5">★</label>
-
                             <input type="radio" id="overallRating4" name="overallRating" value="4">
                             <label for="overallRating4">★</label>
-
                             <input type="radio" id="overallRating3" name="overallRating" value="3">
                             <label for="overallRating3">★</label>
-
                             <input type="radio" id="overallRating2" name="overallRating" value="2">
                             <label for="overallRating2">★</label>
-
                             <input type="radio" id="overallRating1" name="overallRating" value="1">
                             <label for="overallRating1">★</label>
                         </div>
-
                         <span class="rating-label-right">Excellent</span>
                     </div>
-
                     <div id="overallRatingText" class="rating-text"></div>
+                    <div id="overallRatingError" class="error-message">Please select an Overall Rating</div>
                 </div>
 
                 <!-- Question 6: Additional Comments -->
@@ -639,17 +572,11 @@
                             <p class="question-hint">Share any additional feedback, suggestions, or specific examples (Optional)</p>
                         </div>
                     </div>
-
                     <textarea 
                         name="comments" 
-                        placeholder="Enter your comments here... 
-                        Examples:
-                        - What did you enjoy most about the class?
-                        - Are there areas where the instructor could improve?
-                        - Any specific exercises or moments that stood out?"
+                        placeholder="Enter your comments here..."
                         maxlength="2000"
                         rows="4"></textarea>
-
                     <div class="text-right mt-2 text-sm char-count">
                         <span id="charCount">0</span>/2000 characters
                     </div>
@@ -657,7 +584,7 @@
 
                 <!-- Submit Button -->
                 <div class="text-center mt-8">
-                    <button type="submit" id="submitBtn" class="submit-btn">
+                    <button type="submit" id="submitBtn" class="submit-btn" disabled>
                         <i class="fas fa-paper-plane mr-2"></i> Submit Feedback
                     </button>
                     <p class="text-espresso opacity-80 text-sm mt-4">
@@ -685,8 +612,8 @@
             </div>
         </div>
 
-        <jsp:include page="../util/footer.jsp" />
-        
+        <!-- ... kod sebelum ini sama ... -->
+
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const form = document.getElementById('feedbackForm');
@@ -696,7 +623,6 @@
                 const commentsTextarea = document.querySelector('textarea[name="comments"]');
                 const submitBtn = document.getElementById('submitBtn');
 
-                // Rating descriptions
                 const ratingDescriptions = {
                     1: "Poor - Needs significant improvement",
                     2: "Fair - Room for improvement",
@@ -705,132 +631,152 @@
                     5: "Excellent - Outstanding performance"
                 };
 
-                // Initialize star rating functionality
-                initializeStarRatings();
+                // Function to update progress bar and button state
+                function updateProgress() {
+                    const requiredFields = ['teachingSkill', 'communication', 'supportInteraction', 'punctuality', 'overallRating'];
 
-                // Character count for comments
+                    let answered = 0;
+                    requiredFields.forEach(fieldName => {
+                        // FIX: Guna form.elements untuk direct access
+                        const radios = form.elements[fieldName];
+                        let isChecked = false;
+
+                        if (radios) {
+                            // Check if any radio in this group is checked
+                            for (let i = 0; i < radios.length; i++) {
+                                if (radios[i].checked) {
+                                    isChecked = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (isChecked) {
+                            answered++;
+                            const errorElement = document.getElementById(fieldName + 'Error');
+                            if (errorElement) {
+                                errorElement.style.display = 'none';
+                            }
+                        }
+                    });
+
+                    const progress = (answered / requiredFields.length) * 100;
+                    progressFill.style.width = `${progress}%`;
+
+                    // Enable submit button only when all 5 are answered
+                    submitBtn.disabled = (answered !== 5);
+
+                    // DEBUG - akan auto remove lepas confirm works
+                    console.log('Answered:', answered, '/ 5');
+
+                    return answered;
+                }
+
+                // Function to handle radio button changes
+                function handleRatingChange(event) {
+                    const ratingName = event.target.name;
+                    const value = parseInt(event.target.value);
+                    const textElement = document.getElementById(ratingName + 'Text');
+
+                    if (textElement && ratingDescriptions[value]) {
+                        textElement.textContent = ratingDescriptions[value];
+                    }
+
+                    updateProgress();
+                }
+
+                // FIX: Add event listeners menggunakan delegation pada form
+                form.addEventListener('change', function (e) {
+                    if (e.target.type === 'radio') {
+                        handleRatingChange(e);
+                    }
+                });
+
+                // Character counter
                 if (commentsTextarea) {
                     commentsTextarea.addEventListener('input', function () {
                         charCount.textContent = this.value.length;
                     });
+                    charCount.textContent = commentsTextarea.value.length;
                 }
 
-                // Update progress bar
-                function updateProgress() {
-                    const questions = ['teachingSkill', 'communication', 'supportInteraction', 'punctuality', 'overallRating'];
-                    const answered = questions.filter(q => {
-                        const input = form.querySelector(`input[name="${q}"]:checked`);
-                        return input !== null;
-                    }).length;
-
-                    const progress = (answered / questions.length) * 100;
-                    progressFill.style.width = `${progress}%`;
-
-                    // Enable/disable submit button based on progress
-                    submitBtn.disabled = answered < questions.length;
-                }
-
-                // Initialize star ratings with text updates
-                function initializeStarRatings() {
-                    const starGroups = document.querySelectorAll('.star-rating');
-
-                    starGroups.forEach(group => {
-                        const inputs = group.querySelectorAll('input[type="radio"]');
-                        const questionId = group.closest('.question-card').id;
-                        const textElement = document.getElementById(`${questionId.replace('question', '').toLowerCase()}Text`);
-
-                        inputs.forEach(input => {
-                            // Add change event listener
-                            input.addEventListener('change', function () {
-                                const value = parseInt(this.value);
-                                if (textElement) {
-                                    textElement.textContent = ratingDescriptions[value];
-                                }
-                                updateProgress();
-                            });
-
-                            const label = group.querySelector(`label[for="${input.id}"]`);
-                            if (label) {
-                                label.addEventListener('click', function () {
-                                    // Force the radio button to be checked
-                                    input.checked = true;
-                                    // Trigger change event immediately
-                                    const event = new Event('change');
-                                    input.dispatchEvent(event);
-                                });
-                            }
-                        });
-                    });
-                }
-
-                // Form submission - FIXED ACTION
+                // Form submission - bahagian ni sama macam sebelum
+                // Form submission
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
 
-                    // Simple check - if submit button is not disabled, allow submission
-                    if (submitBtn.disabled) {
-                        showNotification('Please answer all required questions before submitting.', 'error');
+                    const requiredFields = ['teachingSkill', 'communication', 'supportInteraction', 'punctuality', 'overallRating'];
+                    let hasErrors = false;
+
+                    requiredFields.forEach(field => {
+                        const radios = form.elements[field];
+                        let isChecked = false;
+
+                        if (radios) {
+                            for (let i = 0; i < radios.length; i++) {
+                                if (radios[i].checked) {
+                                    isChecked = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        const errorElement = document.getElementById(field + 'Error');
+                        if (!isChecked) {
+                            hasErrors = true;
+                            if (errorElement) {
+                                errorElement.style.display = 'block';
+                            }
+                        } else if (errorElement) {
+                            errorElement.style.display = 'none';
+                        }
+                    });
+
+                    if (hasErrors) {
+                        alert('Please answer all required questions.');
                         return;
                     }
 
-                    // Show loading state
-                    const originalBtnText = submitBtn.innerHTML;
                     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Submitting...';
                     submitBtn.disabled = true;
 
-                    // Submit form via AJAX
+                    // FIX: Convert FormData to URLSearchParams untuk servlet
+                    const formData = new FormData(form);
+                    const params = new URLSearchParams();
+
+                    for (let [key, value] of formData.entries()) {
+                        params.append(key, value);
+                        console.log(key + ': ' + value); // Debug
+                    }
+
                     fetch(form.action, {
                         method: 'POST',
-                        body: new FormData(form)
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: params.toString()
                     })
-                    .then(response => {
-                        if (response.redirected) {
-                            // If server redirects, follow the redirect
-                            window.location.href = response.url;
-                            return;
-                        }
-                        return response.text();
-                    })
-                    .then(text => {
-                        // Show success message
-                        form.style.display = 'none';
-                        thankYouMessage.style.display = 'block';
-                        progressFill.style.display = 'none';
-                    })
-                    .catch(error => {
-                        console.error('Error submitting feedback:', error);
-                        showNotification('Error submitting feedback. Please try again.', 'error');
-                        submitBtn.innerHTML = originalBtnText;
-                        submitBtn.disabled = false;
-                    });
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    form.style.display = 'none';
+                                    thankYouMessage.style.display = 'block';
+                                    document.querySelector('.progress-bar').style.display = 'none';
+                                } else {
+                                    alert(data.message || 'Failed to submit feedback. Please try again.');
+                                    submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Feedback';
+                                    submitBtn.disabled = false;
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert('Error submitting feedback. Please try again.');
+                                submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i> Submit Feedback';
+                                submitBtn.disabled = false;
+                            });
                 });
 
-                // Show notification function
-                function showNotification(message, type) {
-                    // Create notification element
-                    const notification = document.createElement('div');
-                    notification.className = 'fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg ' +
-                            (type === 'success' ? 'notification-success' :
-                                    type === 'error' ? 'notification-error' :
-                                    'notification-info');
-                    notification.textContent = message;
-                    notification.style.zIndex = '9999';
-                    notification.style.transition = 'all 0.3s ease';
-
-                    document.body.appendChild(notification);
-
-                    // Remove after 3 seconds
-                    setTimeout(() => {
-                        notification.style.opacity = '0';
-                        setTimeout(() => {
-                            if (notification.parentNode) {
-                                document.body.removeChild(notification);
-                            }
-                        }, 300);
-                    }, 3000);
-                }
-
-                // Initial progress update
+                // Initialize on page load
                 updateProgress();
             });
         </script>

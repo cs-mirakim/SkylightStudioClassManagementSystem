@@ -182,7 +182,7 @@ public class ClassManagementServlet extends HttpServlet {
                 params.add(levelFilter);
             }
 
-            sql.append("ORDER BY c.classDate, c.classStartTime");
+            sql.append("ORDER BY c.classDate DESC, c.classStartTime DESC");
 
             logger.info("Executing SQL: " + sql.toString());
 

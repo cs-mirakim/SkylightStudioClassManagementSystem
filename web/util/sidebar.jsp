@@ -11,53 +11,26 @@
     String userRole = SessionUtil.getUserRole(session);
     String userName = SessionUtil.getUserName(session);
 
-    // Determine display role text
-    String displayRole = "User";
-    if ("admin".equals(userRole)) {
-        displayRole = "Admin";
-    } else if ("instructor".equals(userRole)) {
-        displayRole = "Instructor";
-    }
+    // Get inbox count from session
+    int sidebarInboxCount = SessionUtil.getInboxCount(session);
 %>
 
 <div id="sidebar-overlay" class="fixed inset-0 bg-espresso/40 backdrop-blur-sm hidden z-40" aria-hidden="true"></div>
 
 <aside id="sidebar"
        class="fixed left-0 top-0 h-full w-64 bg-whitePure text-espresso transform -translate-x-full transition-transform duration-300 z-50 shadow-2xl flex flex-col border-r border-petal"
-       aria-hidden="true" aria-label="Sidebar">
+       aria-hidden="true" aria-label="Sidebar"
+       data-inbox-count="<%= sidebarInboxCount%>">
 
     <div class="p-6 border-b border-petal flex-shrink-0">
-        <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center justify-between">
             <div class="text-xl font-bold tracking-tight text-dusty">Skylight Studio</div>
             <button id="sidebarClose" class="p-2 rounded-full hover:bg-petal transition-colors text-espresso/40 hover:text-espresso">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
-
-        <fieldset class="bg-cloud p-3 rounded-xl border border-petal">
-            <legend class="px-2 text-[10px] font-bold uppercase tracking-widest text-espresso/40">User Type</legend>
-            <div class="flex gap-4 mt-1 px-1">
-                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-espresso/70">
-                    <input type="radio" name="sidebar_role" value="admin" 
-                           <%= "admin".equals(userRole) ? "checked" : ""%>
-                           class="w-4 h-4 accent-dusty" disabled/>
-                    <span>ADMIN</span>
-                </label>
-                <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-espresso/70">
-                    <input type="radio" name="sidebar_role" value="instructor"
-                           <%= "instructor".equals(userRole) ? "checked" : ""%>
-                           class="w-4 h-4 accent-dusty" disabled/>
-                    <span>INSTRUCTOR</span>
-                </label>
-            </div>
-            <div class="mt-2 text-center">
-                <span class="text-xs text-espresso/60">
-                    Logged in as: <strong><%= userName != null ? userName : "User"%></strong>
-                </span>
-            </div>
-        </fieldset>
     </div>
 
     <nav id="sidebar-menu" class="flex-1 overflow-y-auto custom-scrollbar" aria-label="Sidebar navigation">
@@ -77,45 +50,41 @@
 <div id="logoutModal"
      class="hidden fixed inset-0 bg-espresso/50 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
     <div class="bg-whitePure p-6 rounded-xl shadow-lg shadow-blush/30 w-full max-w-sm border border-blush">
-        <!-- Header -->
         <h2 class="text-xl font-semibold mb-4 text-center text-espresso">
             Confirm Logout
         </h2>
 
-        <!-- Divider line -->
         <hr class="border-petal mb-4">
 
-        <!-- Confirmation Message -->
-        <div class="mb-6">
-            <p class="text-sm text-espresso/70 text-center mb-3">
-                Are you sure you want to logout from Skylight Studio Management System?
-            </p>
-            <div class="flex items-center gap-2 p-3 rounded-lg bg-cloud/50 border border-petal">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-dusty flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                <p class="text-xs text-espresso/70">
-                    Your session will be terminated and you'll need to login again.
+            <div class="mb-6">
+                <p class="text-sm text-espresso/70 text-center mb-3">
+                    Are you sure you want to logout from Skylight Studio Management System?
                 </p>
+                <div class="flex items-center gap-2 p-3 rounded-lg bg-cloud/50 border border-petal">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-dusty flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <p class="text-xs text-espresso/70">
+                        Your session will be terminated and you'll need to login again.
+                    </p>
+                </div>
             </div>
-        </div>
 
-        <!-- Buttons -->
-        <div class="flex flex-col gap-2">
-            <form id="logoutForm" action="<%= request.getContextPath()%>/authenticate" method="GET" style="display: none;">
-                <input type="hidden" name="action" value="logout">
-            </form>
+            <div class="flex flex-col gap-2">
+                <form id="logoutForm" action="<%= request.getContextPath()%>/authenticate" method="GET" style="display: none;">
+                    <input type="hidden" name="action" value="logout">
+                </form>
 
-            <button onclick="performLogout()"
-                    class="w-full bg-dusty hover:bg-dustyHover text-whitePure p-3 rounded-lg font-medium transition-colors">
-                Yes, Logout
-            </button>
+                <button onclick="performLogout()"
+                        class="w-full bg-dusty hover:bg-dustyHover text-whitePure p-3 rounded-lg font-medium transition-colors">
+                    Yes, Logout
+                </button>
 
-            <button onclick="closeLogoutModal()"
-                    class="w-full bg-cloud hover:bg-blush text-espresso p-3 rounded-lg font-medium transition-colors border border-blush">
-                Cancel
-            </button>
-        </div>
+                <button onclick="closeLogoutModal()"
+                        class="w-full bg-cloud hover:bg-blush text-espresso p-3 rounded-lg font-medium transition-colors border border-blush">
+                    Cancel
+                </button>
+            </div>
     </div>
 </div>
 
@@ -140,13 +109,12 @@
     }
 
     function performLogout() {
-        // Submit logout form yang guna AuthenticationServlet
         document.getElementById('logoutForm').submit();
     }
 
     // Event listeners for logout modal
     document.addEventListener('DOMContentLoaded', function () {
-        const logoutBtn = document.getElementById('sidebar-logout');
+        var logoutBtn = document.getElementById('sidebar-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', openLogoutModal);
         }
@@ -159,7 +127,7 @@
         });
 
         // Close modal when clicking outside
-        const logoutModal = document.getElementById('logoutModal');
+        var logoutModal = document.getElementById('logoutModal');
         if (logoutModal) {
             logoutModal.addEventListener('click', function (e) {
                 if (e.target.id === 'logoutModal') {
