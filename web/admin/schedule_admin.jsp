@@ -16,7 +16,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>Admin Schedule Management Page</title>
+        <title>Admin Class Management Page</title>
 
         <!-- Font Inter + Lora -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -162,7 +162,7 @@
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
                         <div>
                             <h2 class="text-xl font-semibold mb-1 text-espresso">
-                                Admin Schedule Management Page
+                                Admin Class Management Page
                             </h2>
                             <p class="text-sm text-espressoLighter">
                                 Manage and schedule all classes for the fitness center

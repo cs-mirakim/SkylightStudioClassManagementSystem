@@ -26,13 +26,13 @@ public class InboxMessagesInstructorServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
-
+        
         System.out.println("[INFO] Accessing InboxMessagesInstructorServlet via URL: " + request.getRequestURI());
-
+        
         HttpSession session = request.getSession();
-
+        
         // Check if user is instructor
         if (!SessionUtil.checkInstructorAccess(session)) {
             if (!SessionUtil.isLoggedIn(session)) {
@@ -42,22 +42,22 @@ public class InboxMessagesInstructorServlet extends HttpServlet {
             }
             return;
         }
-
+        
         // Get instructor ID from session
         Integer instructorId = SessionUtil.getCurrentInstructorId(session);
         System.out.println("[INFO] Instructor ID from session: " + instructorId);
-
+        
         if (instructorId == null) {
             response.sendRedirect(request.getContextPath() + "/general/login.jsp?error=session_expired&message=Please_login_again");
             return;
         }
-
+        
         try {
             // Get notifications for instructor
             List<Map<String, Object>> notifications = classDAO.getNotificationsForInstructor(instructorId);
-
+            
             System.out.println("[INFO] Found " + notifications.size() + " notifications");
-
+            
             // Count notifications by type for badge
             int totalCount = notifications.size();
             int newClassCount = 0;
@@ -65,7 +65,7 @@ public class InboxMessagesInstructorServlet extends HttpServlet {
             int waitlistCount = 0;
             int reminderCount = 0;
             int tomorrowCount = 0;
-
+            
             for (Map<String, Object> notif : notifications) {
                 String type = (String) notif.get("type");
                 if ("new_class".equals(type)) {
@@ -80,7 +80,7 @@ public class InboxMessagesInstructorServlet extends HttpServlet {
                     tomorrowCount++;
                 }
             }
-
+            
             // Prepare data for JSP
             Map<String, Object> notificationData = new HashMap<>();
             notificationData.put("allNotifications", notifications);
@@ -90,16 +90,16 @@ public class InboxMessagesInstructorServlet extends HttpServlet {
             notificationData.put("waitlistCount", waitlistCount);
             notificationData.put("reminderCount", reminderCount);
             notificationData.put("tomorrowCount", tomorrowCount);
-
+            
             // Set attributes for JSP
             request.setAttribute("notificationData", notificationData);
             request.setAttribute("instructorName", SessionUtil.getCurrentInstructorName(session));
-
+            
             System.out.println("[INFO] Forwarding to inboxMessages_instructor.jsp with " + totalCount + " notifications");
-
+            
             // Forward to JSP
             request.getRequestDispatcher("/instructor/inboxMessages_instructor.jsp").forward(request, response);
-
+            
         } catch (SQLException e) {
             System.err.println("[ERROR] Database error in InboxMessagesInstructorServlet: " + e.getMessage());
             e.printStackTrace();

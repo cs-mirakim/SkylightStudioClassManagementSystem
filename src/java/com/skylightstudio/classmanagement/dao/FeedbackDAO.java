@@ -138,4 +138,176 @@ public class FeedbackDAO {
     private double roundToTwoDecimals(double value) {
         return Math.round(value * 100.0) / 100.0;
     }
+
+    // Get detailed ratings for instructor with date filter
+    public Map<String, Object> getDetailedRatingsForInstructor(int instructorId, Date startDate)
+            throws SQLException {
+
+        Map<String, Object> detailedRatings = new HashMap<>();
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+
+            String sql = "SELECT "
+                    + "AVG(teachingSkill) as avgTeaching, "
+                    + "AVG(communication) as avgCommunication, "
+                    + "AVG(supportInteraction) as avgSupport, "
+                    + "AVG(punctuality) as avgPunctuality, "
+                    + "AVG(overallRating) as avgOverall, "
+                    + "MAX(teachingSkill) as maxTeaching, "
+                    + "MIN(teachingSkill) as minTeaching, "
+                    + "MAX(communication) as maxCommunication, "
+                    + "MIN(communication) as minCommunication, "
+                    + "MAX(supportInteraction) as maxSupport, "
+                    + "MIN(supportInteraction) as minSupport, "
+                    + "MAX(punctuality) as maxPunctuality, "
+                    + "MIN(punctuality) as minPunctuality, "
+                    + "COUNT(*) as feedbackCount "
+                    + "FROM feedback WHERE instructorID = ? ";
+
+            if (startDate != null) {
+                sql += "AND feedbackDate >= ?";
+            }
+
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, instructorId);
+
+            if (startDate != null) {
+                stmt.setDate(2, startDate);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                detailedRatings.put("avgTeaching", rs.getDouble("avgTeaching"));
+                detailedRatings.put("avgCommunication", rs.getDouble("avgCommunication"));
+                detailedRatings.put("avgSupport", rs.getDouble("avgSupport"));
+                detailedRatings.put("avgPunctuality", rs.getDouble("avgPunctuality"));
+                detailedRatings.put("avgOverall", rs.getDouble("avgOverall"));
+                detailedRatings.put("maxTeaching", rs.getDouble("maxTeaching"));
+                detailedRatings.put("minTeaching", rs.getDouble("minTeaching"));
+                detailedRatings.put("maxCommunication", rs.getDouble("maxCommunication"));
+                detailedRatings.put("minCommunication", rs.getDouble("minCommunication"));
+                detailedRatings.put("maxSupport", rs.getDouble("maxSupport"));
+                detailedRatings.put("minSupport", rs.getDouble("minSupport"));
+                detailedRatings.put("maxPunctuality", rs.getDouble("maxPunctuality"));
+                detailedRatings.put("minPunctuality", rs.getDouble("minPunctuality"));
+                detailedRatings.put("feedbackCount", rs.getInt("feedbackCount"));
+            }
+
+            stmt.close();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+
+        return detailedRatings;
+    }
+
+    // Get monthly trend data
+    public List<Map<String, Object>> getMonthlyTrendData(int instructorId, Date startDate)
+            throws SQLException {
+
+        List<Map<String, Object>> monthlyData = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+
+            String sql = "SELECT "
+                    + "TO_CHAR(feedbackDate, 'Mon') as month, "
+                    + "EXTRACT(MONTH FROM feedbackDate) as monthNum, "
+                    + "AVG(overallRating) as avgRating, "
+                    + "COUNT(*) as feedbackCount "
+                    + "FROM feedback WHERE instructorID = ? ";
+
+            if (startDate != null) {
+                sql += "AND feedbackDate >= ? ";
+            }
+
+            sql += "GROUP BY TO_CHAR(feedbackDate, 'Mon'), EXTRACT(MONTH FROM feedbackDate) "
+                    + "ORDER BY EXTRACT(MONTH FROM feedbackDate) DESC "
+                    + "FETCH FIRST 6 ROWS ONLY";
+
+            PreparedStatement stmt = conn.prepareStatement(sql);
+            stmt.setInt(1, instructorId);
+
+            if (startDate != null) {
+                stmt.setDate(2, startDate);
+            }
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> monthData = new HashMap<>();
+                monthData.put("month", rs.getString("month"));
+                monthData.put("monthNum", rs.getInt("monthNum"));
+                monthData.put("avgRating", rs.getDouble("avgRating"));
+                monthData.put("feedbackCount", rs.getInt("feedbackCount"));
+                monthlyData.add(monthData);
+            }
+
+            stmt.close();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+
+        return monthlyData;
+    }
+
+    // METHOD BARU: Count confirmed classes with date filter
+    public int countConfirmedClassesForInstructor(int instructorId, java.sql.Date startDate) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) as count FROM class_confirmation cc ")
+                .append("WHERE instructorID = ? AND action = 'confirmed' ");
+
+        if (startDate != null) {
+            sql.append("AND EXISTS (SELECT 1 FROM class c WHERE c.classID = cc.classID AND c.classDate >= ?)");
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            stmt.setInt(1, instructorId);
+            if (startDate != null) {
+                stmt.setDate(2, startDate);
+            }
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+            return 0;
+        }
+    }
+
+// METHOD BARU: Count cancelled classes with date filter
+    public int countCancelledClassesForInstructor(int instructorId, java.sql.Date startDate) throws SQLException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) as total FROM class_confirmation cc ")
+                .append("WHERE instructorID = ? AND action = 'cancelled' ");
+
+        if (startDate != null) {
+            sql.append("AND EXISTS (SELECT 1 FROM class c WHERE c.classID = cc.classID AND c.classDate >= ?)");
+        }
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            stmt.setInt(1, instructorId);
+            if (startDate != null) {
+                stmt.setDate(2, startDate);
+            }
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
+    }
 }
