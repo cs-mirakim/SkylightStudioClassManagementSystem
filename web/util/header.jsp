@@ -145,9 +145,7 @@
             if (userRole === 'admin') {
                 endpoint = contextPath + '/admin/inbox-messages?action=count-unread';
             } else if (userRole === 'instructor') {
-                // For instructor, we'll fetch the full servlet and count from notificationData
-                // Since instructor servlet doesn't have count-unread action yet
-                return; // Skip for now, atau implement count endpoint untuk instructor
+                endpoint = contextPath + '/instructor/inboxMessages_instructor?action=count-unread';
             }
 
             if (!endpoint)
@@ -160,7 +158,7 @@
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     try {
                         var response = JSON.parse(xhr.responseText);
-                        var count = response.unreadCount || 0;
+                        var count = response.unreadCount || response.totalCount || 0;
 
                         // Update badge
                         var badge = document.getElementById('inboxBadgeCount');
@@ -190,8 +188,8 @@
             xhr.send();
         }
 
-        // Update on page load
-        if (userRole === 'admin') {
+        // Update on page load for both admin and instructor
+        if (userRole === 'admin' || userRole === 'instructor') {
             updateNotificationCount();
 
             // Update every 30 seconds
