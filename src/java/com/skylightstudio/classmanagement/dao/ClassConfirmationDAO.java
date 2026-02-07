@@ -248,4 +248,91 @@ public class ClassConfirmationDAO {
         }
         return cancelledClasses;
     }
+    
+        public int countConfirmedClassesForInstructor(int instructorId) throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM class_confirmation " +
+                     "WHERE instructorID = ? AND action = 'confirmed'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+            return 0;
+        }
+    }
+
+    public int countClassesForInstructor(int instructorId) throws SQLException {
+        String sql = "SELECT COUNT(*) as total FROM class_confirmation " +
+                     "WHERE instructorID = ? AND action IN ('confirmed', 'completed')";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
+    }
+
+    public int countCancelledClassesForInstructor(int instructorId) throws SQLException {
+        String sql = "SELECT COUNT(*) as total FROM class_confirmation " +
+                     "WHERE instructorID = ? AND action = 'cancelled'";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("total");
+            }
+            return 0;
+        }
+    }
+    
+    // Tambah method ini ke dalam ClassConfirmationDAO:
+    public boolean cancelInstructorFromClass(int classId, int instructorId, String reason) throws SQLException {
+        String sql = "UPDATE class_confirmation SET action = 'cancelled', " +
+                     "cancelledAt = CURRENT_TIMESTAMP, " +
+                     "cancellationReason = ? " +
+                     "WHERE classID = ? AND instructorID = ? AND action IN ('confirmed', 'pending')";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, reason);
+            stmt.setInt(2, classId);
+            stmt.setInt(3, instructorId);
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
+    public boolean promoteReliefToConfirmed(int classId) throws SQLException {
+        String sql = "UPDATE class_confirmation SET action = 'confirmed', actionAt = CURRENT_TIMESTAMP " +
+                     "WHERE classID = ? AND action = 'pending' " +
+                     "AND instructorID = (SELECT instructorID FROM class_confirmation " +
+                     "WHERE classID = ? AND action = 'pending' " +
+                     "ORDER BY actionAt ASC FETCH FIRST 1 ROWS ONLY)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, classId);
+            stmt.setInt(2, classId);
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+    
 }

@@ -319,4 +319,19 @@ public class RegistrationDAO {
             return false;
         }
     }
+    
+    public int countPendingRegistrations() throws SQLException {
+        String sql = "SELECT COUNT(*) as count FROM registration WHERE status = 'pending' AND userType = 'instructor'";
+        
+        try (Connection conn = DBConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            if (rs.next()) {
+                return rs.getInt("count");
+            }
+        }
+        return 0;
+    }
+
 }
