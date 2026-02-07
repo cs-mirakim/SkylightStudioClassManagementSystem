@@ -1,10 +1,6 @@
 <%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
 <%@ page import="com.skylightstudio.classmanagement.model.Admin" %>
 <%@ page import="com.skylightstudio.classmanagement.model.Instructor" %>
-<%@ page import="com.skylightstudio.classmanagement.dao.RegistrationDAO" %>
-<%@ page import="com.skylightstudio.classmanagement.dao.ClassConfirmationDAO" %>
-<%@ page import="com.skylightstudio.classmanagement.dao.ClassDAO" %>
-<%@ page import="java.sql.SQLException" %>
 
 <%
     // Check if user is logged in
@@ -29,14 +25,14 @@
     if ("admin".equals(userRole)) {
         admin = SessionUtil.getAdminObject(session);
         if (admin != null) {
-            userName = admin.getName();
-            username = admin.getUsername();
+            userName = admin.getName(); // Full name
+            username = admin.getUsername(); // Username
         }
     } else if ("instructor".equals(userRole)) {
         instructor = SessionUtil.getInstructorObject(session);
         if (instructor != null) {
-            userName = instructor.getName();
-            username = instructor.getUsername();
+            userName = instructor.getName(); // Full name
+            username = instructor.getUsername(); // Username
         }
     }
 
@@ -57,39 +53,12 @@
         avatarLetter = userName.substring(0, 1).toUpperCase();
     }
 
-    // Get REAL notification count from database
-    int inboxCount = 0;
+    // Determine inbox link based on role
     String inboxLink = "#";
-
-    try {
-        if ("admin".equals(userRole)) {
-            inboxLink = "../admin/inboxMessages_admin.jsp";
-
-            // Count from database using EXISTING methods
-            RegistrationDAO registrationDAO = new RegistrationDAO();
-            ClassConfirmationDAO classConfirmationDAO = new ClassConfirmationDAO();
-
-            int pendingRegistrations = registrationDAO.countPendingRegistrations(); // Method yang dah ada
-            int cancelledClasses = classConfirmationDAO.getCancelledClasses().size(); // Count dari list yang dah ada
-
-            inboxCount = pendingRegistrations + cancelledClasses;
-
-            // Update session
-            SessionUtil.updateInboxCountForAdmin(session, inboxCount);
-
-        } else if ("instructor".equals(userRole)) {
-            inboxLink = "../instructor/inboxMessages_instructor.jsp";
-
-            // Count from database
-            ClassDAO classDAO = new ClassDAO();
-            inboxCount = classDAO.getNotificationsForInstructor(userId).size(); // Count dari list
-
-            // Update session
-            SessionUtil.updateInboxCountForInstructor(session, inboxCount);
-        }
-    } catch (SQLException e) {
-        System.err.println("[Header] Error counting notifications: " + e.getMessage());
-        inboxCount = 0;
+    if ("admin".equals(userRole)) {
+        inboxLink = request.getContextPath() + "/admin/inbox-messages";
+    } else if ("instructor".equals(userRole)) {
+        inboxLink = request.getContextPath() + "/instructor/inboxMessages_instructor";
     }
 
     // Determine display role text
@@ -125,18 +94,20 @@
 
     <div class="flex items-center justify-end gap-4 w-1/4">
 
-        <% if (inboxCount > 0) {%>
+        <!-- Inbox notification with dynamic count -->
         <a href="<%= inboxLink%>" 
+           id="inboxNotificationBtn"
            class="relative p-2 rounded-xl hover:bg-petal/50 transition-all text-espresso/60 hover:text-dusty"
-           aria-label="Inbox">
+           aria-label="Inbox"
+           style="display: none;">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"></path>
             </svg>
-            <span id="header-inbox-badge" class="absolute top-2 right-2 bg-dusty text-whitePure text-[8px] font-bold rounded-full h-3.5 w-3.5 flex items-center justify-center ring-2 ring-whitePure">
-                <%= inboxCount%>
+            <span id="inboxBadgeCount" 
+                  class="absolute top-2 right-2 bg-dusty text-whitePure text-[8px] font-bold rounded-full h-3.5 w-3.5 flex items-center justify-center ring-2 ring-whitePure">
+                0
             </span>
         </a>
-        <% }%>
 
         <a href="../general/profile.jsp"
            class="flex items-center gap-3 pl-3 pr-1 py-1 rounded-xl border border-petal hover:border-dusty/30 hover:bg-cloud transition-all group">
@@ -163,47 +134,68 @@
 </header>
 
 <script>
-    // Auto-refresh inbox count every 30 seconds (AJAX polling)
+// Header notification count fetcher (ES5 compatible)
     (function () {
-        var refreshInterval = 30000; // 30 seconds
+        var userRole = '<%= userRole%>';
+        var contextPath = '<%= request.getContextPath()%>';
 
-        function refreshInboxCount() {
+        function updateNotificationCount() {
+            var endpoint = '';
+
+            if (userRole === 'admin') {
+                endpoint = contextPath + '/admin/inbox-messages?action=count-unread';
+            } else if (userRole === 'instructor') {
+                // For instructor, we'll fetch the full servlet and count from notificationData
+                // Since instructor servlet doesn't have count-unread action yet
+                return; // Skip for now, atau implement count endpoint untuk instructor
+            }
+
+            if (!endpoint)
+                return;
+
+            // Fetch notification count using XMLHttpRequest (ES5)
             var xhr = new XMLHttpRequest();
-            var userRole = '<%= userRole%>';
-            var url = userRole === 'admin'
-                    ? '<%= request.getContextPath()%>/admin/inbox-messages?action=count-unread'
-                    : '<%= request.getContextPath()%>/instructor/inboxMessages_instructor?action=count-unread';
-
-            xhr.open('GET', url, true);
+            xhr.open('GET', endpoint, true);
             xhr.onreadystatechange = function () {
                 if (xhr.readyState === 4 && xhr.status === 200) {
                     try {
                         var response = JSON.parse(xhr.responseText);
-                        var count = response.unreadCount || response.totalCount || 0;
+                        var count = response.unreadCount || 0;
 
-                        var badge = document.getElementById('header-inbox-badge');
-                        if (badge) {
+                        // Update badge
+                        var badge = document.getElementById('inboxBadgeCount');
+                        var btn = document.getElementById('inboxNotificationBtn');
+
+                        if (count > 0) {
                             badge.textContent = count;
+                            btn.style.display = 'block';
+                        } else {
+                            btn.style.display = 'none';
+                        }
 
-                            // Show/hide badge parent
-                            var badgeParent = badge.closest('a');
-                            if (count > 0) {
-                                if (badgeParent)
-                                    badgeParent.style.display = '';
-                            } else {
-                                if (badgeParent)
-                                    badgeParent.style.display = 'none';
+                        // Update sidebar if exists
+                        var sidebar = document.getElementById('sidebar');
+                        if (sidebar) {
+                            sidebar.setAttribute('data-inbox-count', count);
+                            // Trigger sidebar re-render if function exists
+                            if (typeof window.updateSidebarBadge === 'function') {
+                                window.updateSidebarBadge(count);
                             }
                         }
                     } catch (e) {
-                        console.error('Error parsing inbox count:', e);
+                        console.error('Error parsing notification count:', e);
                     }
                 }
             };
             xhr.send();
         }
 
-        // Refresh every 30 seconds
-        setInterval(refreshInboxCount, refreshInterval);
+        // Update on page load
+        if (userRole === 'admin') {
+            updateNotificationCount();
+
+            // Update every 30 seconds
+            setInterval(updateNotificationCount, 30000);
+        }
     })();
 </script>

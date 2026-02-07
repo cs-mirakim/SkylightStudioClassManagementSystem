@@ -1,4 +1,6 @@
-// sidebar.js - ES5 Compatible Version with Dynamic Badge
+// sidebar.js - ES5 Compatible Version with Fixed Role Detection
+// Compatible dengan NetBeans 8.2
+
 var menus = {
     instructor: [
         {label: 'Profile', href: '../general/profile.jsp'},
@@ -24,8 +26,35 @@ function initSidebar() {
     var menuContainer = document.getElementById('sidebar-menu');
     var closeBtn = document.getElementById('sidebarClose');
 
-    if (!sidebar || !overlay || !menuContainer)
+    if (!sidebar || !overlay || !menuContainer) {
+        console.warn('Sidebar elements not found');
         return;
+    }
+
+    // Get user role from sidebar data attribute (most reliable)
+    function getCurrentUserRole() {
+        var roleFromAttr = sidebar.getAttribute('data-user-role');
+        if (roleFromAttr) {
+            console.log('User role from sidebar attribute:', roleFromAttr);
+            return roleFromAttr;
+        }
+
+        // Fallback: check radio button
+        var adminRadio = document.querySelector('input[name="sidebar_role"][value="admin"]');
+        var instructorRadio = document.querySelector('input[name="sidebar_role"][value="instructor"]');
+
+        if (adminRadio && adminRadio.checked) {
+            console.log('User role from radio: admin');
+            return 'admin';
+        }
+        if (instructorRadio && instructorRadio.checked) {
+            console.log('User role from radio: instructor');
+            return 'instructor';
+        }
+
+        console.warn('No role detected, defaulting to admin');
+        return 'admin'; // default fallback
+    }
 
     // Get inbox count from sidebar data attribute
     function getInboxCount() {
@@ -33,22 +62,19 @@ function initSidebar() {
         return count ? parseInt(count, 10) : 0;
     }
 
-    // Get user role from checked radio button
-    function getCurrentUserRole() {
-        var adminRadio = document.querySelector('input[name="sidebar_role"][value="admin"]');
-        var instructorRadio = document.querySelector('input[name="sidebar_role"][value="instructor"]');
-
-        if (adminRadio && adminRadio.checked)
-            return 'admin';
-        if (instructorRadio && instructorRadio.checked)
-            return 'instructor';
-        return 'admin'; // default fallback
-    }
-
+    // Render menu based on role
     function renderMenu(role) {
+        console.log('Rendering menu for role:', role);
         menuContainer.innerHTML = '';
-        var items = menus[role] || [];
+
+        var items = menus[role];
+        if (!items || items.length === 0) {
+            console.error('No menu items found for role:', role);
+            return;
+        }
+
         var inboxCount = getInboxCount();
+        console.log('Inbox count:', inboxCount);
 
         for (var i = 0; i < items.length; i++) {
             var item = items[i];
@@ -72,9 +98,12 @@ function initSidebar() {
                 badgeCount = inboxCount;
             }
 
-            var badgeHtml = (badgeCount > 0)
-                    ? '<span class="ml-2 px-2 py-0.5 text-[10px] font-bold bg-dusty text-whitePure rounded-full shadow-sm group-hover:bg-espresso transition-colors">' + badgeCount + '</span>'
-                    : '';
+            var badgeHtml = '';
+            if (badgeCount > 0) {
+                badgeHtml = '<span class="ml-2 px-2 py-0.5 text-[10px] font-bold bg-dusty text-whitePure rounded-full shadow-sm group-hover:bg-espresso transition-colors">' +
+                        badgeCount +
+                        '</span>';
+            }
 
             el.innerHTML = '<div class="flex items-center">' +
                     '<span class="text-sm font-semibold text-espresso/90 group-hover:text-dusty">' + item.label + '</span>' +
@@ -92,42 +121,49 @@ function initSidebar() {
 
             menuContainer.appendChild(container);
         }
+
+        console.log('Menu rendered successfully for', role);
     }
 
+    // Open sidebar
     function openSidebar() {
         sidebar.classList.remove('-translate-x-full');
         overlay.classList.remove('hidden');
         sidebar.setAttribute('aria-hidden', 'false');
     }
 
+    // Close sidebar
     function closeSidebar() {
         sidebar.classList.add('-translate-x-full');
         overlay.classList.add('hidden');
         sidebar.setAttribute('aria-hidden', 'true');
     }
 
+    // Event listeners
     var sidebarBtn = document.getElementById('sidebarBtn');
     if (sidebarBtn) {
         sidebarBtn.addEventListener('click', openSidebar);
     }
+
     if (closeBtn) {
         closeBtn.addEventListener('click', closeSidebar);
     }
+
     overlay.addEventListener('click', closeSidebar);
 
-    // Initial render
+    // Initial render based on user role
     var initialRole = getCurrentUserRole();
+    console.log('Initial role detected:', initialRole);
     renderMenu(initialRole);
 
-    // Listen for role changes (radios are disabled, just safety)
-    var roleRadios = document.querySelectorAll('input[name="sidebar_role"]');
-    for (var i = 0; i < roleRadios.length; i++) {
-        roleRadios[i].addEventListener('change', function (e) {
-            if (!this.disabled) {
-                renderMenu(e.target.value);
-            }
-        });
-    }
+    // Global function to update badge from header
+    window.updateSidebarBadge = function (count) {
+        console.log('Updating sidebar badge to:', count);
+        sidebar.setAttribute('data-inbox-count', count);
+        var currentRole = getCurrentUserRole();
+        renderMenu(currentRole);
+    };
 }
 
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initSidebar);
