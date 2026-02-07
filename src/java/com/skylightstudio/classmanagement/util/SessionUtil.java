@@ -123,26 +123,59 @@ public class SessionUtil {
             }
         }
     }
-    
+
     // ========== NEW METHODS FOR SCHEDULE ==========
-    
     public static Integer getCurrentInstructorId(HttpSession session) {
-        if (!isInstructor(session)) return null;
+        if (!isInstructor(session)) {
+            return null;
+        }
         return getUserId(session);
     }
-    
+
     public static String getCurrentInstructorName(HttpSession session) {
-        if (!isInstructor(session)) return null;
+        if (!isInstructor(session)) {
+            return null;
+        }
         return getUserName(session);
     }
-    
+
     public static String getCurrentInstructorInitials(HttpSession session) {
         String name = getCurrentInstructorName(session);
-        if (name == null || name.trim().isEmpty()) return "??";
+        if (name == null || name.trim().isEmpty()) {
+            return "??";
+        }
         String[] parts = name.split(" ");
         if (parts.length >= 2) {
             return (parts[0].charAt(0) + "" + parts[parts.length - 1].charAt(0)).toUpperCase();
         }
         return name.substring(0, Math.min(2, name.length())).toUpperCase();
+    }
+
+    // ========== NOTIFICATION COUNT METHODS ==========
+    public static void setInboxCount(HttpSession session, int count) {
+        if (session != null) {
+            session.setAttribute("inboxCount", count);
+        }
+    }
+
+    public static int getInboxCount(HttpSession session) {
+        try {
+            Integer count = (Integer) session.getAttribute("inboxCount");
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
+    public static void updateInboxCountForAdmin(HttpSession session, int count) {
+        if (isAdmin(session)) {
+            setInboxCount(session, count);
+        }
+    }
+
+    public static void updateInboxCountForInstructor(HttpSession session, int count) {
+        if (isInstructor(session)) {
+            setInboxCount(session, count);
+        }
     }
 }

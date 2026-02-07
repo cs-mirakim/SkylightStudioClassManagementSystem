@@ -165,7 +165,7 @@ public class RegistrationDAO {
     }
 
     // ========== NEW METHOD: Get all instructor registrations with instructor details ==========
-        public List<Map<String, Object>> getAllInstructorRegistrations() throws SQLException {
+    public List<Map<String, Object>> getAllInstructorRegistrations() throws SQLException {
         System.out.println("[DEBUG] RegistrationDAO.getAllInstructorRegistrations() called");
 
         String sql = "SELECT r.registerID, r.status as registrationStatus, r.registerDate, r.adminMessage, "
@@ -319,14 +319,14 @@ public class RegistrationDAO {
             return false;
         }
     }
-    
+
     public int countPendingRegistrations() throws SQLException {
         String sql = "SELECT COUNT(*) as count FROM registration WHERE status = 'pending' AND userType = 'instructor'";
-        
+
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
+
             if (rs.next()) {
                 return rs.getInt("count");
             }

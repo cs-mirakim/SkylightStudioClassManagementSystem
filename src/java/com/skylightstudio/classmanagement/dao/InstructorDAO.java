@@ -304,8 +304,8 @@ public class InstructorDAO {
 
     // Method untuk update instructor status dengan reviewedBy
     public boolean updateInstructorStatus(int instructorID, String status, int reviewedBy) throws SQLException {
-        System.out.println("DEBUG DAO - updateInstructorStatus: instructorID=" + instructorID + 
-                           ", status=" + status + ", reviewedBy=" + reviewedBy);
+        System.out.println("DEBUG DAO - updateInstructorStatus: instructorID=" + instructorID
+                + ", status=" + status + ", reviewedBy=" + reviewedBy);
 
         String sql;
 
@@ -375,8 +375,8 @@ public class InstructorDAO {
 
     // Update instructor status and review info
     public boolean updateInstructorReview(int instructorID, String status, int reviewedBy) throws SQLException {
-        System.out.println("DEBUG DAO - updateInstructorReview: instructorID=" + instructorID + 
-                           ", status=" + status + ", reviewedBy=" + reviewedBy);
+        System.out.println("DEBUG DAO - updateInstructorReview: instructorID=" + instructorID
+                + ", status=" + status + ", reviewedBy=" + reviewedBy);
 
         String sql = "UPDATE instructor SET status = ?, reviewedBy = ?, reviewedAt = CURRENT_TIMESTAMP "
                 + "WHERE instructorID = ?";
@@ -396,7 +396,5 @@ public class InstructorDAO {
             throw e;
         }
     }
-    
-    
-    
+
 }

@@ -609,8 +609,8 @@ public class ClassDAO {
 
         return stats;
     }
-    
-   /**
+
+    /**
      * Get notifications for a specific instructor
      */
     public List<Map<String, Object>> getNotificationsForInstructor(int instructorId) throws SQLException {
@@ -788,19 +788,18 @@ public class ClassDAO {
 
         return notifications;
     }
-    
-    
-   // Get active classes count this month
+
+    // Get active classes count this month
     public int getActiveClassesThisMonthCount() throws SQLException {
         String sql = "SELECT COUNT(*) as count FROM class "
-                   + "WHERE classStatus = 'active' "
-                   + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
-                   + "AND YEAR(classDate) = YEAR(CURRENT_DATE)";
+                + "WHERE classStatus = 'active' "
+                + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
+                + "AND YEAR(classDate) = YEAR(CURRENT_DATE)";
 
         System.out.println("[ClassDAO] Executing SQL: " + sql);
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -814,15 +813,15 @@ public class ClassDAO {
 
     // Get today's classes count
     public int getTodaysClassesCount() throws SQLException {
-    String sql = "SELECT COUNT(*) as count FROM class "
-               + "WHERE classStatus = 'active' "
-               + "AND classDate = CURRENT_DATE";
-    
-    System.out.println("[ClassDAO] Executing SQL: " + sql);
-    
-    try (Connection conn = DBConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        
+        String sql = "SELECT COUNT(*) as count FROM class "
+                + "WHERE classStatus = 'active' "
+                + "AND classDate = CURRENT_DATE";
+
+        System.out.println("[ClassDAO] Executing SQL: " + sql);
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 int count = rs.getInt("count");
@@ -839,31 +838,31 @@ public class ClassDAO {
 
         // Untuk Derby, kita perlu approach yang berbeza
         String sql = "SELECT "
-                   + "CASE MONTH(classDate) "
-                   + "  WHEN 1 THEN 'January' "
-                   + "  WHEN 2 THEN 'February' "
-                   + "  WHEN 3 THEN 'March' "
-                   + "  WHEN 4 THEN 'April' "
-                   + "  WHEN 5 THEN 'May' "
-                   + "  WHEN 6 THEN 'June' "
-                   + "  WHEN 7 THEN 'July' "
-                   + "  WHEN 8 THEN 'August' "
-                   + "  WHEN 9 THEN 'September' "
-                   + "  WHEN 10 THEN 'October' "
-                   + "  WHEN 11 THEN 'November' "
-                   + "  WHEN 12 THEN 'December' "
-                   + "END as month, "
-                   + "COUNT(*) as count "
-                   + "FROM class "
-                   + "WHERE classStatus = 'active' "
-                   + "AND classDate >= (CURRENT_DATE - 180 DAYS) "
-                   + "GROUP BY MONTH(classDate) "
-                   + "ORDER BY MONTH(classDate)";
+                + "CASE MONTH(classDate) "
+                + "  WHEN 1 THEN 'January' "
+                + "  WHEN 2 THEN 'February' "
+                + "  WHEN 3 THEN 'March' "
+                + "  WHEN 4 THEN 'April' "
+                + "  WHEN 5 THEN 'May' "
+                + "  WHEN 6 THEN 'June' "
+                + "  WHEN 7 THEN 'July' "
+                + "  WHEN 8 THEN 'August' "
+                + "  WHEN 9 THEN 'September' "
+                + "  WHEN 10 THEN 'October' "
+                + "  WHEN 11 THEN 'November' "
+                + "  WHEN 12 THEN 'December' "
+                + "END as month, "
+                + "COUNT(*) as count "
+                + "FROM class "
+                + "WHERE classStatus = 'active' "
+                + "AND classDate >= (CURRENT_DATE - 180 DAYS) "
+                + "GROUP BY MONTH(classDate) "
+                + "ORDER BY MONTH(classDate)";
 
         System.out.println("[ClassDAO] Executing SQL: " + sql);
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -893,14 +892,14 @@ public class ClassDAO {
         Map<String, Integer> distribution = new HashMap<>();
 
         String sql = "SELECT classType, COUNT(*) as count "
-                   + "FROM class "
-                   + "WHERE classStatus = 'active' "
-                   + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
-                   + "AND YEAR(classDate) = YEAR(CURRENT_DATE) "
-                   + "GROUP BY classType";
+                + "FROM class "
+                + "WHERE classStatus = 'active' "
+                + "AND MONTH(classDate) = MONTH(CURRENT_DATE) "
+                + "AND YEAR(classDate) = YEAR(CURRENT_DATE) "
+                + "GROUP BY classType";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -916,16 +915,15 @@ public class ClassDAO {
         }
         return distribution;
     }
-    
-    // Add these methods to existing ClassDAO class:
 
+    // Add these methods to existing ClassDAO class:
     public int getMonthlyClassCount(int year, int month) throws SQLException {
-        String sql = "SELECT COUNT(*) as count FROM class WHERE classStatus = 'active' " +
-                     "AND EXTRACT(YEAR FROM classDate) = ? " +
-                     "AND EXTRACT(MONTH FROM classDate) = ?";
+        String sql = "SELECT COUNT(*) as count FROM class WHERE classStatus = 'active' "
+                + "AND EXTRACT(YEAR FROM classDate) = ? "
+                + "AND EXTRACT(MONTH FROM classDate) = ?";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, year);
             stmt.setInt(2, month);
@@ -942,8 +940,8 @@ public class ClassDAO {
         String sql = "SELECT COUNT(*) as count FROM class WHERE classStatus = 'active' AND classDate = CURRENT_DATE";
 
         try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
+                Statement stmt = conn.createStatement();
+                ResultSet rs = stmt.executeQuery(sql)) {
 
             if (rs.next()) {
                 return rs.getInt("count");
@@ -954,11 +952,11 @@ public class ClassDAO {
 
     public Map<String, Integer> getClassTypeDistribution(Date startDate, Date endDate) throws SQLException {
         Map<String, Integer> distribution = new HashMap<>();
-        String sql = "SELECT classType, COUNT(*) as count FROM class WHERE classStatus = 'active' " +
-                     "AND classDate BETWEEN ? AND ? GROUP BY classType";
+        String sql = "SELECT classType, COUNT(*) as count FROM class WHERE classStatus = 'active' "
+                + "AND classDate BETWEEN ? AND ? GROUP BY classType";
 
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDate(1, startDate);
             stmt.setDate(2, endDate);
@@ -966,10 +964,21 @@ public class ClassDAO {
 
             while (rs.next()) {
                 String type = rs.getString("classType");
-                if (type == null) type = "Other";
+                if (type == null) {
+                    type = "Other";
+                }
                 distribution.put(type, rs.getInt("count"));
             }
         }
         return distribution;
+    }
+
+    public int countNotificationsForInstructor(Integer instructorId) throws SQLException {
+        if (instructorId == null) {
+            return 0;
+        }
+
+        List<Map<String, Object>> notifications = getNotificationsForInstructor(instructorId);
+        return notifications.size();
     }
 }
