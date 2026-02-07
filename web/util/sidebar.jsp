@@ -11,8 +11,16 @@
     String userRole = SessionUtil.getUserRole(session);
     String userName = SessionUtil.getUserName(session);
 
-    // Get inbox count from session
-    int sidebarInboxCount = SessionUtil.getInboxCount(session);
+    // Determine display role text
+    String displayRole = "User";
+    if ("admin".equals(userRole)) {
+        displayRole = "Admin";
+    } else if ("instructor".equals(userRole)) {
+        displayRole = "Instructor";
+    }
+
+    // Get initial inbox count (will be updated by AJAX)
+    int sidebarInboxCount = 0;
 %>
 
 <div id="sidebar-overlay" class="fixed inset-0 bg-espresso/40 backdrop-blur-sm hidden z-40" aria-hidden="true"></div>
@@ -20,6 +28,7 @@
 <aside id="sidebar"
        class="fixed left-0 top-0 h-full w-64 bg-whitePure text-espresso transform -translate-x-full transition-transform duration-300 z-50 shadow-2xl flex flex-col border-r border-petal"
        aria-hidden="true" aria-label="Sidebar"
+       data-user-role="<%= userRole%>"
        data-inbox-count="<%= sidebarInboxCount%>">
 
     <div class="p-6 border-b border-petal flex-shrink-0">
@@ -56,9 +65,16 @@
 
         <hr class="border-petal mb-4">
 
-            <div class="mb-6">
-                <p class="text-sm text-espresso/70 text-center mb-3">
-                    Are you sure you want to logout from Skylight Studio Management System?
+        <div class="mb-6">
+            <p class="text-sm text-espresso/70 text-center mb-3">
+                Are you sure you want to logout from Skylight Studio Management System?
+            </p>
+            <div class="flex items-center gap-2 p-3 rounded-lg bg-cloud/50 border border-petal">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-dusty flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <p class="text-xs text-espresso/70">
+                    Your session will be terminated and you'll need to login again.
                 </p>
                 <div class="flex items-center gap-2 p-3 rounded-lg bg-cloud/50 border border-petal">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-dusty flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,10 +86,10 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-2">
-                <form id="logoutForm" action="<%= request.getContextPath()%>/authenticate" method="GET" style="display: none;">
-                    <input type="hidden" name="action" value="logout">
-                </form>
+        <div class="flex flex-col gap-2">
+            <form id="logoutForm" action="<%= request.getContextPath()%>/authenticate" method="GET" style="display: none;">
+                <input type="hidden" name="action" value="logout">
+            </form>
 
                 <button onclick="performLogout()"
                         class="w-full bg-dusty hover:bg-dustyHover text-whitePure p-3 rounded-lg font-medium transition-colors">
