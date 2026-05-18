@@ -118,7 +118,17 @@ public class MonitorInstructorServlet extends HttpServlet {
             out.print("<email>" + escapeXml(instructor.get("email").toString()) + "</email>");
             out.print("<experience>" + getExperienceString(instructor.get("yearOfExperience")) + "</experience>");
 
-            // ✅ FIX: Check if dateJoined exists and is not null
+            // ✅ ADD: Profile image path
+            String profileImage = (String) instructor.get("profileImageFilePath");
+            if (profileImage != null && !profileImage.isEmpty() && !profileImage.equals("null")) {
+                if (!profileImage.startsWith("../")) {
+                    profileImage = "../" + profileImage;
+                }
+                out.print("<profileImage>" + escapeXml(profileImage) + "</profileImage>");
+            } else {
+                out.print("<profileImage>../profile_pictures/instructor/dummy.png</profileImage>");
+            }
+
             Object dateJoined = instructor.get("dateJoined");
             if (dateJoined != null) {
                 out.print("<dateJoined>" + formatDate(dateJoined) + "</dateJoined>");
