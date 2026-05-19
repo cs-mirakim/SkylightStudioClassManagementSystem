@@ -116,6 +116,17 @@
                                 </label>
                             </div>
                         </fieldset>
+
+                        <!-- Security Code Field (only shown for Admin) -->
+                        <div id="securityCodeField" class="mt-4" style="display: none;">
+                            <label for="securityCode" class="block text-sm font-medium mb-1 text-espresso">
+                                Security Code <span class="text-dusty">*</span>
+                            </label>
+                            <input type="text" name="securityCode" id="securityCode" 
+                                   class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition"
+                                   placeholder="Enter the code provided by the owner" />
+                            <p class="text-xs text-espresso/70 mt-1">Required for Admin registration only.</p>
+                        </div>
                     </div>
 
                     <!-- Account Information Section -->
@@ -200,16 +211,15 @@
                                        class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition"
                                        placeholder="000000000000"
                                        pattern="\d{12}"
-                                       title="Enter 12-digit NRIC without dashes" />
+                                       title="Enter 12-digit NRIC without dashes"
+                                       oninput="extractDOBFromNRIC()" />
                                 <p class="text-xs text-espresso/70 mt-1">Enter 12-digit NRIC without dashes</p>
                             </div>
 
-                            <div>
-                                <label for="bod" class="block text-sm font-medium mb-1 text-espresso">
-                                    Date of Birth <span class="text-dusty">*</span>
-                                </label>
-                                <input id="bod" name="bod" type="date" required
-                                       class="w-full p-3 border border-blush rounded-lg focus:outline-none focus:ring-2 focus:ring-dusty focus:border-transparent transition" />
+                            <!-- DOB extracted from NRIC (hidden) -->
+                            <input type="hidden" id="bod" name="bod" />
+                            <div id="dob_display" class="p-3 border border-blush rounded-lg bg-cloud/50 text-espresso/70 text-sm" style="display:none;">
+                                Date of Birth: <span id="dob_text"></span> (extracted from NRIC)
                             </div>
                         </div>
                     </div>
@@ -329,31 +339,28 @@
                 const certificationHelp = document.getElementById('certification_help');
                 const adminLabel = document.getElementById('adminLabel');
                 const instructorLabel = document.getElementById('instructorLabel');
+                const securityCodeField = document.getElementById('securityCodeField');
+                const securityCodeInput = document.getElementById('securityCode');
 
                 if (role === 'admin') {
-                    // Hide year of experience for admin
                     instructorFields.classList.add('hidden');
                     yearOfExperience.removeAttribute('required');
-
-                    // Update certification labels for admin
+                    securityCodeField.style.display = 'block';
+                    securityCodeInput.setAttribute('required', 'required');
                     certificationTitle.textContent = 'Supporting Document';
                     certificationLabel.innerHTML = 'Identification / Authorization Document <span class="text-dusty">*</span>';
                     certificationHelp.innerHTML = 'For Admin: Please upload identification document or authorization letter.<br>Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)';
-
-                    // Update label styling
                     adminLabel.classList.add('border-dusty', 'bg-blush/30');
                     instructorLabel.classList.remove('border-dusty', 'bg-blush/30');
                 } else {
-                    // Show year of experience for instructor
                     instructorFields.classList.remove('hidden');
                     yearOfExperience.setAttribute('required', 'required');
-
-                    // Update certification labels for instructor
+                    securityCodeField.style.display = 'none';
+                    securityCodeInput.removeAttribute('required');
+                    securityCodeInput.value = '';
                     certificationTitle.textContent = 'Certification Document';
                     certificationLabel.innerHTML = 'Teaching Certification <span class="text-dusty">*</span>';
                     certificationHelp.innerHTML = 'For Instructor: Please upload your teaching certification.<br>Accepted formats: PDF, JPG, PNG, DOC, DOCX (Max: 5MB)';
-
-                    // Update label styling
                     instructorLabel.classList.add('border-dusty', 'bg-blush/30');
                     adminLabel.classList.remove('border-dusty', 'bg-blush/30');
                 }
@@ -362,8 +369,6 @@
             // Initialize on page load
             document.addEventListener('DOMContentLoaded', function () {
                 toggleForms();
-
-                // Add styling to the checked radio's label
                 const checkedRadio = document.querySelector('input[name="reg_role"]:checked');
                 if (checkedRadio.value === 'admin') {
                     document.getElementById('adminLabel').classList.add('border-dusty', 'bg-blush/30');
@@ -390,20 +395,16 @@
             function checkUsername() {
                 const username = document.getElementById('username').value;
                 const feedback = document.getElementById('usernameFeedback');
-
                 if (username.length < 3) {
                     feedback.textContent = 'Username must be at least 3 characters';
                     feedback.className = 'text-xs mt-1 text-warningText';
                     return false;
                 }
-
-                // Simulate checking if username exists
                 if (username.includes('admin') || username.includes('root')) {
                     feedback.textContent = 'Username is not available';
                     feedback.className = 'text-xs mt-1 text-dangerText';
                     return false;
                 }
-
                 feedback.textContent = 'Username is available';
                 feedback.className = 'text-xs mt-1 text-successTextDark';
                 return true;
@@ -414,13 +415,11 @@
                 const email = document.getElementById('email').value;
                 const feedback = document.getElementById('emailFeedback');
                 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
                 if (!emailPattern.test(email)) {
                     feedback.textContent = 'Please enter a valid email address';
                     feedback.className = 'text-xs mt-1 text-warningText';
                     return false;
                 }
-
                 feedback.textContent = '';
                 return true;
             }
@@ -430,41 +429,93 @@
                 const password = document.getElementById('password').value;
                 const confirmPassword = document.getElementById('confirm_password').value;
                 const feedback = document.getElementById('passwordFeedback');
-
                 if (password.length < 6) {
                     feedback.textContent = 'Password must be at least 6 characters';
                     feedback.className = 'text-xs text-warningText';
                     return false;
                 }
-
                 if (password !== confirmPassword) {
                     feedback.textContent = 'Passwords do not match';
                     feedback.className = 'text-xs text-dangerText';
                     return false;
                 }
-
                 feedback.textContent = 'Passwords match ✓';
                 feedback.className = 'text-xs text-successTextDark';
                 return true;
+            }
+
+            // Extract DOB from Malaysian NRIC (YYMMDD-PB-###G)
+            function extractDOBFromNRIC() {
+                const nric = document.getElementById('nric').value.trim();
+                const bodHidden = document.getElementById('bod');
+
+                // Always clear first
+                bodHidden.value = '';
+
+                // Must be exactly 12 digits
+                if (!/^\d{12}$/.test(nric)) {
+                    return null;
+                }
+
+                const yy = parseInt(nric.substring(0, 2), 10);
+                const mm = parseInt(nric.substring(2, 4), 10);
+                const dd = parseInt(nric.substring(4, 6), 10);
+
+                // Determine century
+                const currentYear = new Date().getFullYear();
+                const currentYY = currentYear % 100;
+                let fullYear = 2000 + yy;
+                if (yy > currentYY) {
+                    fullYear = 1900 + yy;
+                }
+
+                // Validate the date
+                const testDate = new Date(fullYear, mm - 1, dd);
+                if (testDate.getFullYear() !== fullYear || testDate.getMonth() !== mm - 1 || testDate.getDate() !== dd) {
+                    return null;
+                }
+
+                // Format for hidden field (server expects yyyy-MM-dd)
+                const monthStr = mm.toString().padStart(2, '0');
+                const dayStr = dd.toString().padStart(2, '0');
+                const dateStr = fullYear + '-' + monthStr + '-' + dayStr;
+
+                bodHidden.value = dateStr;
+
+                // Optional: update display if the elements exist (they may not exist in your page)
+                var dobDisplay = document.getElementById('dob_display');
+                var dobText = document.getElementById('dob_text');
+                if (dobDisplay && dobText) {
+                    dobDisplay.style.display = 'block';
+                    dobText.textContent = fullYear + '/' + monthStr + '/' + dayStr;
+                }
+
+                return testDate;
             }
 
             // Form validation before submission
             function validateForm() {
                 const role = document.querySelector('input[name="reg_role"]:checked').value;
 
-                // Validate all fields
+                // Security code check for admin
+                if (role === 'admin') {
+                    const securityCode = document.getElementById('securityCode').value;
+                    if (!securityCode) {
+                        alert('Please enter the security code provided by the owner.');
+                        return false;
+                    }
+                }
+
                 if (!checkUsername() || !checkEmail() || !validatePassword()) {
                     alert('Please correct the errors in the form');
                     return false;
                 }
 
-                // Check terms
                 if (!document.getElementById('terms').checked) {
                     alert('You must agree to the terms and conditions');
                     return false;
                 }
 
-                // Validate required fields based on role
                 if (role === 'instructor') {
                     const yearOfExperience = document.getElementById('yearOfExperience').value;
                     if (!yearOfExperience || yearOfExperience < 0) {
@@ -473,33 +524,26 @@
                     }
                 }
 
-                // Validate certification file
                 const certification = document.getElementById('certification').files[0];
                 if (!certification) {
                     alert('Document upload is required for registration');
                     return false;
                 }
-
                 if (certification.size > 5 * 1024 * 1024) {
                     alert('Document file must be less than 5MB');
                     return false;
                 }
-
-                // Validate file extensions for certification
                 const certFilename = certification.name.toLowerCase();
                 if (!certFilename.match(/\.(pdf|jpg|jpeg|png|doc|docx)$/)) {
                     alert('Certification file must be PDF, JPG, PNG, DOC, or DOCX format');
                     return false;
                 }
 
-                // Validate file sizes for profile image
                 const profileImage = document.getElementById('profileImage').files[0];
                 if (profileImage && profileImage.size > 2 * 1024 * 1024) {
                     alert('Profile image must be less than 2MB');
                     return false;
                 }
-
-                // Validate file extensions for profile image
                 if (profileImage) {
                     const profileFilename = profileImage.name.toLowerCase();
                     if (!profileFilename.match(/\.(jpg|jpeg|png)$/)) {
@@ -508,29 +552,25 @@
                     }
                 }
 
-                // Validate NRIC format
                 const nric = document.getElementById('nric').value;
                 if (!nric.match(/^\d{12}$/)) {
                     alert('NRIC must be exactly 12 digits without dashes');
                     return false;
                 }
 
-                // Validate date of birth
-                const bod = document.getElementById('bod').value;
-                if (!bod) {
-                    alert('Date of Birth is required');
+                // Extract and validate DOB from NRIC
+                const birthDate = extractDOBFromNRIC();
+                if (!birthDate) {
+                    alert('Invalid NRIC – cannot extract valid Date of Birth. Please check your NRIC.');
                     return false;
                 }
 
-                // Calculate age
-                const birthDate = new Date(bod);
                 const today = new Date();
                 let age = today.getFullYear() - birthDate.getFullYear();
                 const monthDiff = today.getMonth() - birthDate.getMonth();
                 if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
                     age--;
                 }
-
                 if (age < 18) {
                     alert('You must be at least 18 years old to register');
                     return false;
@@ -539,7 +579,6 @@
                 return true;
             }
 
-            // Add form validation on submit
             document.getElementById('registerForm').addEventListener('submit', function (e) {
                 if (!validateForm()) {
                     e.preventDefault();

@@ -635,6 +635,16 @@ public class RegistrationServlet extends HttpServlet {
                 throw new Exception("Passwords do not match.");
             }
 
+            // ===== ADD THIS SECURITY CODE CHECK FOR ADMIN =====
+            if ("admin".equals(userType)) {
+                String securityCode = request.getParameter("securityCode");
+                // The fixed code – only known by the owner
+                if (securityCode == null || !securityCode.equals("$admin123")) {
+                    throw new Exception("Invalid security code. Admin registration requires the correct security code.");
+                }
+            }
+            // =================================================
+
             nric = nric.replace("-", "");
             if (!nric.matches("\\d{12}")) {
                 throw new Exception("NRIC must be 12 digits.");
