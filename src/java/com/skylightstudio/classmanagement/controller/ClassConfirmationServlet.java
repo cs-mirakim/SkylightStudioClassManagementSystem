@@ -11,7 +11,10 @@ import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
-
+import java.util.Calendar;
+import java.util.TimeZone;
+import java.sql.Date;
+import java.sql.Time;
 
 @WebServlet(name = "ClassConfirmationServlet", urlPatterns = {"/ClassConfirmationServlet"})
 public class ClassConfirmationServlet extends HttpServlet {
@@ -20,6 +23,12 @@ public class ClassConfirmationServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         System.out.println("=== ClassConfirmationServlet.doGet() called ===");
+
+        // Disable caching
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+
         System.out.println("Request URL: " + request.getRequestURL());
         System.out.println("Query String: " + request.getQueryString());
 
@@ -322,9 +331,43 @@ public class ClassConfirmationServlet extends HttpServlet {
         System.out.println("=== getAvailableClasses() for instructor: " + instructorId + " ===");
 
         ClassDAO classDao = new ClassDAO();
-        // Use the new method that gets ALL active classes
-        List<Class> classes = classDao.getClassesForInstructor(instructorId);
-        System.out.println("Found " + classes.size() + " total active classes");
+        // Get ALL active classes first
+        List<Class> allClasses = classDao.getClassesForInstructor(instructorId);
+        System.out.println("Found " + allClasses.size() + " total active classes from database");
+
+        // FIX: Filter hanya class yang BELUM PASSED menggunakan Malaysia timezone
+        List<Class> classes = new ArrayList<>();
+        Calendar nowCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+        nowCal.set(Calendar.SECOND, 0);
+        nowCal.set(Calendar.MILLISECOND, 0);
+        long nowMillis = nowCal.getTimeInMillis();
+
+        for (Class cls : allClasses) {
+            // Build class datetime in Malaysia timezone
+            Calendar classCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+            classCal.setTime(cls.getClassDate());
+
+            // Get start time
+            Time startTimeSql = cls.getClassStartTime();
+            Calendar startTimeCal = Calendar.getInstance();
+            startTimeCal.setTime(startTimeSql);
+            classCal.set(Calendar.HOUR_OF_DAY, startTimeCal.get(Calendar.HOUR_OF_DAY));
+            classCal.set(Calendar.MINUTE, startTimeCal.get(Calendar.MINUTE));
+            classCal.set(Calendar.SECOND, 0);
+            classCal.set(Calendar.MILLISECOND, 0);
+
+            long classMillis = classCal.getTimeInMillis();
+
+            // Only include classes that haven't passed yet
+            if (classMillis >= nowMillis) {
+                classes.add(cls);
+                System.out.println("Including class: " + cls.getClassName() + " (Date: " + cls.getClassDate() + ")");
+            } else {
+                System.out.println("Excluding past class: " + cls.getClassName() + " (Date: " + cls.getClassDate() + ")");
+            }
+        }
+
+        System.out.println("After filtering, " + classes.size() + " future/upcoming classes remain");
 
         // Format for FullCalendar
         List<Map<String, Object>> events = new ArrayList<>();
@@ -344,8 +387,12 @@ public class ClassConfirmationServlet extends HttpServlet {
             String endDate = dateFormat.format(cls.getClassDate());
             String endTime = timeFormat.format(cls.getClassEndTime());
 
-            event.put("start", startDate + "T" + startTime);
-            event.put("end", endDate + "T" + endTime);
+            // FIX: TAMBAH +08:00 untuk Malaysia timezone (GMT+8)
+            String startDateTime = startDate + "T" + startTime + "+08:00";
+            String endDateTime = endDate + "T" + endTime + "+08:00";
+
+            event.put("start", startDateTime);
+            event.put("end", endDateTime);
 
             System.out.println("Event start: " + event.get("start") + ", end: " + event.get("end"));
 
@@ -358,7 +405,7 @@ public class ClassConfirmationServlet extends HttpServlet {
             extendedProps.put("location", cls.getLocation());
             extendedProps.put("description", cls.getDescription());
             extendedProps.put("capacity", cls.getNoOfParticipant());
-            extendedProps.put("currentStudents", 0); // You can implement this
+            extendedProps.put("currentStudents", 0);
             extendedProps.put("classId", cls.getClassID());
 
             // Get instructor assignments
@@ -392,25 +439,21 @@ public class ClassConfirmationServlet extends HttpServlet {
                     System.out.println("Setting status: pending (Yellow)");
                 }
             } else {
-                // Check if class has both instructors
                 boolean hasMainInstructor = classDetails != null && classDetails.containsKey("mainInstructor");
                 boolean hasReliefInstructor = classDetails != null && classDetails.containsKey("reliefInstructor");
 
                 if (hasMainInstructor && hasReliefInstructor) {
-                    // Class has both instructors - instructor is not involved
                     event.put("className", "fc-event-available");
                     extendedProps.put("status", "unavailable");
-                    System.out.println("Setting status: unavailable (Blue but hidden from others)");
+                    System.out.println("Setting status: unavailable (Hidden)");
                 } else if (hasMainInstructor && !hasReliefInstructor) {
-                    // Class has main instructor but needs relief
-                    event.put("className", "fc-event-available");
+                    event.put("className", "fc-event-available-relief");
                     extendedProps.put("status", "available_relief");
-                    System.out.println("Setting status: available for relief (Blue)");
+                    System.out.println("Setting status: available for relief (Light Blue)");
                 } else {
-                    // Class has no instructors
                     event.put("className", "fc-event-available");
                     extendedProps.put("status", "available_main");
-                    System.out.println("Setting status: available for main (Blue)");
+                    System.out.println("Setting status: available for main (Teal)");
                 }
             }
 

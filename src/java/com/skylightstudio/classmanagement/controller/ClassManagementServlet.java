@@ -15,7 +15,10 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.sql.Date;
+import java.sql.Time;
 
 @WebServlet(name = "ClassManagementServlet", urlPatterns = {"/ClassManagementServlet"})
 public class ClassManagementServlet extends HttpServlet {
@@ -108,6 +111,14 @@ public class ClassManagementServlet extends HttpServlet {
         String typeFilter = request.getParameter("type");
         String levelFilter = request.getParameter("level");
 
+        // Get showPast parameter - default false (hide past classes unless explicitly true)
+        String showPastParam = request.getParameter("showPast");
+        boolean showPast = "true".equalsIgnoreCase(showPastParam);
+
+        // Get showOnlyPassed parameter for "Has Passed" filter
+        String showOnlyPassedParam = request.getParameter("showOnlyPassed");
+        boolean showOnlyPassed = "true".equalsIgnoreCase(showOnlyPassedParam);
+
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
@@ -123,26 +134,32 @@ public class ClassManagementServlet extends HttpServlet {
             sql.append("c.noOfParticipant, c.location, c.description, ");
             sql.append("c.classStatus, c.qrcodeFilePath, c.adminID, ");
 
+            // Get current timestamp for comparison
+            sql.append("CURRENT_TIMESTAMP as currentTimestamp, ");
+
+            // Create a timestamp for class datetime for easier comparison
+            sql.append("TIMESTAMP(c.classDate, c.classStartTime) as classDateTime ");
+
             // Use subqueries for instructors (Apache Derby syntax)
-            sql.append("(SELECT i.name FROM class_confirmation cc ");
+            sql.append(", (SELECT i.name FROM class_confirmation cc ");
             sql.append("JOIN instructor i ON cc.instructorID = i.instructorID ");
             sql.append("WHERE cc.classID = c.classID AND cc.action = 'confirmed' ");
             sql.append("ORDER BY cc.actionAt DESC ");
-            sql.append("FETCH FIRST 1 ROW ONLY) as confirmedInstructor, ");
+            sql.append("FETCH FIRST 1 ROW ONLY) as confirmedInstructor ");
 
-            sql.append("(SELECT i.instructorID FROM class_confirmation cc ");
+            sql.append(", (SELECT i.instructorID FROM class_confirmation cc ");
             sql.append("JOIN instructor i ON cc.instructorID = i.instructorID ");
             sql.append("WHERE cc.classID = c.classID AND cc.action = 'confirmed' ");
             sql.append("ORDER BY cc.actionAt DESC ");
-            sql.append("FETCH FIRST 1 ROW ONLY) as confirmedInstructorID, ");
+            sql.append("FETCH FIRST 1 ROW ONLY) as confirmedInstructorID ");
 
-            sql.append("(SELECT i.name FROM class_confirmation cc ");
+            sql.append(", (SELECT i.name FROM class_confirmation cc ");
             sql.append("JOIN instructor i ON cc.instructorID = i.instructorID ");
             sql.append("WHERE cc.classID = c.classID AND cc.action = 'pending' ");
             sql.append("ORDER BY cc.actionAt ASC ");
-            sql.append("FETCH FIRST 1 ROW ONLY) as pendingInstructor, ");
+            sql.append("FETCH FIRST 1 ROW ONLY) as pendingInstructor ");
 
-            sql.append("(SELECT i.instructorID FROM class_confirmation cc ");
+            sql.append(", (SELECT i.instructorID FROM class_confirmation cc ");
             sql.append("JOIN instructor i ON cc.instructorID = i.instructorID ");
             sql.append("WHERE cc.classID = c.classID AND cc.action = 'pending' ");
             sql.append("ORDER BY cc.actionAt ASC ");
@@ -153,30 +170,45 @@ public class ClassManagementServlet extends HttpServlet {
 
             List<Object> params = new ArrayList<>();
 
-            // Apply filters
-            if (statusFilter != null && !statusFilter.isEmpty()) {
-                if ("auto-inactive".equals(statusFilter)) {
-                    sql.append("AND c.classStatus = 'active' ");
-                    sql.append("AND NOT EXISTS (SELECT 1 FROM class_confirmation cc2 ");
-                    sql.append("WHERE cc2.classID = c.classID AND cc2.action = 'confirmed') ");
-                    // Apache Derby: Use scalar function for time addition
-                    sql.append("AND ((TIMESTAMP(c.classDate, c.classStartTime)) < (CURRENT_TIMESTAMP + 24 HOURS)) ");
-                } else {
-                    sql.append("AND c.classStatus = ? ");
-                    params.add(statusFilter);
+            // SPECIAL CASE: If showOnlyPassed is true, only show classes that have passed
+            if (showOnlyPassed) {
+                sql.append("AND TIMESTAMP(c.classDate, c.classStartTime) < CURRENT_TIMESTAMP ");
+            } // NORMAL CASE: Handle showPast toggle
+            else {
+                // Default: hide past classes unless showPast=true
+                if (!showPast) {
+                    sql.append("AND TIMESTAMP(c.classDate, c.classStartTime) >= CURRENT_TIMESTAMP ");
+                }
+                // If showPast=true, we DON'T add the condition - show all (past and future)
+
+                // Apply other status filters
+                if (statusFilter != null && !statusFilter.isEmpty()) {
+                    if ("auto-inactive".equals(statusFilter)) {
+                        sql.append("AND c.classStatus = 'active' ");
+                        sql.append("AND NOT EXISTS (SELECT 1 FROM class_confirmation cc2 ");
+                        sql.append("WHERE cc2.classID = c.classID AND cc2.action = 'confirmed') ");
+                        sql.append("AND TIMESTAMP(c.classDate, c.classStartTime) < (CURRENT_TIMESTAMP + 24 HOURS) ");
+                        sql.append("AND TIMESTAMP(c.classDate, c.classStartTime) >= CURRENT_TIMESTAMP ");
+                    } else if (!"passed".equals(statusFilter)) {  // Skip 'passed' here as it's handled above
+                        sql.append("AND c.classStatus = ? ");
+                        params.add(statusFilter);
+                    }
                 }
             }
 
+            // Apply date filter
             if (dateFilter != null && !dateFilter.isEmpty()) {
                 sql.append("AND c.classDate = ? ");
                 params.add(Date.valueOf(dateFilter));
             }
 
+            // Apply type filter
             if (typeFilter != null && !typeFilter.isEmpty()) {
                 sql.append("AND c.classType = ? ");
                 params.add(typeFilter);
             }
 
+            // Apply level filter
             if (levelFilter != null && !levelFilter.isEmpty()) {
                 sql.append("AND c.classLevel = ? ");
                 params.add(levelFilter);
@@ -185,6 +217,8 @@ public class ClassManagementServlet extends HttpServlet {
             sql.append("ORDER BY c.classDate DESC, c.classStartTime DESC");
 
             logger.info("Executing SQL: " + sql.toString());
+            logger.info("Parameters: showPast=" + showPast + ", showOnlyPassed=" + showOnlyPassed
+                    + ", statusFilter=" + statusFilter + ", dateFilter=" + dateFilter);
 
             stmt = conn.prepareStatement(sql.toString());
 
@@ -216,16 +250,33 @@ public class ClassManagementServlet extends HttpServlet {
                 first = false;
                 count++;
 
-                // Calculate hours remaining
                 Date classDate = rs.getDate("classDate");
                 Time startTime = rs.getTime("classStartTime");
-                long classDateTime = classDate.getTime() + startTime.getTime();
-                long now = System.currentTimeMillis();
-                long hoursRemaining = (classDateTime - now) / (1000 * 60 * 60);
+                Timestamp classDateTime = rs.getTimestamp("classDateTime");
+                Timestamp currentTimestamp = rs.getTimestamp("currentTimestamp");
+
+                // Calculate hours remaining using Malaysia timezone
+                Calendar classCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+                classCal.setTime(classDate);
+                Calendar timeCal = Calendar.getInstance();
+                timeCal.setTime(startTime);
+                classCal.set(Calendar.HOUR_OF_DAY, timeCal.get(Calendar.HOUR_OF_DAY));
+                classCal.set(Calendar.MINUTE, timeCal.get(Calendar.MINUTE));
+                classCal.set(Calendar.SECOND, 0);
+                classCal.set(Calendar.MILLISECOND, 0);
+                long classMillis = classCal.getTimeInMillis();
+
+                Calendar nowCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+                long nowMillis = nowCal.getTimeInMillis();
+
+                long hoursRemaining = (classMillis - nowMillis) / (1000 * 60 * 60);
+
+                // Check if class has passed
+                boolean isClassPassed = classDateTime != null && classDateTime.before(currentTimestamp);
 
                 // Determine if auto-inactive
                 boolean isAutoInactive = false;
-                if ("active".equals(rs.getString("classStatus"))
+                if (!isClassPassed && "active".equals(rs.getString("classStatus"))
                         && rs.getString("confirmedInstructor") == null
                         && hoursRemaining < 24 && hoursRemaining >= 0) {
                     isAutoInactive = true;
@@ -264,7 +315,8 @@ public class ClassManagementServlet extends HttpServlet {
 
                 json.append("\"hasReliefInstructor\": ").append(
                         rs.getString("pendingInstructor") != null).append(",");
-                json.append("\"isAutoInactive\": ").append(isAutoInactive);
+                json.append("\"isAutoInactive\": ").append(isAutoInactive).append(",");
+                json.append("\"isClassPassed\": ").append(isClassPassed);
                 json.append("}");
             }
 
@@ -557,10 +609,19 @@ public class ClassManagementServlet extends HttpServlet {
             return;
         }
 
-        // Check 24-hour rule for status change
-        long classDateTime = currentClass.getClassDate().getTime() + currentClass.getClassStartTime().getTime();
-        long now = System.currentTimeMillis();
-        long hoursRemaining = (classDateTime - now) / (1000 * 60 * 60);
+        // Check 24-hour rule for status change using Malaysia timezone
+        Calendar classCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+        classCal.setTime(currentClass.getClassDate());
+        classCal.set(Calendar.HOUR_OF_DAY, currentClass.getClassStartTime().getHours());
+        classCal.set(Calendar.MINUTE, currentClass.getClassStartTime().getMinutes());
+        classCal.set(Calendar.SECOND, 0);
+        classCal.set(Calendar.MILLISECOND, 0);
+        long classMillis = classCal.getTimeInMillis();
+
+        Calendar nowCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+        long nowMillis = nowCal.getTimeInMillis();
+
+        long hoursRemaining = (classMillis - nowMillis) / (1000 * 60 * 60);
 
         // Cannot set to inactive if less than 24 hours remaining
         if ("inactive".equals(classStatus)
@@ -765,10 +826,19 @@ public class ClassManagementServlet extends HttpServlet {
             reliefInstructor = (Map<String, Object>) classDetails.get("reliefInstructor");
         }
 
-        // Calculate hours remaining
-        long classDateTime = cls.getClassDate().getTime() + cls.getClassStartTime().getTime();
-        long now = System.currentTimeMillis();
-        long hoursRemaining = (classDateTime - now) / (1000 * 60 * 60);
+        // Calculate hours remaining using Malaysia timezone
+        Calendar classCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+        classCal.setTime(cls.getClassDate());
+        classCal.set(Calendar.HOUR_OF_DAY, cls.getClassStartTime().getHours());
+        classCal.set(Calendar.MINUTE, cls.getClassStartTime().getMinutes());
+        classCal.set(Calendar.SECOND, 0);
+        classCal.set(Calendar.MILLISECOND, 0);
+        long classMillis = classCal.getTimeInMillis();
+
+        Calendar nowCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+        long nowMillis = nowCal.getTimeInMillis();
+
+        long hoursRemaining = (classMillis - nowMillis) / (1000 * 60 * 60);
 
         Connection conn = null;
 

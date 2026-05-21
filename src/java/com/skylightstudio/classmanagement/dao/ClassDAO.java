@@ -7,15 +7,19 @@ import com.skylightstudio.classmanagement.util.DBConnection;
 import java.sql.*;
 import java.util.*;
 import java.sql.Date;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 public class ClassDAO {
 
     // Get ALL classes that should appear for an instructor
+    // Get ALL classes that should appear for an instructor
     public List<Class> getClassesForInstructor(int instructorId) {
         List<Class> classes = new ArrayList<>();
-        String sql = "SELECT c.* FROM class c "
+        String sql = "SELECT c.*, "
+                + "(SELECT COUNT(*) FROM class_confirmation cc WHERE cc.classID = c.classID AND cc.action = 'confirmed') as hasInstructor "
+                + "FROM class c "
                 + "WHERE c.classStatus = 'active' "
-                + "AND c.classDate >= CURRENT_DATE "
                 + "ORDER BY c.classDate, c.classStartTime";
 
         try (Connection conn = DBConnection.getConnection();
@@ -25,6 +29,45 @@ public class ClassDAO {
 
             while (rs.next()) {
                 Class cls = mapResultSetToClass(rs);
+                int hasInstructor = rs.getInt("hasInstructor");
+
+                // Calculate hours remaining with Malaysia timezone
+                Calendar nowCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+                nowCal.set(Calendar.SECOND, 0);
+                nowCal.set(Calendar.MILLISECOND, 0);
+                long nowMillis = nowCal.getTimeInMillis();
+
+                Calendar classCal = Calendar.getInstance(TimeZone.getTimeZone("Asia/Kuala_Lumpur"));
+                classCal.setTime(cls.getClassDate());
+                Time startTimeSql = cls.getClassStartTime();
+                Calendar startTimeCal = Calendar.getInstance();
+                startTimeCal.setTime(startTimeSql);
+                classCal.set(Calendar.HOUR_OF_DAY, startTimeCal.get(Calendar.HOUR_OF_DAY));
+                classCal.set(Calendar.MINUTE, startTimeCal.get(Calendar.MINUTE));
+                classCal.set(Calendar.SECOND, 0);
+                classCal.set(Calendar.MILLISECOND, 0);
+                long classMillis = classCal.getTimeInMillis();
+
+                long hoursRemaining = (classMillis - nowMillis) / (1000 * 60 * 60);
+
+                System.out.println("Class: " + cls.getClassName()
+                        + ", hasInstructor: " + hasInstructor
+                        + ", hoursRemaining: " + hoursRemaining);
+
+                // SKIP past classes (class already ended)
+                if (classMillis < nowMillis) {
+                    System.out.println("  -> SKIPPED (past class)");
+                    continue;
+                }
+
+                // CHECK auto-inactive: no confirmed instructor AND less than 24 hours remaining
+                if (hasInstructor == 0 && hoursRemaining < 24 && hoursRemaining >= 0) {
+                    System.out.println("  -> SKIPPED (auto-inactive - no instructor within 24h)");
+                    continue;  // ← TAMBAH CONTINUE HERE!
+                }
+
+                // If we reach here, class is valid for instructor view
+                System.out.println("  -> ADDED to instructor view");
                 classes.add(cls);
             }
         } catch (SQLException e) {

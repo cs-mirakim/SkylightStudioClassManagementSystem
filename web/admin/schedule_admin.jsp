@@ -187,6 +187,7 @@
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                                 <option value="auto-inactive">Auto-Inactive</option>
+                                <option value="passed">Has Passed</option>  <!-- TAMBAH INI -->
                             </select>
                         </div>
 
@@ -217,13 +218,23 @@
                             </select>
                         </div>
                     </div>
-                    <div class="flex justify-end mt-4">
-                        <button id="applyFilterBtn" class="btn-accent px-5 py-2 rounded-lg font-medium mr-2 shadow-sm">
-                            Apply Filters
-                        </button>
-                        <button id="resetFilterBtn" class="btn-secondary px-5 py-2 rounded-lg font-medium shadow-sm">
-                            Reset
-                        </button>
+
+                    <!-- TAMBAH TOGGLE BUTTON -->
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" id="showPastClasses" class="w-4 h-4 text-dusty focus:ring-dusty/50 border-blush rounded">
+                                <span class="ml-2 text-sm text-espresso">Show past classes (already ended)</span>
+                            </label>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button id="applyFilterBtn" class="btn-accent px-5 py-2 rounded-lg font-medium shadow-sm">
+                                Apply Filters
+                            </button>
+                            <button id="resetFilterBtn" class="btn-secondary px-5 py-2 rounded-lg font-medium shadow-sm">
+                                Reset
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -231,26 +242,35 @@
                 <div class="mb-6 p-4 bg-infoBg/30 border border-infoText/20 rounded-lg">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h4 class="font-medium text-infoText mb-2">📋 Class Management Rules:</h4>
+                            <h4 class="font-medium text-infoText mb-2">📋 Class Management Rules (Updated):</h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <h5 class="font-medium text-espresso mb-1">Basic Rules:</h5>
+                                    <h5 class="font-medium text-espresso mb-1">📌 Basic Rules:</h5>
                                     <ul class="text-sm text-espresso space-y-1">
                                         <li>• Classes auto-inactive if no instructor within 24 hours before start</li>
-                                        <li>• Cannot set to inactive if <24 hours remaining</li>
-                                        <li>• Cannot reactivate if <24 hours remaining</li>
+                                        <li>• Cannot set to inactive if &lt;24 hours remaining</li>
+                                        <li>• Cannot reactivate if &lt;24 hours remaining</li>
                                         <li>• Delete only allowed for classes without instructors</li>
+                                        <li class="text-espresso/70">• <span class="font-medium">Edit disabled for past classes</span> (class has ended)</li>
                                     </ul>
                                 </div>
                                 <div>
-                                    <h5 class="font-medium text-espresso mb-1">Emergency Withdrawal:</h5>
+                                    <h5 class="font-medium text-espresso mb-1">⚠️ Emergency Withdrawal:</h5>
                                     <ul class="text-sm text-espresso space-y-1">
                                         <li>• Only way to withdraw confirmed instructors</li>
-                                        <li>• >24 hours: Withdraw instructor, class remains active</li>
-                                        <li>• <24 hours with relief: Relief automatically becomes confirmed instructor</li>
-                                        <li>• <24 hours no relief: Class cancelled</li>
+                                        <li>• &gt;24 hours: Withdraw instructor, class remains active</li>
+                                        <li>• &lt;24 hours with relief: Relief automatically becomes confirmed instructor</li>
+                                        <li>• &lt;24 hours no relief: Class cancelled</li>
+                                        <li class="text-espresso/70">• <span class="font-medium">Emergency withdraw disabled for past classes</span></li>
                                     </ul>
                                 </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-infoText/10">
+                                <h5 class="font-medium text-espresso mb-1">🔍 Filter Options:</h5>
+                                <ul class="text-sm text-espresso space-y-1">
+                                    <li>• <span class="font-medium">Has Passed</span> - Show classes that have already ended (read-only)</li>
+                                    <li>• <span class="font-medium">Show past classes</span> - Toggle to view/hide completed classes</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -750,7 +770,8 @@
 
             // Helper functions
             function calculateHoursRemaining(classItem) {
-                var classDateTime = new Date(classItem.classDate + 'T' + classItem.classStartTime);
+                // TAMBAH +08:00 untuk force Malaysia timezone
+                var classDateTime = new Date(classItem.classDate + 'T' + classItem.classStartTime + '+08:00');
                 var now = new Date();
                 var diffMs = classDateTime - now;
                 var diffHours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -832,7 +853,7 @@
                 showLoading();
 
                 var params = new URLSearchParams();
-                if (filterStatus.value)
+                if (filterStatus.value && filterStatus.value !== 'passed')  // 'passed' dihandle secara berasingan
                     params.append('status', filterStatus.value);
                 if (filterDate.value)
                     params.append('date', filterDate.value);
@@ -841,12 +862,23 @@
                 if (filterLevel.value)
                     params.append('level', filterLevel.value);
 
+                // TAMBAH: Send showPast parameter with proper boolean
+                var showPastCheckbox = document.getElementById('showPastClasses');
+                var showPastValue = showPastCheckbox ? showPastCheckbox.checked : false;
+                params.append('showPast', showPastValue.toString());
+
+                // TAMBAH: Handle 'passed' filter from status dropdown
+                if (filterStatus.value === 'passed') {
+                    params.append('showOnlyPassed', 'true');
+                }
+
                 fetch('../ClassManagementServlet?action=getClasses&' + params.toString())
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
                                 classesData = data.data;
                                 filteredData = classesData.slice();
+                                currentPage = 1;  // Reset to first page
                                 renderTable();
                             } else {
                                 alert('Error loading classes: ' + data.message);
@@ -910,6 +942,7 @@
 
                 // Filter buttons
                 applyFilterBtn.addEventListener('click', function () {
+                    currentPage = 1;  // TAMBAH: Reset to page 1 when applying filters
                     loadClasses();
                 });
 
@@ -918,6 +951,12 @@
                     filterDate.value = '';
                     filterType.value = '';
                     filterLevel.value = '';
+                    // Also reset showPast checkbox to false (default hide past classes)
+                    var showPastCheckbox = document.getElementById('showPastClasses');
+                    if (showPastCheckbox) {
+                        showPastCheckbox.checked = false;
+                    }
+                    currentPage = 1;
                     loadClasses();
                 });
 
@@ -1002,7 +1041,7 @@
                     var row = document.createElement('tr');
 
                     // Format date and time
-                    var formattedDate = new Date(classItem.classDate + 'T' + classItem.classStartTime).toLocaleDateString('en-US', {
+                    var formattedDate = new Date(classItem.classDate + 'T' + classItem.classStartTime + '+08:00').toLocaleDateString('en-US', {
                         weekday: 'short',
                         month: 'short',
                         day: 'numeric',
@@ -1012,10 +1051,13 @@
 
                     // Get time remaining info
                     var timeRemainingInfo = getTimeRemainingDisplay(classItem);
+                    var isPastClass = timeRemainingInfo.isPast === true;
 
                     // Status badge
                     var statusBadge = '';
-                    if (classItem.classStatus === 'active' && !classItem.isAutoInactive) {
+                    if (isPastClass) {
+                        statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-espresso/20 text-espressoLighter font-medium">📅 Class Has Passed</span>';
+                    } else if (classItem.classStatus === 'active' && !classItem.isAutoInactive) {
                         statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-activeBg text-activeText font-medium">Active</span>';
                     } else if (classItem.isAutoInactive) {
                         statusBadge = '<span class="px-2 py-1 text-xs rounded-full bg-autoInactiveBg text-autoInactiveText font-medium">⚠️ Auto-Inactive</span>';
@@ -1050,22 +1092,50 @@
                         levelChipColor = 'bg-dangerBg text-dangerText';
                     }
 
-                    // Action buttons
+                    // ========== ACTION BUTTONS LOGIC ==========
                     var actionButtons = '';
-                    if (hasInstructor(classItem)) {
-                        // Has instructor - Edit + Emergency Withdraw
-                        actionButtons = '<div class="flex flex-col space-y-2">' +
-                                '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium text-left">Edit Class</button>' +
-                                '<button onclick="showEmergencyWithdraw(' + classItem.classID + ')" class="text-warningText hover:text-warningText/80 font-medium text-left">Emergency Withdraw</button>' +
-                                '</div>';
-                    } else {
-                        // No instructor - Edit + Delete
-                        actionButtons = '<div class="flex items-center space-x-2">' +
-                                '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium">Edit</button>' +
-                                '<span class="text-blush">|</span>' +
-                                '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium">Delete</button>' +
-                                '</div>';
+                    var hasInstructorFlag = hasInstructor(classItem);
+
+                    // CASE 1: Class has passed (already ended)
+                    if (isPastClass) {
+                        if (!hasInstructorFlag) {
+                            // No instructor - can delete only - BUAT LEBIH JELAS
+                            actionButtons = '<div class="flex items-center space-x-2">' +
+                                    '<span class="text-espressoLighter/70 text-sm cursor-not-allowed" title="Cannot edit past classes">✏️ Edit</span>' +
+                                    '<span class="text-blush">|</span>' +
+                                    '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium bg-whitePure/50 px-2 py-1 rounded">🗑️ Delete</button>' +
+                                    '</div>';
+                        } else {
+                            // Has instructor but class passed - both disabled with clear message
+                            actionButtons = '<div class="flex flex-col space-y-1">' +
+                                    '<span class="text-espressoLighter/50 text-sm cursor-not-allowed" title="Cannot edit past classes">✏️ Edit Class</span>' +
+                                    '<span class="text-espressoLighter/50 text-sm cursor-not-allowed" title="Cannot withdraw after class has ended">⚠️ Emergency Withdraw</span>' +
+                                    '<span class="text-xs text-espressoLighter/60 mt-1 italic">⏰ Class has ended - No actions available</span>' +
+                                    '</div>';
+                        }
                     }
+
+                    // CASE 2: Class not yet passed - normal logic
+                    else {
+                        if (hasInstructorFlag) {
+                            // Has instructor - Edit + Emergency Withdraw (both enabled)
+                            actionButtons = '<div class="flex flex-col space-y-2">' +
+                                    '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium text-left">✏️ Edit Class</button>' +
+                                    '<button onclick="showEmergencyWithdraw(' + classItem.classID + ')" class="text-warningText hover:text-warningText/80 font-medium text-left">⚠️ Emergency Withdraw</button>' +
+                                    '</div>';
+                        } else {
+                            // No instructor - Edit + Delete
+                            actionButtons = '<div class="flex items-center space-x-2">' +
+                                    '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium">✏️ Edit</button>' +
+                                    '<span class="text-blush">|</span>' +
+                                    '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium">🗑️ Delete</button>' +
+                                    '</div>';
+                        }
+                    }
+
+                    // Add visual indicator for past classes (semi-transparent row)
+                    var rowClass = isPastClass ? 'bg-espresso/5' : '';
+                    row.className = rowClass;
 
                     row.innerHTML =
                             '<td class="px-6 py-4">' +
@@ -1084,7 +1154,7 @@
                             '<span class="inline-block px-2 py-1 text-xs rounded-full ' + typeChipColor + '">' + classItem.classType + '</span>' +
                             '<span class="inline-block px-2 py-1 text-xs rounded-full ' + levelChipColor + ' ml-1">' + classItem.classLevel + '</span>' +
                             '</div>' +
-                            '<div class="text-sm text-espressoLighter mt-1">' + classItem.noOfParticipant + ' participants</div>' +
+                            '<div class="text-sm text-espressoLighter mt-1">👥 ' + classItem.noOfParticipant + ' participants</div>' +
                             '</td>' +
                             '<td class="px-6 py-4">' +
                             instructorInfo +

@@ -183,6 +183,31 @@
                 color: #E65100 !important;
             }
 
+            /* Event status colors */
+            .fc-event-available {
+                background-color: #6D9B9B !important;
+                border-color: #557878 !important;
+            }
+
+            .fc-event-confirmed {
+                background-color: #A5D6A7 !important;
+                border-color: #1B5E20 !important;
+                color: #1B5E20 !important;
+            }
+
+            .fc-event-pending {
+                background-color: #FFCC80 !important;
+                border-color: #E65100 !important;
+                color: #E65100 !important;
+            }
+
+            /* TAMBAH INI: New color for Available for Relief */
+            .fc-event-available-relief {
+                background-color: #93C5FD !important;  /* Light blue */
+                border-color: #3B82F6 !important;
+                color: #1E3A8A !important;
+            }
+
             /* Modal styles */
             .modal-overlay {
                 position: fixed;
@@ -335,6 +360,11 @@
                             <div class="w-3 h-3 rounded-full bg-warningBg mr-2"></div>
                             <span class="text-sm text-espresso">Pending - You're in queue as relief</span>
                         </div>
+                        <!-- TAMBAH INI: New legend for Available for Relief -->
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full bg-blue-300 mr-2"></div>
+                            <span class="text-sm text-espresso">Available for Relief - Main instructor assigned, seeking relief</span>
+                        </div>
                     </div>
                 </div>
 
@@ -482,6 +512,14 @@
                             initializeCalendar();
                             highlightCurrentPage();
 
+                            // TAMBAH: Auto-refresh calendar every 30 seconds
+                            setInterval(function () {
+                                console.log('Auto-refreshing calendar...');
+                                if (window.calendar) {
+                                    window.calendar.refetchEvents();
+                                }
+                            }, 30000);  // 30 seconds
+
                             // Close modal when clicking outside
                             document.getElementById('classModal').addEventListener('click', function (e) {
                                 if (e.target === this) {
@@ -575,11 +613,13 @@
                         function fetchEventsFromServer(successCallback, failureCallback) {
                             console.log('Fetching events from database via servlet...');
 
-                            fetch('../ClassConfirmationServlet?action=getClasses', {
+                            fetch('../ClassConfirmationServlet?action=getClasses&_t=' + Date.now(), {// TAMBAH timestamp
                                 method: 'GET',
                                 headers: {
                                     'Accept': 'application/json',
-                                    'Cache-Control': 'no-cache'
+                                    'Cache-Control': 'no-cache, no-store, must-revalidate', // TAMBAH
+                                    'Pragma': 'no-cache', // TAMBAH
+                                    'Expires': '0'  // TAMBAH
                                 }
                             })
                                     .then(function (response) {
@@ -624,48 +664,70 @@
 
                                             // Transform events to FullCalendar format
                                             var events = data.events.map(function (event) {
-                                                // Ensure event has proper structure
                                                 const classId = event.id || event.classID || 'event_' + Math.random();
                                                 const currentInstructorIdNum = parseInt(CURRENT_INSTRUCTOR_ID);
-
                                                 const props = event.extendedProps || {};
                                                 const eventStatus = props.status || 'available';
 
-                                                // Determine if event should be shown based on status
-                                                let shouldShowEvent = true;
+                                                // FIX: Pastikan dates menggunakan +08:00 timezone (Malaysia)
+                                                let startDateTime = event.start;
+                                                let endDateTime = event.end;
+
+                                                // If date doesn't have timezone, add +08:00
+                                                if (startDateTime && !startDateTime.includes('+') && !startDateTime.includes('Z')) {
+                                                    startDateTime = startDateTime + '+08:00';
+                                                }
+                                                if (endDateTime && !endDateTime.includes('+') && !endDateTime.includes('Z')) {
+                                                    endDateTime = endDateTime + '+08:00';
+                                                }
 
                                                 // Hide events that are "unavailable" (both instructors assigned, user not involved)
                                                 if (eventStatus === 'unavailable') {
-                                                    shouldShowEvent = false;
                                                     console.log('Filtering out class ' + classId + ': Both instructors assigned, user not involved');
-                                                }
-
-                                                if (shouldShowEvent) {
-                                                    return {
-                                                        id: classId,
-                                                        title: event.title || event.className || 'Unnamed Class',
-                                                        start: event.start,
-                                                        end: event.end,
-                                                        className: event.className || 'fc-event-available',
-                                                        extendedProps: {
-                                                            status: eventStatus,
-                                                            location: props.location || 'Not specified',
-                                                            description: props.description || '',
-                                                            capacity: props.capacity || 0,
-                                                            currentStudents: props.currentStudents || 0,
-                                                            mainInstructor: props.mainInstructor || null,
-                                                            reliefInstructor: props.reliefInstructor || null,
-                                                            classId: classId,
-                                                            classStatus: props.classStatus || 'available'
-                                                        }
-                                                    };
-                                                } else {
                                                     return null;
                                                 }
+
+                                                // Hide events that are "unavailable"
+                                                if (eventStatus === 'unavailable') {
+                                                    return null;
+                                                }
+
+                                                // ✅ CLIENT-SIDE: Tapis class yang dah pass 24-jam threshold (no instructor)
+                                                const hasMainInstructor = !!(event.extendedProps && event.extendedProps.mainInstructor);
+                                                const eventStart = new Date(startDateTime);
+                                                const now = new Date();
+                                                const hoursUntilClass = (eventStart - now) / (1000 * 60 * 60);
+
+                                                if (!hasMainInstructor && hoursUntilClass < 24) {
+                                                    console.log('Client-side filter: Hiding class ' + classId + ' - no instructor, ' + hoursUntilClass.toFixed(2) + 'h remaining');
+                                                    return null;
+                                                }
+
+                                                console.log('Processing event:', classId, event.title, 'Start:', startDateTime, 'Status:', eventStatus);
+
+                                                return {
+                                                    id: classId,
+                                                    title: event.title || event.className || 'Unnamed Class',
+                                                    start: startDateTime,
+                                                    end: endDateTime,
+                                                    className: event.className || 'fc-event-available',
+                                                    extendedProps: {
+                                                        status: eventStatus,
+                                                        location: props.location || 'Not specified',
+                                                        description: props.description || '',
+                                                        capacity: props.capacity || 0,
+                                                        currentStudents: props.currentStudents || 0,
+                                                        mainInstructor: props.mainInstructor || null,
+                                                        reliefInstructor: props.reliefInstructor || null,
+                                                        classId: classId,
+                                                        classStatus: props.classStatus || 'available'
+                                                    }
+                                                };
                                             }).filter(function (event) {
-                                                return event !== null; // Remove null events
+                                                return event !== null;
                                             });
 
+                                            console.log('FINAL events count after filter:', events.length);
                                             successCallback(events);
 
                                             // Show/hide calendar based on events
@@ -704,25 +766,51 @@
                             // Set modal content
                             document.getElementById('modalClassName').textContent = event.title;
 
-                            // Format date and time
+                            // FIX: Format date and time with Malaysia timezone (GMT+8)
                             const startDate = new Date(event.start);
                             const endDate = new Date(event.end);
-                            document.getElementById('modalDateTime').textContent =
-                                    startDate.toLocaleDateString('en-US', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    }) + ' • ' +
-                                    startDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'}) + ' - ' +
-                                    endDate.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
 
-                            // Calculate duration
-                            const durationMs = endDate - startDate;
+                            // Options for Malaysia timezone display
+                            const dateOptions = {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                timeZone: 'Asia/Kuala_Lumpur'
+                            };
+
+                            const timeOptions = {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Asia/Kuala_Lumpur',
+                                hour12: true
+                            };
+
+                            const startTimeOptions = {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Asia/Kuala_Lumpur',
+                                hour12: true
+                            };
+
+                            const endTimeOptions = {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                timeZone: 'Asia/Kuala_Lumpur',
+                                hour12: true
+                            };
+
+                            const formattedDate = startDate.toLocaleDateString('en-US', dateOptions);
+                            const formattedStartTime = startDate.toLocaleTimeString('en-US', startTimeOptions);
+                            const formattedEndTime = endDate.toLocaleTimeString('en-US', endTimeOptions);
+
+                            document.getElementById('modalDateTime').textContent = formattedDate + ' • ' + formattedStartTime + ' - ' + formattedEndTime;
+
+                            // Calculate duration (use getTime() which is timezone independent)
+                            const durationMs = endDate.getTime() - startDate.getTime();
                             const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
                             const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
-                            document.getElementById('modalDuration').textContent =
-                                    durationHours + 'h ' + durationMinutes + 'min';
+                            document.getElementById('modalDuration').textContent = durationHours + 'h ' + durationMinutes + 'min';
 
                             document.getElementById('modalLocation').textContent = props.location || 'Not specified';
                             document.getElementById('modalDescription').textContent = props.description || 'No description';

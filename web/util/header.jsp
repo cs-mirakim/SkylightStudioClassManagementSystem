@@ -1,6 +1,10 @@
 <%@ page import="com.skylightstudio.classmanagement.util.SessionUtil" %>
 <%@ page import="com.skylightstudio.classmanagement.model.Admin" %>
 <%@ page import="com.skylightstudio.classmanagement.model.Instructor" %>
+<%@ page import="com.skylightstudio.classmanagement.dao.RegistrationDAO" %>
+<%@ page import="com.skylightstudio.classmanagement.dao.ClassConfirmationDAO" %>
+<%@ page import="com.skylightstudio.classmanagement.dao.ClassDAO" %>
+<%@ page import="java.sql.SQLException" %>
 
 <%
     // Check if user is logged in
@@ -25,14 +29,14 @@
     if ("admin".equals(userRole)) {
         admin = SessionUtil.getAdminObject(session);
         if (admin != null) {
-            userName = admin.getName(); // Full name
-            username = admin.getUsername(); // Username
+            userName = admin.getName();
+            username = admin.getUsername();
         }
     } else if ("instructor".equals(userRole)) {
         instructor = SessionUtil.getInstructorObject(session);
         if (instructor != null) {
-            userName = instructor.getName(); // Full name
-            username = instructor.getUsername(); // Username
+            userName = instructor.getName();
+            username = instructor.getUsername();
         }
     }
 
