@@ -1147,41 +1147,44 @@
 
                                 // Load available years for the instructor
                                 function loadAvailableYears() {
-                                    if (!currentInstructorId) return;
-                                    
+                                    if (!currentInstructorId)
+                                        return;
+
                                     fetch('monitor-instructor?action=getAvailableYears&id=' + currentInstructorId)
-                                        .then(function(response) {
-                                            if (!response.ok) return;
-                                            return response.text();
-                                        })
-                                        .then(function(xmlText) {
-                                            var parser = new DOMParser();
-                                            var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                                            var yearSelect = document.getElementById('yearFilter');
-                                            
-                                            var years = xmlDoc.getElementsByTagName('year');
-                                            if (years.length > 0) {
-                                                while (yearSelect.options.length > 1) yearSelect.remove(1);
-                                                for (var i = 0; i < years.length; i++) {
-                                                    var option = document.createElement('option');
-                                                    option.value = years[i].textContent;
-                                                    option.textContent = years[i].textContent;
-                                                    yearSelect.appendChild(option);
+                                            .then(function (response) {
+                                                if (!response.ok)
+                                                    return;
+                                                return response.text();
+                                            })
+                                            .then(function (xmlText) {
+                                                var parser = new DOMParser();
+                                                var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                                                var yearSelect = document.getElementById('yearFilter');
+
+                                                var years = xmlDoc.getElementsByTagName('year');
+                                                if (years.length > 0) {
+                                                    while (yearSelect.options.length > 1)
+                                                        yearSelect.remove(1);
+                                                    for (var i = 0; i < years.length; i++) {
+                                                        var option = document.createElement('option');
+                                                        option.value = years[i].textContent;
+                                                        option.textContent = years[i].textContent;
+                                                        yearSelect.appendChild(option);
+                                                    }
                                                 }
-                                            }
-                                        })
-                                        .catch(function(error) {
-                                            console.error('Error loading years:', error);
-                                        });
+                                            })
+                                            .catch(function (error) {
+                                                console.error('Error loading years:', error);
+                                            });
                                 }
 
                                 // Enable/disable month filter based on year selection
                                 function setupYearMonthHandlers() {
                                     var yearFilter = document.getElementById('yearFilter');
                                     var monthFilter = document.getElementById('monthFilter');
-                                    
+
                                     if (yearFilter && monthFilter) {
-                                        yearFilter.addEventListener('change', function() {
+                                        yearFilter.addEventListener('change', function () {
                                             if (this.value === '') {
                                                 monthFilter.disabled = true;
                                                 monthFilter.value = '';
@@ -1199,10 +1202,12 @@
 
                                     var year = document.getElementById('yearFilter').value;
                                     var month = document.getElementById('monthFilter').value;
-                                    
+
                                     var url = 'monitor-instructor?action=completePerformance&id=' + currentInstructorId;
-                                    if (year) url += '&year=' + year;
-                                    if (month) url += '&month=' + month;
+                                    if (year)
+                                        url += '&year=' + year;
+                                    if (month)
+                                        url += '&month=' + month;
 
                                     fetch(url)
                                             .then(function (response) {
@@ -1252,49 +1257,76 @@
 
                                 // Update charts based on year/month filter
                                 function updateChartsWithPeriod() {
-                                    if (!currentInstructorId) return;
-                                    
+                                    if (!currentInstructorId) {
+                                        console.log('No currentInstructorId');
+                                        return;
+                                    }
+
                                     var year = document.getElementById('yearFilter').value;
                                     var month = document.getElementById('monthFilter').value;
-                                    
+
+                                    console.log('Fetching data for instructor:', currentInstructorId, 'year:', year, 'month:', month);
+
                                     var url = 'monitor-instructor?action=completePerformance&id=' + currentInstructorId;
-                                    if (year) url += '&year=' + year;
-                                    if (month) url += '&month=' + month;
-                                    
+                                    if (year)
+                                        url += '&year=' + year;
+                                    if (month)
+                                        url += '&month=' + month;
+
+                                    console.log('Request URL:', url);
+
                                     fetch(url)
-                                        .then(function(response) {
-                                            if (!response.ok) throw new Error('Network response was not ok');
-                                            return response.text();
-                                        })
-                                        .then(function(xmlText) {
-                                            var parser = new DOMParser();
-                                            var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
-                                            
-                                            var errorElement = xmlDoc.querySelector('parsererror');
-                                            if (errorElement) throw new Error('Invalid XML response from server');
-                                            
-                                            currentPerformanceData = xmlDoc;
-                                            
-                                            // Update metric cards
-                                            document.getElementById('perfOverallRating').textContent = getXmlValue(xmlDoc, 'overallRating');
-                                            document.getElementById('perfTotalClasses').textContent = getXmlValue(xmlDoc, 'totalClasses');
-                                            document.getElementById('perfCancelled').textContent = getXmlValue(xmlDoc, 'cancelled');
-                                            document.getElementById('perfCompletion').textContent = getXmlValue(xmlDoc, 'completion');
-                                            
-                                            updateCharts(xmlDoc);
-                                        })
-                                        .catch(function(error) {
-                                            console.error('Error loading performance:', error);
-                                            alert('Error loading performance data: ' + error.message);
-                                        });
+                                            .then(function (response) {
+                                                if (!response.ok)
+                                                    throw new Error('Network response was not ok: ' + response.status);
+                                                return response.text();
+                                            })
+                                            .then(function (xmlText) {
+                                                console.log('Response received, length:', xmlText.length);
+
+                                                var parser = new DOMParser();
+                                                var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+
+                                                var errorElement = xmlDoc.querySelector('parsererror');
+                                                if (errorElement) {
+                                                    console.error('XML Parse Error:', errorElement.textContent);
+                                                    throw new Error('Invalid XML response from server');
+                                                }
+
+                                                // Debug: Log values from XML
+                                                var totalClasses = getXmlValue(xmlDoc, 'totalClasses');
+                                                var cancelled = getXmlValue(xmlDoc, 'cancelled');
+                                                var overallRating = getXmlValue(xmlDoc, 'overallRating');
+                                                console.log('Parsed values - totalClasses:', totalClasses, 'cancelled:', cancelled, 'overallRating:', overallRating);
+
+                                                currentPerformanceData = xmlDoc;
+
+                                                // Update metric cards
+                                                document.getElementById('perfOverallRating').textContent = overallRating;
+                                                document.getElementById('perfTotalClasses').textContent = totalClasses;
+                                                document.getElementById('perfCancelled').textContent = cancelled;
+                                                document.getElementById('perfCompletion').textContent = getXmlValue(xmlDoc, 'completion');
+
+                                                // Wrap chart update in try-catch
+                                                try {
+                                                    updateCharts(xmlDoc);
+                                                } catch (chartError) {
+                                                    console.error('Error updating charts:', chartError);
+                                                    // Don't show alert to user, just log
+                                                }
+                                            })
+                                            .catch(function (error) {
+                                                console.error('Error loading performance:', error);
+                                                alert('Error loading performance data: ' + error.message);
+                                            });
                                 }
 
                                 function closePerformance() {
                                     document.getElementById('performanceModal').classList.add('hidden');
                                     currentPerformanceData = null;
                                 }
-
-                                // View certification
+                                
+                                                                // View certification
                                 function viewCertification() {
                                     if (!currentInstructorId) {
                                         alert('No instructor selected');
@@ -1319,8 +1351,8 @@
                                     document.getElementById('certFrame').src = '';
                                     currentCertificationPath = '';
                                 }
-
-                                // PDF Preview functions
+                                
+                                                                // PDF Preview functions
                                 function showPDFPreview(pdfBlob, instructorName) {
                                     if (!pdfBlob) {
                                         alert('Failed to generate PDF');
@@ -1365,119 +1397,6 @@
                                         URL.revokeObjectURL(iframe.src);
                                     }
                                     iframe.src = '';
-                                }
-
-                                // Activate/Deactivate functions
-                                function toggleActivateInstructor(instructorId) {
-                                    currentInstructorId = instructorId;
-
-                                    var instructor = null;
-                                    for (var i = 0; i < allInstructors.length; i++) {
-                                        if (allInstructors[i].id == instructorId) {
-                                            instructor = allInstructors[i];
-                                            break;
-                                        }
-                                    }
-
-                                    if (!instructor) {
-                                        alert('Instructor not found');
-                                        return;
-                                    }
-
-                                    if (instructor.status === 'active') {
-                                        // Check if instructor has assigned classes
-                                        checkInstructorClasses(instructorId, function (hasClasses) {
-                                            showDeactivateConfirmation(instructorId, instructor.name, hasClasses);
-                                        });
-                                    } else {
-                                        // Activate mode
-                                        var modalIcon = document.getElementById('modalIcon');
-                                        var modalTitle = document.getElementById('modalTitle');
-                                        var modalText = document.getElementById('modalText');
-                                        var confirmButton = document.getElementById('confirmButton');
-
-                                        modalIcon.innerHTML = '<svg class="w-6 h-6 text-successTextDark" fill="currentColor" viewBox="0 0 20 20">' +
-                                                '<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>' +
-                                                '</svg>';
-                                        modalIcon.className = 'flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full bg-successBg';
-
-                                        modalTitle.textContent = 'Activate Instructor?';
-                                        modalText.textContent = 'Are you sure you want to activate ' + instructor.name + '? They will be able to access the system and be assigned to new classes.';
-
-                                        confirmButton.textContent = 'Yes, Activate';
-                                        confirmButton.className = 'px-4 py-2 bg-teal text-whitePure rounded-lg hover:bg-tealHover transition-colors';
-
-                                        document.getElementById('activateDeactivateModal').classList.remove('hidden');
-                                    }
-                                }
-
-                                function closeActivateDeactivate() {
-                                    document.getElementById('activateDeactivateModal').classList.add('hidden');
-                                    currentInstructorId = null;
-                                }
-
-                                function confirmActivateDeactivate() {
-                                    if (!currentInstructorId)
-                                        return;
-
-                                    var instructor = null;
-                                    for (var i = 0; i < allInstructors.length; i++) {
-                                        if (allInstructors[i].id == currentInstructorId) {
-                                            instructor = allInstructors[i];
-                                            break;
-                                        }
-                                    }
-
-                                    if (!instructor) {
-                                        alert('Instructor not found');
-                                        closeActivateDeactivate();
-                                        return;
-                                    }
-
-                                    var newStatus = instructor.status === 'active' ? 'inactive' : 'active';
-
-                                    fetch('monitor-instructor', {
-                                        method: 'POST',
-                                        body: new URLSearchParams({
-                                            action: 'toggleStatus',
-                                            id: currentInstructorId,
-                                            newStatus: newStatus
-                                        }),
-                                        headers: {
-                                            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-                                        }
-                                    })
-                                            .then(function (response) {
-                                                if (!response.ok) {
-                                                    return response.text().then(function (text) {
-                                                        throw new Error('Server error: ' + response.status);
-                                                    });
-                                                }
-                                                return response.text();
-                                            })
-                                            .then(function (responseText) {
-                                                var parser = new DOMParser();
-                                                var xmlDoc = parser.parseFromString(responseText, 'text/xml');
-
-                                                var result = getXmlValue(xmlDoc, 'result');
-                                                var message = getXmlValue(xmlDoc, 'message');
-
-                                                if (result === 'success') {
-                                                    instructor.status = newStatus;
-                                                    updateInstructorRow(instructor);
-                                                    loadStats();
-                                                    alert(message || 'Status updated successfully');
-                                                    closeActivateDeactivate();
-                                                } else {
-                                                    alert('Error: ' + (message || 'Failed to update status'));
-                                                    closeActivateDeactivate();
-                                                }
-                                            })
-                                            .catch(function (error) {
-                                                console.error('Error toggling status:', error);
-                                                alert('Error updating instructor status: ' + error.message);
-                                                closeActivateDeactivate();
-                                            });
                                 }
 
                                 function updateInstructorRow(instructor) {
@@ -1595,9 +1514,14 @@
                                     // Destroy existing charts
                                     for (var key in chartInstances) {
                                         if (chartInstances[key]) {
-                                            chartInstances[key].destroy();
+                                            try {
+                                                chartInstances[key].destroy();
+                                            } catch (e) {
+                                                console.log('Error destroying chart:', key, e);
+                                            }
                                         }
                                     }
+                                    chartInstances = {};
 
                                     // Get ratings data
                                     var teaching = parseFloat(getXmlValue(xmlDoc, 'teaching')) || 0;
@@ -1607,112 +1531,20 @@
                                     var overall = parseFloat(getXmlValue(xmlDoc, 'overallRating')) || 0;
 
                                     // CHART 1: CATEGORY RATINGS
-                                    var categoryCtx = document.getElementById('categoryChart').getContext('2d');
-                                    chartInstances.categoryChart = new Chart(categoryCtx, {
-                                        type: 'bar',
-                                        data: {
-                                            labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality', 'Overall'],
-                                            datasets: [{
-                                                    label: 'Average Rating',
-                                                    data: [teaching, communication, support, punctuality, overall],
-                                                    backgroundColor: ['#6D9B9B', '#A3C1D6', '#F2D1D1', '#B36D6D', '#557878'],
-                                                    borderColor: ['#557878', '#8AA9C4', '#E8BEBE', '#965656', '#3D3434'],
-                                                    borderWidth: 1,
-                                                    borderRadius: 4
-                                                }]
-                                        },
-                                        options: {
-                                            responsive: true,
-                                            maintainAspectRatio: false,
-                                            scales: {
-                                                y: {
-                                                    beginAtZero: true,
-                                                    max: 5,
-                                                    grid: {color: '#EFE1E1'},
-                                                    ticks: {color: '#3D3434'}
-                                                },
-                                                x: {
-                                                    grid: {color: '#EFE1E1'},
-                                                    ticks: {color: '#3D3434'}
-                                                }
-                                            },
-                                            plugins: {
-                                                legend: {display: false},
-                                                tooltip: {
-                                                    backgroundColor: '#3D3434',
-                                                    titleColor: '#FDF8F8',
-                                                    bodyColor: '#FDF8F8'
-                                                }
-                                            }
-                                        }
-                                    });
-
-                                    // CHART 2: PERFORMANCE TREND
-                                    var trendCtx = document.getElementById('trendChart').getContext('2d');
-                                    
-                                    // Get trend data from XML (supports daily, monthly, or yearly)
-                                    var trendElements = xmlDoc.getElementsByTagName('point');
-                                    var trendLabels = [];
-                                    var ratingData = [];
-                                    var totalClassesData = [];
-                                    
-                                    var trendGranularity = xmlDoc.getElementsByTagName('trendData')[0];
-                                    if (trendGranularity) {
-                                        trendGranularity = trendGranularity.getAttribute('granularity') || 'monthly';
-                                    } else {
-                                        trendGranularity = 'monthly';
-                                    }
-                                    
-                                    for (var i = 0; i < trendElements.length; i++) {
-                                        var pointElement = trendElements[i];
-                                        var pointName = pointElement.getElementsByTagName('name')[0].textContent;
-                                        var pointRating = parseFloat(pointElement.getElementsByTagName('rating')[0].textContent) || 0;
-                                        
-                                        trendLabels.push(pointName);
-                                        ratingData.push(pointRating);
-                                    }
-                                    
-                                    // Update chart title based on granularity
-                                    var chartTitle = '';
-                                    if (trendGranularity === 'daily') chartTitle = 'Daily Performance Trend';
-                                    else if (trendGranularity === 'monthly') chartTitle = 'Monthly Performance Trend';
-                                    else chartTitle = 'Yearly Performance Trend';
-                                    
-                                    var trendChartContainer = document.querySelector('#trendChart').closest('.border-blush');
-                                    if (trendChartContainer) {
-                                        var titleElement = trendChartContainer.querySelector('h4');
-                                        if (titleElement) titleElement.textContent = chartTitle;
-                                    }
-                                    
-                                    // If no data, show placeholder
-                                    if (trendElements.length === 0 || ratingData.every(function(r) { return r === 0; })) {
-                                        var chartContainer = document.getElementById('trendChart').parentElement;
-                                        if (!chartContainer.querySelector('.empty-chart-message')) {
-                                            chartContainer.innerHTML = '<div class="empty-chart-message text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
-                                        }
-                                    } else {
-                                        // Check if canvas still exists
-                                        var existingCanvas = document.getElementById('trendChart');
-                                        if (!existingCanvas || existingCanvas.tagName !== 'CANVAS') {
-                                            var newCanvas = document.createElement('canvas');
-                                            newCanvas.id = 'trendChart';
-                                            chartContainer.innerHTML = '';
-                                            chartContainer.appendChild(newCanvas);
-                                            trendCtx = newCanvas.getContext('2d');
-                                        }
-                                        
-                                        chartInstances.trendChart = new Chart(trendCtx, {
-                                            type: 'line',
+                                    var categoryCanvas = document.getElementById('categoryChart');
+                                    if (categoryCanvas) {
+                                        var categoryCtx = categoryCanvas.getContext('2d');
+                                        chartInstances.categoryChart = new Chart(categoryCtx, {
+                                            type: 'bar',
                                             data: {
-                                                labels: trendLabels,
+                                                labels: ['Teaching Skill', 'Communication', 'Support & Interaction', 'Punctuality', 'Overall'],
                                                 datasets: [{
                                                         label: 'Average Rating',
-                                                        data: ratingData,
-                                                        borderColor: '#6D9B9B',
-                                                        backgroundColor: 'rgba(109, 155, 155, 0.1)',
-                                                        borderWidth: 2,
-                                                        fill: true,
-                                                        tension: 0.4
+                                                        data: [teaching, communication, support, punctuality, overall],
+                                                        backgroundColor: ['#6D9B9B', '#A3C1D6', '#F2D1D1', '#B36D6D', '#557878'],
+                                                        borderColor: ['#557878', '#8AA9C4', '#E8BEBE', '#965656', '#3D3434'],
+                                                        borderWidth: 1,
+                                                        borderRadius: 4
                                                     }]
                                             },
                                             options: {
@@ -1727,7 +1559,7 @@
                                                     },
                                                     x: {
                                                         grid: {color: '#EFE1E1'},
-                                                        ticks: {color: '#3D3434', rotation: trendLabels.length > 10 ? 45 : 0}
+                                                        ticks: {color: '#3D3434'}
                                                     }
                                                 },
                                                 plugins: {
@@ -1740,69 +1572,210 @@
                                                 }
                                             }
                                         });
+                                    } else {
+                                        console.error('categoryChart canvas not found');
+                                    }
+
+                                    // CHART 2: PERFORMANCE TREND
+                                    var trendCanvas = document.getElementById('trendChart');
+                                            var trendContainer = document.getElementById('trendChart')?.parentElement;
+
+                                    // Get trend data from XML
+                                    var trendPoints = xmlDoc.getElementsByTagName('point');
+                                    var trendLabels = [];
+                                    var ratingData = [];
+                                    var hasRealData = false;
+
+                                    for (var i = 0; i < trendPoints.length; i++) {
+                                        var point = trendPoints[i];
+                                        var name = point.getElementsByTagName('name')[0];
+                                        var rating = point.getElementsByTagName('rating')[0];
+
+                                        if (name && rating) {
+                                            trendLabels.push(name.textContent);
+                                            var ratingValue = parseFloat(rating.textContent) || 0;
+                                            ratingData.push(ratingValue);
+                                            if (ratingValue > 0)
+                                                hasRealData = true;
+                                        }
+                                    }
+
+                                    // Get granularity
+                                    var trendDataElement = xmlDoc.getElementsByTagName('trendData')[0];
+                                    var trendGranularity = trendDataElement ? (trendDataElement.getAttribute('granularity') || 'monthly') : 'monthly';
+
+                                    // Update chart title
+                                    var chartTitle = '';
+                                    if (trendGranularity === 'daily')
+                                        chartTitle = 'Daily Performance Trend';
+                                    else if (trendGranularity === 'monthly')
+                                        chartTitle = 'Monthly Performance Trend';
+                                    else
+                                        chartTitle = 'Yearly Performance Trend';
+
+                                    var trendChartContainer = document.querySelector('#trendChart')?.closest('.border-blush');
+                                    if (trendChartContainer) {
+                                        var titleElement = trendChartContainer.querySelector('h4');
+                                        if (titleElement)
+                                            titleElement.textContent = chartTitle;
+                                    }
+
+                                    // Handle empty or zero data
+                                    if (trendPoints.length === 0 || !hasRealData) {
+                                        if (trendContainer && !trendContainer.querySelector('.empty-chart-message')) {
+                                            trendContainer.innerHTML = '<div class="empty-chart-message text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
+                                            if (chartInstances.trendChart) {
+                                                delete chartInstances.trendChart;
+                                            }
+                                        }
+                                    } else {
+                                        // Recreate canvas if needed
+                                        var existingCanvas = trendContainer.querySelector('canvas');
+                                        if (!existingCanvas || existingCanvas.id !== 'trendChart') {
+                                            trendContainer.innerHTML = '';
+                                            var newCanvas = document.createElement('canvas');
+                                            newCanvas.id = 'trendChart';
+                                            trendContainer.appendChild(newCanvas);
+                                            trendCanvas = newCanvas;
+                                        }
+
+                                        if (trendCanvas) {
+                                            if (chartInstances.trendChart) {
+                                                try {
+                                                    chartInstances.trendChart.destroy();
+                                                } catch (e) {
+                                                }
+                                            }
+
+                                            var trendCtx = trendCanvas.getContext('2d');
+
+                                            chartInstances.trendChart = new Chart(trendCtx, {
+                                                type: 'line',
+                                                data: {
+                                                    labels: trendLabels,
+                                                    datasets: [{
+                                                            label: 'Average Rating',
+                                                            data: ratingData,
+                                                            borderColor: '#6D9B9B',
+                                                            backgroundColor: 'rgba(109, 155, 155, 0.1)',
+                                                            borderWidth: 2,
+                                                            fill: true,
+                                                            tension: 0.4
+                                                        }]
+                                                },
+                                                options: {
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    scales: {
+                                                        y: {
+                                                            beginAtZero: true,
+                                                            max: 5,
+                                                            grid: {color: '#EFE1E1'},
+                                                            ticks: {color: '#3D3434'}
+                                                        },
+                                                        x: {
+                                                            grid: {color: '#EFE1E1'},
+                                                            ticks: {color: '#3D3434', rotation: trendLabels.length > 10 ? 45 : 0, autoSkip: true, maxRotation: 45, minRotation: 45}
+                                                        }
+                                                    },
+                                                    plugins: {
+                                                        legend: {display: false},
+                                                        tooltip: {
+                                                            backgroundColor: '#3D3434',
+                                                            titleColor: '#FDF8F8',
+                                                            bodyColor: '#FDF8F8'
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            console.log('Trend chart created with', trendLabels.length, 'points');
+                                        }
                                     }
 
                                     // CHART 3: CLASS DISTRIBUTION
                                     var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                     var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelled')) || 0;
-                                    var completedClasses = totalClasses - cancelledClasses;
-                                    
+                                    var completedClasses = parseInt(getXmlValue(xmlDoc, 'completed')) || (totalClasses - cancelledClasses);
+
+                                    console.log('Class Distribution - Total:', totalClasses, 'Cancelled:', cancelledClasses, 'Completed:', completedClasses);
+
                                     var distContainer = document.getElementById('distributionChart').parentElement;
 
-                                    if (totalClasses === 0) {
-                                        if (!distContainer.querySelector('.empty-chart-message')) {
+                                    if (totalClasses === 0 || (completedClasses === 0 && cancelledClasses === 0)) {
+                                        if (distContainer && !distContainer.querySelector('.empty-chart-message')) {
                                             distContainer.innerHTML = '<div class="empty-chart-message text-center py-8"><p class="text-espresso/60">No classes found for selected period</p></div>';
+                                            if (chartInstances.distributionChart) {
+                                                delete chartInstances.distributionChart;
+                                            }
                                         }
                                     } else {
+                                        // Clean up container and recreate canvas
                                         var existingCanvas = distContainer.querySelector('canvas');
                                         if (!existingCanvas) {
+                                            distContainer.innerHTML = '';
                                             var newCanvas = document.createElement('canvas');
                                             newCanvas.id = 'distributionChart';
+                                            distContainer.appendChild(newCanvas);
+                                        } else if (existingCanvas.id !== 'distributionChart') {
                                             distContainer.innerHTML = '';
+                                            var newCanvas = document.createElement('canvas');
+                                            newCanvas.id = 'distributionChart';
                                             distContainer.appendChild(newCanvas);
                                         }
-                                        
-                                        var distributionCtx = document.getElementById('distributionChart').getContext('2d');
-                                        
-                                        chartInstances.distributionChart = new Chart(distributionCtx, {
-                                            type: 'pie',
-                                            data: {
-                                                labels: ['Completed', 'Cancelled'],
-                                                datasets: [{
-                                                        data: [completedClasses, cancelledClasses],
-                                                        backgroundColor: ['#A5D6A7', '#EF9A9A'],
-                                                        borderColor: ['#8BC34A', '#F44336'],
-                                                        borderWidth: 2
-                                                    }]
-                                            },
-                                            options: {
-                                                responsive: true,
-                                                maintainAspectRatio: false,
-                                                plugins: {
-                                                    legend: {
-                                                        position: 'bottom',
-                                                        labels: {
-                                                            color: '#3D3434',
-                                                            padding: 20,
-                                                            font: {size: 12}
-                                                        }
-                                                    },
-                                                    tooltip: {
-                                                        callbacks: {
-                                                            label: function (context) {
-                                                                var label = context.label || '';
-                                                                var value = context.raw || 0;
-                                                                var percentage = Math.round((value / totalClasses) * 100);
-                                                                return label + ': ' + value + ' (' + percentage + '%)';
-                                                            }
-                                                        },
-                                                        backgroundColor: '#3D3434',
-                                                        titleColor: '#FDF8F8',
-                                                        bodyColor: '#FDF8F8'
-                                                    }
+
+                                        var distributionCanvas = document.getElementById('distributionChart');
+                                        if (distributionCanvas) {
+                                            // Destroy existing chart if any
+                                            if (chartInstances.distributionChart) {
+                                                try {
+                                                    chartInstances.distributionChart.destroy();
+                                                } catch (e) {
                                                 }
                                             }
-                                        });
+
+                                            var distributionCtx = distributionCanvas.getContext('2d');
+
+                                            chartInstances.distributionChart = new Chart(distributionCtx, {
+                                                type: 'pie',
+                                                data: {
+                                                    labels: ['Completed Classes', 'Cancelled Classes'],
+                                                    datasets: [{
+                                                            data: [completedClasses, cancelledClasses],
+                                                            backgroundColor: ['#A5D6A7', '#EF9A9A'],
+                                                            borderColor: ['#8BC34A', '#F44336'],
+                                                            borderWidth: 2
+                                                        }]
+                                                },
+                                                options: {
+                                                    responsive: true,
+                                                    maintainAspectRatio: false,
+                                                    plugins: {
+                                                        legend: {
+                                                            position: 'bottom',
+                                                            labels: {
+                                                                color: '#3D3434',
+                                                                padding: 20,
+                                                                font: {size: 12}
+                                                            }
+                                                        },
+                                                        tooltip: {
+                                                            callbacks: {
+                                                                label: function (context) {
+                                                                    var label = context.label || '';
+                                                                    var value = context.raw || 0;
+                                                                    var percentage = totalClasses > 0 ? Math.round((value / totalClasses) * 100) : 0;
+                                                                    return label + ': ' + value + ' (' + percentage + '%)';
+                                                                }
+                                                            },
+                                                            backgroundColor: '#3D3434',
+                                                            titleColor: '#FDF8F8',
+                                                            bodyColor: '#FDF8F8'
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            console.log('Class distribution chart created successfully');
+                                        }
                                     }
 
                                     // Update rating breakdown table
