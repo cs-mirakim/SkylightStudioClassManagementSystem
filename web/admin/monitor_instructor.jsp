@@ -405,7 +405,7 @@
                                                 <h5 class="font-medium text-espresso">Performance Summary</h5>
                                                 <button onclick="showPerformance()" class="text-sm text-teal hover:text-tealHover flex items-center px-3 py-1 rounded border border-teal hover:bg-teal/5 transition-colors">
                                                     <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.414L11 9.586V6z" clip-rule="evenodd"/>
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
                                                     </svg>
                                                     View Detailed Performance
                                                 </button>
@@ -465,13 +465,27 @@
                                 <p class="text-sm text-espresso/60 mt-1" id="performanceInstructorName">Loading...</p>
                             </div>
                             <div class="flex items-center space-x-4">
-                                <!-- Time Period Selector -->
-                                <select id="timePeriod" onchange="updateChartsWithPeriod()" class="px-3 py-1 border border-blush rounded-lg bg-whitePure text-sm focus:outline-none focus:ring-2 focus:ring-teal">
-                                    <option value="3months">Last 3 Months</option>
-                                    <option value="6months">Last 6 Months</option>
-                                    <option value="1year">Last 1 Year</option>
-                                    <option value="all">All Time</option>
-                                </select>
+                                <!-- Year + Month Filter -->
+                                <div class="flex items-center space-x-2">
+                                    <select id="yearFilter" onchange="updateChartsWithPeriod()" class="px-3 py-1 border border-blush rounded-lg bg-whitePure text-sm focus:outline-none focus:ring-2 focus:ring-teal">
+                                        <option value="">All Years</option>
+                                    </select>
+                                    <select id="monthFilter" onchange="updateChartsWithPeriod()" class="px-3 py-1 border border-blush rounded-lg bg-whitePure text-sm focus:outline-none focus:ring-2 focus:ring-teal" disabled>
+                                        <option value="">All Months</option>
+                                        <option value="1">January</option>
+                                        <option value="2">February</option>
+                                        <option value="3">March</option>
+                                        <option value="4">April</option>
+                                        <option value="5">May</option>
+                                        <option value="6">June</option>
+                                        <option value="7">July</option>
+                                        <option value="8">August</option>
+                                        <option value="9">September</option>
+                                        <option value="10">October</option>
+                                        <option value="11">November</option>
+                                        <option value="12">December</option>
+                                    </select>
+                                </div>
 
                                 <button onclick="closePerformance()" class="text-espresso/40 hover:text-espresso">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -513,9 +527,9 @@
                                     </div>
                                 </div>
 
-                                <!-- Monthly Trend Chart -->
+                                <!-- Performance Trend Chart -->
                                 <div class="bg-whitePure p-4 rounded-lg border border-blush">
-                                    <h4 class="font-medium text-espresso mb-4">Monthly Performance Trend</h4>
+                                    <h4 class="font-medium text-espresso mb-4">Performance Trend</h4>
                                     <div class="chart-container">
                                         <canvas id="trendChart"></canvas>
                                     </div>
@@ -684,6 +698,7 @@
                                     loadStats();
                                     loadInstructors();
                                     initEventListeners();
+                                    setupYearMonthHandlers();
                                 });
 
                                 function initDateRangePicker() {
@@ -764,7 +779,6 @@
                                                         dateJoined: element.getElementsByTagName('dateJoined')[0].textContent,
                                                         status: element.getElementsByTagName('status')[0].textContent,
                                                         registrationStatus: element.getElementsByTagName('registrationStatus')[0].textContent,
-                                                        // ✅ ADD: Profile image
                                                         profileImage: element.getElementsByTagName('profileImage')[0] ?
                                                                 element.getElementsByTagName('profileImage')[0].textContent :
                                                                 '../profile_pictures/instructor/dummy.png'
@@ -860,7 +874,6 @@
                                     var actionButtonClass = instructor.status === 'active' ? 'text-dusty hover:text-dustyHover' : 'text-teal hover:text-tealHover';
                                     var actionButtonBorder = instructor.status === 'active' ? 'border-dusty' : 'border-teal';
 
-                                    // ✅ FIX: Use instructor.profileImage if available, else use dummy
                                     var imgSrc = instructor.profileImage || '../profile_pictures/instructor/dummy.png';
 
                                     row.innerHTML = '<td class="px-6 py-4 whitespace-nowrap">' +
@@ -1107,6 +1120,9 @@
                                                     statusEl.innerHTML = '<span class="px-2 py-1 text-xs rounded-full bg-dangerBg text-dangerText">Inactive</span>';
                                                 }
 
+                                                // Load available years for the performance modal
+                                                loadAvailableYears();
+
                                                 // Show modal
                                                 document.getElementById('detailsModal').classList.remove('hidden');
                                             })
@@ -1129,15 +1145,66 @@
                                     currentInstructorId = null;
                                 }
 
-                                // NEW: Load performance data with period filter
+                                // Load available years for the instructor
+                                function loadAvailableYears() {
+                                    if (!currentInstructorId) return;
+                                    
+                                    fetch('monitor-instructor?action=getAvailableYears&id=' + currentInstructorId)
+                                        .then(function(response) {
+                                            if (!response.ok) return;
+                                            return response.text();
+                                        })
+                                        .then(function(xmlText) {
+                                            var parser = new DOMParser();
+                                            var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                                            var yearSelect = document.getElementById('yearFilter');
+                                            
+                                            var years = xmlDoc.getElementsByTagName('year');
+                                            if (years.length > 0) {
+                                                while (yearSelect.options.length > 1) yearSelect.remove(1);
+                                                for (var i = 0; i < years.length; i++) {
+                                                    var option = document.createElement('option');
+                                                    option.value = years[i].textContent;
+                                                    option.textContent = years[i].textContent;
+                                                    yearSelect.appendChild(option);
+                                                }
+                                            }
+                                        })
+                                        .catch(function(error) {
+                                            console.error('Error loading years:', error);
+                                        });
+                                }
+
+                                // Enable/disable month filter based on year selection
+                                function setupYearMonthHandlers() {
+                                    var yearFilter = document.getElementById('yearFilter');
+                                    var monthFilter = document.getElementById('monthFilter');
+                                    
+                                    if (yearFilter && monthFilter) {
+                                        yearFilter.addEventListener('change', function() {
+                                            if (this.value === '') {
+                                                monthFilter.disabled = true;
+                                                monthFilter.value = '';
+                                            } else {
+                                                monthFilter.disabled = false;
+                                            }
+                                        });
+                                    }
+                                }
+
+                                // NEW: Load performance data with year/month filter
                                 function showPerformance() {
                                     if (!currentInstructorId)
                                         return;
 
-                                    var period = document.getElementById('timePeriod') ?
-                                            document.getElementById('timePeriod').value : 'all';
+                                    var year = document.getElementById('yearFilter').value;
+                                    var month = document.getElementById('monthFilter').value;
+                                    
+                                    var url = 'monitor-instructor?action=completePerformance&id=' + currentInstructorId;
+                                    if (year) url += '&year=' + year;
+                                    if (month) url += '&month=' + month;
 
-                                    fetch('monitor-instructor?action=completePerformance&id=' + currentInstructorId + '&period=' + period)
+                                    fetch(url)
                                             .then(function (response) {
                                                 if (!response.ok)
                                                     throw new Error('Network response was not ok');
@@ -1172,7 +1239,7 @@
                                                 // Show modal first
                                                 document.getElementById('performanceModal').classList.remove('hidden');
 
-                                                // Update charts with current period
+                                                // Update charts
                                                 setTimeout(function () {
                                                     updateChartsWithPeriod();
                                                 }, 100);
@@ -1183,11 +1250,43 @@
                                             });
                                 }
 
-                                // NEW: Update charts based on period
+                                // Update charts based on year/month filter
                                 function updateChartsWithPeriod() {
-                                    if (!currentPerformanceData)
-                                        return;
-                                    updateCharts(currentPerformanceData);
+                                    if (!currentInstructorId) return;
+                                    
+                                    var year = document.getElementById('yearFilter').value;
+                                    var month = document.getElementById('monthFilter').value;
+                                    
+                                    var url = 'monitor-instructor?action=completePerformance&id=' + currentInstructorId;
+                                    if (year) url += '&year=' + year;
+                                    if (month) url += '&month=' + month;
+                                    
+                                    fetch(url)
+                                        .then(function(response) {
+                                            if (!response.ok) throw new Error('Network response was not ok');
+                                            return response.text();
+                                        })
+                                        .then(function(xmlText) {
+                                            var parser = new DOMParser();
+                                            var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+                                            
+                                            var errorElement = xmlDoc.querySelector('parsererror');
+                                            if (errorElement) throw new Error('Invalid XML response from server');
+                                            
+                                            currentPerformanceData = xmlDoc;
+                                            
+                                            // Update metric cards
+                                            document.getElementById('perfOverallRating').textContent = getXmlValue(xmlDoc, 'overallRating');
+                                            document.getElementById('perfTotalClasses').textContent = getXmlValue(xmlDoc, 'totalClasses');
+                                            document.getElementById('perfCancelled').textContent = getXmlValue(xmlDoc, 'cancelled');
+                                            document.getElementById('perfCompletion').textContent = getXmlValue(xmlDoc, 'completion');
+                                            
+                                            updateCharts(xmlDoc);
+                                        })
+                                        .catch(function(error) {
+                                            console.error('Error loading performance:', error);
+                                            alert('Error loading performance data: ' + error.message);
+                                        });
                                 }
 
                                 function closePerformance() {
@@ -1548,33 +1647,64 @@
                                         }
                                     });
 
-                                    // CHART 2: MONTHLY TREND
+                                    // CHART 2: PERFORMANCE TREND
                                     var trendCtx = document.getElementById('trendChart').getContext('2d');
-
-                                    // Get monthly data from XML
-                                    var monthlyElements = xmlDoc.getElementsByTagName('month');
-                                    var monthLabels = [];
+                                    
+                                    // Get trend data from XML (supports daily, monthly, or yearly)
+                                    var trendElements = xmlDoc.getElementsByTagName('point');
+                                    var trendLabels = [];
                                     var ratingData = [];
                                     var totalClassesData = [];
-
-                                    for (var i = 0; i < monthlyElements.length; i++) {
-                                        var monthElement = monthlyElements[i];
-                                        var monthName = monthElement.getElementsByTagName('name')[0].textContent;
-                                        var monthRating = parseFloat(monthElement.getElementsByTagName('rating')[0].textContent) || 0;
-
-                                        monthLabels.push(monthName);
-                                        ratingData.push(monthRating);
-                                    }
-
-                                    // If no data, show placeholder
-                                    if (monthlyElements.length === 0) {
-                                        var chartContainer = document.getElementById('trendChart').parentElement;
-                                        chartContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
+                                    
+                                    var trendGranularity = xmlDoc.getElementsByTagName('trendData')[0];
+                                    if (trendGranularity) {
+                                        trendGranularity = trendGranularity.getAttribute('granularity') || 'monthly';
                                     } else {
+                                        trendGranularity = 'monthly';
+                                    }
+                                    
+                                    for (var i = 0; i < trendElements.length; i++) {
+                                        var pointElement = trendElements[i];
+                                        var pointName = pointElement.getElementsByTagName('name')[0].textContent;
+                                        var pointRating = parseFloat(pointElement.getElementsByTagName('rating')[0].textContent) || 0;
+                                        
+                                        trendLabels.push(pointName);
+                                        ratingData.push(pointRating);
+                                    }
+                                    
+                                    // Update chart title based on granularity
+                                    var chartTitle = '';
+                                    if (trendGranularity === 'daily') chartTitle = 'Daily Performance Trend';
+                                    else if (trendGranularity === 'monthly') chartTitle = 'Monthly Performance Trend';
+                                    else chartTitle = 'Yearly Performance Trend';
+                                    
+                                    var trendChartContainer = document.querySelector('#trendChart').closest('.border-blush');
+                                    if (trendChartContainer) {
+                                        var titleElement = trendChartContainer.querySelector('h4');
+                                        if (titleElement) titleElement.textContent = chartTitle;
+                                    }
+                                    
+                                    // If no data, show placeholder
+                                    if (trendElements.length === 0 || ratingData.every(function(r) { return r === 0; })) {
+                                        var chartContainer = document.getElementById('trendChart').parentElement;
+                                        if (!chartContainer.querySelector('.empty-chart-message')) {
+                                            chartContainer.innerHTML = '<div class="empty-chart-message text-center py-8"><p class="text-espresso/60">No data available for selected period</p></div>';
+                                        }
+                                    } else {
+                                        // Check if canvas still exists
+                                        var existingCanvas = document.getElementById('trendChart');
+                                        if (!existingCanvas || existingCanvas.tagName !== 'CANVAS') {
+                                            var newCanvas = document.createElement('canvas');
+                                            newCanvas.id = 'trendChart';
+                                            chartContainer.innerHTML = '';
+                                            chartContainer.appendChild(newCanvas);
+                                            trendCtx = newCanvas.getContext('2d');
+                                        }
+                                        
                                         chartInstances.trendChart = new Chart(trendCtx, {
                                             type: 'line',
                                             data: {
-                                                labels: monthLabels,
+                                                labels: trendLabels,
                                                 datasets: [{
                                                         label: 'Average Rating',
                                                         data: ratingData,
@@ -1597,7 +1727,7 @@
                                                     },
                                                     x: {
                                                         grid: {color: '#EFE1E1'},
-                                                        ticks: {color: '#3D3434'}
+                                                        ticks: {color: '#3D3434', rotation: trendLabels.length > 10 ? 45 : 0}
                                                     }
                                                 },
                                                 plugins: {
@@ -1613,16 +1743,27 @@
                                     }
 
                                     // CHART 3: CLASS DISTRIBUTION
-                                    var distributionCtx = document.getElementById('distributionChart').getContext('2d');
-
                                     var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                     var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelled')) || 0;
                                     var completedClasses = totalClasses - cancelledClasses;
+                                    
+                                    var distContainer = document.getElementById('distributionChart').parentElement;
 
                                     if (totalClasses === 0) {
-                                        var distContainer = document.getElementById('distributionChart').parentElement;
-                                        distContainer.innerHTML = '<div class="text-center py-8"><p class="text-espresso/60">No classes found</p></div>';
+                                        if (!distContainer.querySelector('.empty-chart-message')) {
+                                            distContainer.innerHTML = '<div class="empty-chart-message text-center py-8"><p class="text-espresso/60">No classes found for selected period</p></div>';
+                                        }
                                     } else {
+                                        var existingCanvas = distContainer.querySelector('canvas');
+                                        if (!existingCanvas) {
+                                            var newCanvas = document.createElement('canvas');
+                                            newCanvas.id = 'distributionChart';
+                                            distContainer.innerHTML = '';
+                                            distContainer.appendChild(newCanvas);
+                                        }
+                                        
+                                        var distributionCtx = document.getElementById('distributionChart').getContext('2d');
+                                        
                                         chartInstances.distributionChart = new Chart(distributionCtx, {
                                             type: 'pie',
                                             data: {
@@ -1736,13 +1877,12 @@
                                                 var parser = new DOMParser();
                                                 var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
 
-                                                // Extract data for PDF - FIXED: Use averageAllRatings instead of avgRating
+                                                // Extract data for PDF
                                                 var name = getXmlValue(xmlDoc, 'name');
                                                 var email = getXmlValue(xmlDoc, 'email');
                                                 var experience = getXmlValue(xmlDoc, 'experience');
                                                 var totalClasses = parseInt(getXmlValue(xmlDoc, 'totalClasses')) || 0;
                                                 var cancelledClasses = parseInt(getXmlValue(xmlDoc, 'cancelledClasses')) || 0;
-                                                // FIX: Use averageAllRatings instead of avgRating
                                                 var avgRating = getXmlValue(xmlDoc, 'averageAllRatings') || '0.0';
                                                 var feedbackCount = parseInt(getXmlValue(xmlDoc, 'feedbackCount')) || 0;
                                                 var completedClasses = totalClasses - cancelledClasses;
