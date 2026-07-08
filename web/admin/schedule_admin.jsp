@@ -1124,12 +1124,25 @@
                                     '<button onclick="showEmergencyWithdraw(' + classItem.classID + ')" class="text-warningText hover:text-warningText/80 font-medium text-left">⚠️ Emergency Withdraw</button>' +
                                     '</div>';
                         } else {
-                            // No instructor - Edit + Delete
-                            actionButtons = '<div class="flex items-center space-x-2">' +
-                                    '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium">✏️ Edit</button>' +
-                                    '<span class="text-blush">|</span>' +
-                                    '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium">🗑️ Delete</button>' +
-                                    '</div>';
+                            // No instructor - Check if < 24 hours
+                            var timeRemainingInfo = getTimeRemainingDisplay(classItem);
+                            var isLessThan24Hours = timeRemainingInfo.isCritical === true;
+
+                            if (isLessThan24Hours) {
+                                // < 24 hours AND no instructor - Edit DISABLED, Delete enabled
+                                actionButtons = '<div class="flex items-center space-x-2">' +
+                                        '<span class="text-espressoLighter/50 cursor-not-allowed" title="Cannot edit: Less than 24 hours remaining">✏️ Edit</span>' +
+                                        '<span class="text-blush">|</span>' +
+                                        '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium">🗑️ Delete</button>' +
+                                        '</div>';
+                            } else {
+                                // >= 24 hours - Edit + Delete enabled
+                                actionButtons = '<div class="flex items-center space-x-2">' +
+                                        '<button onclick="editClass(' + classItem.classID + ')" class="text-teal hover:text-tealHover font-medium">✏️ Edit</button>' +
+                                        '<span class="text-blush">|</span>' +
+                                        '<button onclick="confirmDelete(' + classItem.classID + ')" class="text-dangerText hover:text-dangerText/80 font-medium">🗑️ Delete</button>' +
+                                        '</div>';
+                            }
                         }
                     }
 
