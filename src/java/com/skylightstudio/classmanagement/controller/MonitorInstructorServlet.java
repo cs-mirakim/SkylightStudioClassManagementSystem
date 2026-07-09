@@ -24,6 +24,7 @@ import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -390,12 +391,7 @@ public class MonitorInstructorServlet extends HttpServlet {
         out.print("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         out.print("<years>");
 
-        String sql = "SELECT DISTINCT YEAR(feedbackDate) as year_num FROM feedback WHERE instructorID = ? AND feedbackDate IS NOT NULL "
-                + "UNION "
-                + "SELECT DISTINCT YEAR(c.classDate) as year_num FROM class_confirmation cc "
-                + "INNER JOIN class c ON cc.classID = c.classID "
-                + "WHERE cc.instructorID = ? AND c.classDate IS NOT NULL "
-                + "ORDER BY year_num DESC";
+        String sql = "SELECT DISTINCT YEAR(feedbackDate) as year_num FROM feedback WHERE instructorID = ? ORDER BY year_num DESC";
 
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -828,20 +824,18 @@ public class MonitorInstructorServlet extends HttpServlet {
         if (yearParam != null && !yearParam.trim().isEmpty()) {
             try {
                 selectedYear = Integer.parseInt(yearParam);
-                System.out.println("✅ Selected year: " + selectedYear);
             } catch (NumberFormatException e) {
-                System.out.println("⚠️ Invalid year format: " + yearParam);
             }
         }
 
         if (monthParam != null && !monthParam.trim().isEmpty() && selectedYear != null) {
             try {
                 selectedMonth = Integer.parseInt(monthParam);
-                System.out.println("✅ Selected month: " + selectedMonth);
             } catch (NumberFormatException e) {
-                System.out.println("⚠️ Invalid month format: " + monthParam);
             }
         }
+
+        System.out.println("Year filter: " + selectedYear + ", Month filter: " + selectedMonth);
 
         System.out.println("Final filters - Year: " + selectedYear + ", Month: " + selectedMonth);
 
@@ -1029,8 +1023,12 @@ public class MonitorInstructorServlet extends HttpServlet {
     private int getFilteredClassCount(int instructorId, Integer year, Integer month, String actionType) throws SQLException {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT COUNT(*) as count FROM class_confirmation cc ")
-                .append("INNER JOIN class c ON cc.classID = c.classID ")
+                .append("JOIN class c ON cc.classID = c.classID ")
                 .append("WHERE cc.instructorID = ? AND cc.action = ? ");
+
+        List<Object> params = new ArrayList<>();
+        params.add(instructorId);
+        params.add(actionType);
 
         if (year != null) {
             sql.append("AND YEAR(c.classDate) = ? ");
@@ -1042,15 +1040,12 @@ public class MonitorInstructorServlet extends HttpServlet {
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            int paramIndex = 1;
-            stmt.setInt(paramIndex++, instructorId);
-            stmt.setString(paramIndex++, actionType);
-
-            if (year != null) {
-                stmt.setInt(paramIndex++, year);
-            }
-            if (month != null && year != null) {
-                stmt.setInt(paramIndex++, month);
+            for (int i = 0; i < params.size(); i++) {
+                if (params.get(i) instanceof Integer) {
+                    stmt.setInt(i + 1, (Integer) params.get(i));
+                } else if (params.get(i) instanceof String) {
+                    stmt.setString(i + 1, (String) params.get(i));
+                }
             }
 
             ResultSet rs = stmt.executeQuery();
@@ -1078,6 +1073,9 @@ public class MonitorInstructorServlet extends HttpServlet {
                 .append("AVG(overallRating) as avgOverall ")
                 .append("FROM feedback WHERE instructorID = ? ");
 
+        List<Object> params = new ArrayList<>();
+        params.add(instructorId);
+
         if (year != null) {
             sql.append("AND YEAR(feedbackDate) = ? ");
         }
@@ -1088,14 +1086,10 @@ public class MonitorInstructorServlet extends HttpServlet {
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            int paramIndex = 1;
-            stmt.setInt(paramIndex++, instructorId);
-
-            if (year != null) {
-                stmt.setInt(paramIndex++, year);
-            }
-            if (month != null && year != null) {
-                stmt.setInt(paramIndex++, month);
+            for (int i = 0; i < params.size(); i++) {
+                if (params.get(i) instanceof Integer) {
+                    stmt.setInt(i + 1, (Integer) params.get(i));
+                }
             }
 
             ResultSet rs = stmt.executeQuery();
@@ -1127,6 +1121,9 @@ public class MonitorInstructorServlet extends HttpServlet {
                 .append("MIN(overallRating) as minOverall ")
                 .append("FROM feedback WHERE instructorID = ? ");
 
+        List<Object> params = new ArrayList<>();
+        params.add(instructorId);
+
         if (year != null) {
             sql.append("AND YEAR(feedbackDate) = ? ");
         }
@@ -1139,14 +1136,8 @@ public class MonitorInstructorServlet extends HttpServlet {
         try (Connection conn = DBConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-            int paramIndex = 1;
-            stmt.setInt(paramIndex++, instructorId);
-
-            if (year != null) {
-                stmt.setInt(paramIndex++, year);
-            }
-            if (month != null && year != null) {
-                stmt.setInt(paramIndex++, month);
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setInt(i + 1, (Integer) params.get(i));
             }
 
             ResultSet rs = stmt.executeQuery();
@@ -1254,61 +1245,44 @@ public class MonitorInstructorServlet extends HttpServlet {
     private List<Map<String, Object>> getMonthlyTrendForYear(int instructorId, int year) throws SQLException {
         List<Map<String, Object>> monthlyData = new ArrayList<>();
 
-        String classSql = "SELECT "
-                + "MONTH(c.classDate) as month_num, "
-                + "COUNT(*) as class_count "
-                + "FROM class_confirmation cc "
-                + "INNER JOIN class c ON cc.classID = c.classID "
-                + "WHERE cc.instructorID = ? AND cc.action = 'confirmed' "
-                + "AND YEAR(c.classDate) = ? "
-                + "GROUP BY MONTH(c.classDate)";
-
-        String ratingSql = "SELECT "
+        String sql = "SELECT "
                 + "MONTH(feedbackDate) as month_num, "
                 + "(AVG(teachingSkill) + AVG(communication) + AVG(supportInteraction) + AVG(punctuality) + AVG(overallRating)) / 5 as avg_rating "
                 + "FROM feedback "
                 + "WHERE instructorID = ? "
                 + "AND YEAR(feedbackDate) = ? "
-                + "GROUP BY MONTH(feedbackDate)";
+                + "GROUP BY MONTH(feedbackDate) "
+                + "ORDER BY MONTH(feedbackDate)";
 
-        String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-        Map<Integer, Integer> classCounts = new HashMap<>();
         try (Connection conn = DBConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(classSql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
             stmt.setInt(1, instructorId);
             stmt.setInt(2, year);
+
             ResultSet rs = stmt.executeQuery();
+
+            String[] monthNames = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+            double[] ratingsByMonth = new double[13];
+            boolean[] hasData = new boolean[13];
+
             while (rs.next()) {
-                classCounts.put(rs.getInt("month_num"), rs.getInt("class_count"));
-            }
-        }
-
-        Map<Integer, Double> ratingsByMonth = new HashMap<>();
-        try (Connection conn = DBConnection.getConnection();
-                PreparedStatement stmt = conn.prepareStatement(ratingSql)) {
-            stmt.setInt(1, instructorId);
-            stmt.setInt(2, year);
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                ratingsByMonth.put(rs.getInt("month_num"), rs.getDouble("avg_rating"));
-            }
-        }
-
-        for (int month = 1; month <= 12; month++) {
-            Map<String, Object> monthData = new HashMap<>();
-            monthData.put("name", monthNames[month - 1] + " " + year);
-
-            Double rating = ratingsByMonth.get(month);
-            if (rating != null && rating > 0) {
-                monthData.put("rating", String.format("%.1f", rating));
-            } else {
-                monthData.put("rating", "0");
+                int monthNum = rs.getInt("month_num");
+                ratingsByMonth[monthNum] = rs.getDouble("avg_rating");
+                hasData[monthNum] = true;
             }
 
-            Integer classCount = classCounts.get(month);
-            monthData.put("totalClasses", classCount != null ? String.valueOf(classCount) : "0");
-            monthlyData.add(monthData);
+            for (int month = 1; month <= 12; month++) {
+                Map<String, Object> monthData = new HashMap<>();
+                monthData.put("name", monthNames[month - 1] + " " + year);
+                if (hasData[month]) {
+                    monthData.put("rating", String.format("%.1f", ratingsByMonth[month]));
+                } else {
+                    monthData.put("rating", "0");
+                }
+                monthData.put("totalClasses", "0");
+                monthlyData.add(monthData);
+            }
         }
 
         return monthlyData;

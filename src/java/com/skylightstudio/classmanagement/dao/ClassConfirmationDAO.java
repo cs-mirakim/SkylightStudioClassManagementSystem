@@ -25,6 +25,11 @@ public class ClassConfirmationDAO {
             return false;
         }
 
+        // safety net je - servlet dah check & bagi mesej spesifik sebelum sampai sini
+        if (getScheduleConflict(instructorId, classId, cls) != null) {
+            return false;
+        }
+
         String sql = "INSERT INTO class_confirmation (classID, instructorID, action, actionAt) "
                 + "VALUES (?, ?, 'confirmed', CURRENT_TIMESTAMP)";
 
@@ -60,6 +65,11 @@ public class ClassConfirmationDAO {
 
         Class cls = classDao.getClassById(classId);
         if (cls == null || !"active".equals(cls.getClassStatus())) {
+            return false;
+        }
+
+        // safety net je - servlet dah check & bagi mesej spesifik sebelum sampai sini
+        if (getScheduleConflict(instructorId, classId, cls) != null) {
             return false;
         }
 
@@ -206,6 +216,40 @@ public class ClassConfirmationDAO {
             return null;
         }
         return cc.getAction();
+    }
+
+    public Map<String, Object> getScheduleConflict(int instructorId, int classId, Class newClass) {
+        String sql = "SELECT cc.action, c.classID, c.className FROM class_confirmation cc "
+                + "JOIN class c ON cc.classID = c.classID "
+                + "WHERE cc.instructorID = ? "
+                + "AND cc.action IN ('confirmed', 'pending') "
+                + "AND cc.classID != ? "
+                + "AND c.classDate = ? "
+                + "AND c.classStartTime < ? "
+                + "AND c.classEndTime > ? "
+                + "FETCH FIRST 1 ROWS ONLY";
+
+        try (Connection conn = DBConnection.getConnection();
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, instructorId);
+            stmt.setInt(2, classId);
+            stmt.setDate(3, newClass.getClassDate());
+            stmt.setTime(4, newClass.getClassEndTime());
+            stmt.setTime(5, newClass.getClassStartTime());
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                Map<String, Object> conflict = new HashMap<>();
+                conflict.put("action", rs.getString("action"));       // "confirmed" atau "pending"
+                conflict.put("classID", rs.getInt("classID"));
+                conflict.put("className", rs.getString("className"));
+                return conflict;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null; // tiada conflict
     }
 
     // Tambahkan method ini di ClassConfirmationDAO.java

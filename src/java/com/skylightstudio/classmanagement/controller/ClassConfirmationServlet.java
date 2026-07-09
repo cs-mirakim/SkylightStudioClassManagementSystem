@@ -150,6 +150,7 @@ public class ClassConfirmationServlet extends HttpServlet {
             // Check if class exists and is active
             System.out.println("Getting class by ID: " + classId);
             Class cls = classDao.getClassById(classId);
+
             if (cls == null) {
                 System.out.println("ERROR: Class not found for ID: " + classId);
                 result.put("success", false);
@@ -173,6 +174,31 @@ public class ClassConfirmationServlet extends HttpServlet {
 
             if ("confirm".equals(action)) {
                 System.out.println("Processing CONFIRM action");
+
+                // Check schedule conflict first
+                Map<String, Object> conflict = ccDao.getScheduleConflict(instructorId, classId, cls);
+                if (conflict != null) {
+                    String conflictAction = (String) conflict.get("action");
+                    String conflictClassName = (String) conflict.get("className");
+
+                    if ("pending".equals(conflictAction)) {
+                        System.out.println("ERROR: Schedule conflict with pending relief request - " + conflictClassName);
+                        result.put("success", false);
+                        result.put("message", "You already have a pending relief request for '"
+                                + conflictClassName + "' at the same date and time. "
+                                + "Please withdraw that request first before confirming as main instructor for this class.");
+                        out.print(mapToJson(result));
+                        return;
+                    } else {
+                        System.out.println("ERROR: Schedule conflict with confirmed class - " + conflictClassName);
+                        result.put("success", false);
+                        result.put("message", "You already have a confirmed class '"
+                                + conflictClassName + "' at the same date and time. "
+                                + "You cannot confirm overlapping classes.");
+                        out.print(mapToJson(result));
+                        return;
+                    }
+                }
 
                 // Check if instructor already in class
                 System.out.println("Checking if instructor " + instructorId + " is already in class " + classId);
@@ -218,6 +244,31 @@ public class ClassConfirmationServlet extends HttpServlet {
 
             } else if ("requestRelief".equals(action)) {
                 System.out.println("Processing REQUEST RELIEF action");
+
+                // Check schedule conflict first
+                Map<String, Object> conflict = ccDao.getScheduleConflict(instructorId, classId, cls);
+                if (conflict != null) {
+                    String conflictAction = (String) conflict.get("action");
+                    String conflictClassName = (String) conflict.get("className");
+
+                    if ("confirmed".equals(conflictAction)) {
+                        System.out.println("ERROR: Schedule conflict with confirmed class - " + conflictClassName);
+                        result.put("success", false);
+                        result.put("message", "You already have a confirmed class '"
+                                + conflictClassName + "' at the same date and time. "
+                                + "You cannot request relief for an overlapping class.");
+                        out.print(mapToJson(result));
+                        return;
+                    } else {
+                        System.out.println("ERROR: Schedule conflict with pending relief request - " + conflictClassName);
+                        result.put("success", false);
+                        result.put("message", "You already have a pending relief request for '"
+                                + conflictClassName + "' at the same date and time. "
+                                + "You cannot request relief for an overlapping class.");
+                        out.print(mapToJson(result));
+                        return;
+                    }
+                }
 
                 // Check if instructor already in class
                 System.out.println("Checking if instructor " + instructorId + " is already in class " + classId);
@@ -288,8 +339,6 @@ public class ClassConfirmationServlet extends HttpServlet {
                     return;
                 }
 
-                // IMPORTANT: For withdrawal, we DON'T check if instructor is in class
-                // because withdrawal is only for instructors who ARE in the class
                 success = ccDao.withdrawFromClass(classId, instructorId);
                 message = success ? "Withdrawn from class" : "Cannot withdraw from class";
                 System.out.println("Withdraw action result: " + success + ", Message: " + message);
